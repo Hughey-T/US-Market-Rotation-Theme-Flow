@@ -67,7 +67,20 @@ class PipelineContractTests(unittest.TestCase):
         self.assertEqual(value["meta"]["methodology_version"], "1.1.0")
 
     def test_fixed_input_clock_source_is_reproducible(self):
-        self.assertEqual(build_synthetic(), build_synthetic())
+        first = build_synthetic()
+        self.assertEqual(first, build_synthetic())
+        config, master, observations, history, previous = synthetic_inputs()
+        changed_commit = build_snapshot(
+            config=config, theme_master=master, observations=observations, history=history, previous_judgments=previous,
+            generated_at=dt.datetime(2026, 7, 11, tzinfo=dt.timezone.utc), data_date="2026-07-10", source_commit="b" * 40,
+        )
+        changed_observations = copy.deepcopy(observations); changed_observations["AAA"]["return_4w"] += 0.001
+        changed_input = build_snapshot(
+            config=config, theme_master=master, observations=changed_observations, history=history, previous_judgments=previous,
+            generated_at=dt.datetime(2026, 7, 11, tzinfo=dt.timezone.utc), data_date="2026-07-10", source_commit="a" * 40,
+        )
+        self.assertNotEqual(first["meta"]["run_id"], changed_commit["meta"]["run_id"])
+        self.assertNotEqual(first["meta"]["run_id"], changed_input["meta"]["run_id"])
 
     def test_observation_input_order_is_irrelevant(self):
         self.assertEqual(build_synthetic(), build_synthetic("reverse"))

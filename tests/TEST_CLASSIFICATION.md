@@ -10,11 +10,11 @@ Each Python test method belongs to exactly one CI category.
 | Production orchestration E2E | `test_production_orchestration_e2e.py` | 8 |
 | Repository operations and transactional publish | `test_publication_contract.py`, `test_membership_contract.py` | 12 |
 | Judgment projection semantics | `test_judgment_projection.py` | 2 |
-| Publication recovery E2E | `test_publication_hardening.py` | 9 |
+| Publication recovery E2E | `test_publication_hardening.py` | 10 |
 | Workflow contracts | `test_lock_and_workflow_contract.py` | 5 |
-| **Total** | 12 files | **139** |
+| **Total** | 12 files | **140** |
 
-T01–T70 remain the 70 numbered design contracts. The other 69 methods are
+T01–T70 remain the 70 numbered design contracts. The other 70 methods are
 independent reachability, semantic, repository, membership, mutation, and raw
 orchestration contracts. No test file is invoked by more than one CI category.
 

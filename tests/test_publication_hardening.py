@@ -1,6 +1,7 @@
 import copy
 import datetime as dt
 import json
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
@@ -98,6 +99,30 @@ class PublicationHardeningTests(unittest.TestCase):
         exported = Path(self.temporary.name) / "latest.json"
         export_current(self.output, exported)
         self.assertEqual(load_json(exported)["meta"]["run_id"], pointer["analysis_id"])
+
+    def test_multiple_valid_orphans_choose_earliest_deterministically(self):
+        first = generation("2026-07-17", "multiple-orphans")
+        with self.assertRaises(OSError):
+            publish_generation(self.output, first, history_item(first), self.index,
+                               lambda step: (_ for _ in ()).throw(OSError("orphan one")) if step == "generation_rename" else None)
+        second = copy.deepcopy(first); second["meta"]["generated_at"] = "2026-07-12T00:00:00Z"
+        second_id = generation_identity(second["meta"]["run_id"], second["meta"]["generated_at"], second["meta"]["source_commit"])
+        second["meta"]["source_snapshot"] = f"output/generations/{second_id}/archive.json"
+        second["meta"]["source_sha256"] = snapshot_source_hash(second)
+        with tempfile.TemporaryDirectory() as other_directory:
+            other = Path(other_directory) / "output"
+            publish_generation(other, self.old, history_item(self.old), self.index)
+            with self.assertRaises(OSError):
+                publish_generation(other, second, history_item(second), self.index,
+                                   lambda step: (_ for _ in ()).throw(OSError("orphan two")) if step == "generation_rename" else None)
+            shutil.copytree(other / "generations" / second_id, self.output / "generations" / second_id)
+        retry = copy.deepcopy(second); retry["meta"]["generated_at"] = "2026-07-13T00:00:00Z"
+        retry_id = generation_identity(retry["meta"]["run_id"], retry["meta"]["generated_at"], retry["meta"]["source_commit"])
+        retry["meta"]["source_snapshot"] = f"output/generations/{retry_id}/archive.json"
+        retry["meta"]["source_sha256"] = snapshot_source_hash(retry)
+        pointer = publish_generation(self.output, retry, history_item(retry), self.index)
+        first_id = first["meta"]["source_snapshot"].split("/")[2]
+        self.assertEqual(pointer["generation_id"], first_id)
 
     def test_previous_generation_id_schema_violation_keeps_current(self):
         current = load_current_generation(self.output)
