@@ -47,6 +47,17 @@ def judgment_from_source(source):
     theme["selected_for_deep_dive"] = source_theme["selected_for_deep_dive"]
     theme["shortlist_rank"] = source_theme["shortlist_rank"]
     theme["shortlist_reason_codes"] = copy.deepcopy(source_theme["shortlist_reason_codes"])
+    quality = source_theme["quality"]
+    theme["data_quality"] = {
+        "classification_eligible": quality["classification_eligible"],
+        "coverage_ratio": quality["coverage_ratio"],
+        "valid_constituent_count": quality["valid_constituent_count"],
+        "history_weeks": quality["history_weeks"],
+        "missing_required_fields": copy.deepcopy(quality["missing_required_fields"]),
+        "quality_reasons": copy.deepcopy(quality["quality_reasons"]),
+    }
+    theme["matched_conditions"] = copy.deepcopy(source_theme["condition_flags"]["matched_conditions"])
+    theme["unmatched_conditions"] = copy.deepcopy(source_theme["condition_flags"]["unmatched_conditions"])
     for field in theme["key_metrics"]:
         theme["key_metrics"][field] = source_theme["metrics"][field]
     return record

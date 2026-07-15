@@ -11,6 +11,7 @@ from jsonschema import Draft202012Validator, FormatChecker
 from .classification import classify_theme, evaluate_priority, evaluate_timing, overheat_breadth_weak, priority_matches
 from .provenance import snapshot_source_hash
 from .shortlist import apply_shortlist
+from .thresholds import equal_weight_led, market_cap_led
 
 
 class ContractError(ValueError):
@@ -52,14 +53,31 @@ def validate_theme_master_semantics(master: dict) -> list[str]:
         if theme_id in seen_ids:
             errors.append(f"duplicate theme_id: {theme_id}")
         seen_ids.add(theme_id)
-        tickers = [member.get("ticker") for member in theme.get("members", [])]
-        if len(tickers) != len(set(tickers)):
-            errors.append(f"{theme_id}: duplicate ticker within theme")
-        for ticker in tickers:
+        periods: dict[str, list[tuple[dt.date, dt.date | None]]] = {}
+        for member in theme.get("members", []):
+            ticker = member.get("ticker")
+            try:
+                valid_from = dt.date.fromisoformat(member.get("valid_from", ""))
+                valid_to_raw = member.get("valid_to")
+                valid_to = dt.date.fromisoformat(valid_to_raw) if valid_to_raw is not None else None
+            except (TypeError, ValueError):
+                errors.append(f"{theme_id}/{ticker}: malformed membership date")
+                continue
+            if valid_to is not None and valid_from > valid_to:
+                errors.append(f"{theme_id}/{ticker}: valid_from is after valid_to")
+            periods.setdefault(ticker, []).append((valid_from, valid_to))
             membership.setdefault(ticker, []).append(theme_id)
+        for ticker, ranges in periods.items():
+            ordered = sorted(ranges, key=lambda item: (item[0], item[1] or dt.date.max))
+            if len(ordered) != len(set(ordered)):
+                errors.append(f"{theme_id}/{ticker}: duplicate membership period")
+            for previous, current in zip(ordered, ordered[1:]):
+                if previous[1] is None or current[0] <= previous[1]:
+                    errors.append(f"{theme_id}/{ticker}: overlapping membership periods")
     for ticker, theme_ids in sorted(membership.items()):
-        if len(theme_ids) > 1:
-            warnings.append(f"OVERLAP:{ticker}:{','.join(sorted(theme_ids))}")
+        distinct = sorted(set(theme_ids))
+        if len(distinct) > 1:
+            warnings.append(f"OVERLAP:{ticker}:{','.join(distinct)}")
     if errors:
         raise ContractError("theme master semantic validation failed:\n" + "\n".join(f"- {error}" for error in errors))
     return warnings
@@ -111,6 +129,11 @@ def validate_latest_semantics(latest: dict, verify_source_hash: bool = False) ->
         for field in ("level", "direction", "positioning_hypothesis", "direct_flow_data_available"):
             if evidence.get(field) != expected_classifications["evidence"].get(field):
                 errors.append(f"{theme_id}: evidence.{field} mismatch; expected {expected_classifications['evidence'].get(field)}")
+        for field in ("matched_conditions", "unmatched_conditions", "contrary_evidence"):
+            if flags.get(field) != expected_flags.get(field):
+                errors.append(f"{theme_id}: condition_flags.{field} mismatch; expected {expected_flags.get(field)}")
+        if evidence.get("matched_conditions") != expected_classifications["evidence"].get("matched_conditions"):
+            errors.append(f"{theme_id}: evidence.matched_conditions mismatch; expected {expected_classifications['evidence'].get('matched_conditions')}")
         expected_weak = overheat_breadth_weak(flags.get("phase_price_overheat"), metrics.get("advance_ratio_4w"), metrics.get("pct_above_50dma"))
         if flags.get("overheat_breadth_weak") != expected_weak:
             errors.append(f"{theme_id}: overheat_breadth_weak mismatch; expected {expected_weak}")
@@ -122,9 +145,9 @@ def validate_latest_semantics(latest: dict, verify_source_hash: bool = False) ->
             errors.append(f"{theme_id}: single_name_concentrated mismatch")
         divergence = metrics.get("weighting_divergence_4w")
         if divergence is not None:
-            if metrics.get("market_cap_led") != (divergence >= 0.03):
+            if metrics.get("market_cap_led") != market_cap_led(divergence):
                 errors.append(f"{theme_id}: market_cap_led mismatch")
-            if metrics.get("equal_weight_led") != (divergence <= -0.03):
+            if metrics.get("equal_weight_led") != equal_weight_led(divergence):
                 errors.append(f"{theme_id}: equal_weight_led mismatch")
         above_count = metrics.get("above_50dma_count")
         above_ratio = metrics.get("pct_above_50dma")
@@ -148,6 +171,23 @@ def validate_latest_semantics(latest: dict, verify_source_hash: bool = False) ->
         raise ContractError("latest semantic validation failed:\n" + "\n".join(f"- {error}" for error in errors))
 
 
+def validate_public_latest(latest: dict, verify_source_hash: bool = True) -> None:
+    """Validate an artifact intended for the public current/latest position."""
+    validate_latest_semantics(latest, verify_source_hash=verify_source_hash)
+    meta = latest.get("meta", {})
+    errors = []
+    if meta.get("status") != "success":
+        errors.append("public latest requires status=success")
+    if meta.get("failure_reason") not in (None, ""):
+        errors.append("public latest cannot contain failure_reason")
+    if meta.get("global_quality", {}).get("critical_missing") != []:
+        errors.append("public latest requires critical_missing=[]")
+    if not latest.get("themes"):
+        errors.append("public latest requires at least one theme")
+    if errors:
+        raise ContractError("public latest validation failed:\n" + "\n".join(f"- {error}" for error in errors))
+
+
 def validate_judgment_semantics(record: dict, source_latest: dict | None) -> None:
     """Reject judgment records that do not faithfully project a validated source snapshot."""
     _walk_finite(record)
@@ -155,6 +195,10 @@ def validate_judgment_semantics(record: dict, source_latest: dict | None) -> Non
         raise ContractError("judgment source latest is unavailable")
     errors = []
     source_meta = source_latest.get("meta", {})
+    try:
+        validate_public_latest(source_latest, verify_source_hash=False)
+    except ContractError as error:
+        errors.append(f"judgment source latest is not publishable: {error}")
     identity = {
         "run_id": "run_id", "data_date": "data_date", "source_commit": "source_commit",
         "source_snapshot": "source_snapshot", "source_sha256": "source_sha256",
@@ -162,6 +206,14 @@ def validate_judgment_semantics(record: dict, source_latest: dict | None) -> Non
     for record_field, source_field in identity.items():
         if record.get(record_field) != source_meta.get(source_field):
             errors.append(f"judgment {record_field} does not match source latest")
+    versions = {
+        "data_schema_version": source_meta.get("schema_version"),
+        "methodology_version": source_meta.get("methodology_version"),
+        "instruction_version": "1.1.0",
+    }
+    for field, expected in versions.items():
+        if record.get(field) != expected:
+            errors.append(f"judgment {field} does not match source latest contract")
     source_regime = source_latest.get("market_regime", {}).get("classification", {})
     for field in ("primary_regime", "secondary_regimes", "confidence", "matched_conditions", "contrary_evidence"):
         if record.get("regime", {}).get(field) != source_regime.get(field):
@@ -169,6 +221,12 @@ def validate_judgment_semantics(record: dict, source_latest: dict | None) -> Non
     priority_by_rule = {"P0": "unclassifiable", "P1": "dd_priority", "P2": "dd_priority", "P3": "dd_candidate", "P4": "watch", "P5": "low_priority", "fallback": "watch"}
     timing_by_rule = {"T0": "unclassifiable", "T1": "price_overheat", "T2": "deteriorating", "T3": "early_unconfirmed", "T4": "favorable", "fallback": "unclassifiable"}
     ranks, seen_theme_ids = [], set()
+    source_themes = source_latest.get("themes", {})
+    record_theme_ids = [theme.get("theme_id") for theme in record.get("theme_judgments", [])]
+    if set(record_theme_ids) != set(source_themes):
+        missing = sorted(set(source_themes) - set(record_theme_ids))
+        extra = sorted(set(record_theme_ids) - set(source_themes))
+        errors.append(f"judgment theme set does not match source latest; missing={missing}, extra={extra}")
     key_metric_fields = (
         "equal_weight_rel_spy_1w", "equal_weight_rel_spy_4w", "equal_weight_rel_spy_13w",
         "market_cap_weight_rel_spy_4w", "advance_ratio_4w", "pct_above_50dma",
@@ -179,7 +237,7 @@ def validate_judgment_semantics(record: dict, source_latest: dict | None) -> Non
         if theme_id in seen_theme_ids:
             errors.append(f"duplicate judgment theme_id: {theme_id}")
         seen_theme_ids.add(theme_id)
-        source_theme = source_latest.get("themes", {}).get(theme_id)
+        source_theme = source_themes.get(theme_id)
         if source_theme is None:
             errors.append(f"judgment theme_id not found in source latest: {theme_id}")
             continue
@@ -213,14 +271,38 @@ def validate_judgment_semantics(record: dict, source_latest: dict | None) -> Non
         for field, expected in copied.items():
             if theme.get(field) != expected:
                 errors.append(f"{theme_id}: {field} does not match source latest")
-        for field in ("level", "direction"):
+        for field in ("level", "direction", "positioning_hypothesis", "matched_conditions"):
             if theme.get("evidence", {}).get(field) != source_cls.get("evidence", {}).get(field):
                 errors.append(f"{theme_id}: evidence.{field} does not match source latest")
+        source_quality = source_theme.get("quality", {})
+        expected_quality = {
+            "classification_eligible": source_quality.get("classification_eligible"),
+            "coverage_ratio": source_quality.get("coverage_ratio"),
+            "valid_constituent_count": source_quality.get("valid_constituent_count"),
+            "history_weeks": source_quality.get("history_weeks"),
+            "missing_required_fields": source_quality.get("missing_required_fields"),
+            "quality_reasons": source_quality.get("quality_reasons"),
+        }
+        if theme.get("data_quality") != expected_quality:
+            errors.append(f"{theme_id}: data_quality does not match source latest")
+        for field in ("matched_conditions", "unmatched_conditions"):
+            if theme.get(field) != source_theme.get("condition_flags", {}).get(field):
+                errors.append(f"{theme_id}: {field} does not match source latest")
         for field in key_metric_fields:
             if theme.get("key_metrics", {}).get(field) != source_theme.get("metrics", {}).get(field):
                 errors.append(f"{theme_id}: key_metrics.{field} does not match source latest")
     if len(ranks) != len(set(ranks)):
         errors.append("judgment shortlist ranks are duplicated")
+    source_selected = source_latest.get("theme_shortlist", {}).get("selected_theme_ids", [])
+    record_selected = [
+        theme.get("theme_id")
+        for theme in sorted(record.get("theme_judgments", []), key=lambda item: item.get("shortlist_rank") or 10**9)
+        if theme.get("selected_for_deep_dive")
+    ]
+    if record_selected != source_selected:
+        errors.append(f"judgment shortlist selection/order does not match source latest; expected {source_selected}")
+    if sorted(ranks) != list(range(1, len(ranks) + 1)):
+        errors.append("judgment shortlist ranks must be contiguous from 1")
     if errors:
         raise ContractError("judgment semantic validation failed:\n" + "\n".join(f"- {error}" for error in errors))
 

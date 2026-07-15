@@ -14,7 +14,7 @@
 | `meta.hard_stop_after` | datetime | R | no | generated_atから14暦日後 | 1 |
 | `meta.run_id` | string | R | no | data date＋quantitative hash短縮値 | all |
 | `meta.source_commit` | 40hex | R | no | workflow開始時`GITHUB_SHA` | 1/record |
-| `meta.source_snapshot` | path | R | no | immutable archive path | all |
+| `meta.source_snapshot` | path | R | no | `output/generations/<run_id>/archive.json` | all |
 | `meta.source_sha256` | 64hex | R | no | archive quantitative payload hash | all/record |
 | `meta.status` | success/failed | R | no | pipeline outcome | 1 |
 | `meta.failure_reason` | string | R | yes | failed reason。success時null | 1 |
@@ -262,3 +262,6 @@
 | `.members[].ticker/role/active` | string/enum/bool | no | membership。active=falseは常に除外 |
 | `.valid_from/valid_to` | date/date|null | valid_to yes | `valid_from <= data_date <= valid_to`（nullは上限なし）のpoint-in-time membership |
 | `.rationale` | string | no | role assignment reason |
+`weighting_divergence_4w`はdecimal文字列表現で差を計算し、小数点以下10桁へround-half-evenで保存する。`market_cap_led`と`equal_weight_led`はこの保存値と同じdecimal threshold contractで判定する。
+
+Theme memberの期間は両端を含む。同一theme/tickerの隣接期間は許可するが、同日を共有する重複、完全duplicate、`valid_from > valid_to`、不正日付は拒否する。

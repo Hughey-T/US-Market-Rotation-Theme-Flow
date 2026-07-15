@@ -112,6 +112,8 @@ theme constituent `i`の4週SPY-relativeが正の場合だけ`positive_contribut
 - `market_cap_led=true`: weighting divergence `>=0.03`
 - `equal_weight_led=true`: weighting divergence `<=-0.03`
 
+weighting divergenceは入力numberのdecimal文字列表現から計算し、小数点以下10桁へround-half-evenで量子化して保存する。threshold判定とsemantic再検証は同じdecimal contractを使用するため、`0.26-0.29`は正確に`-0.03`として扱う。nullはnull、NaN/Infinityは拒否する。
+
 閾値は暫定。一銘柄集中を防ぐgateであり、企業品質評価ではない。
 
 ### overheat breadth weak flag

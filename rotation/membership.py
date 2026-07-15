@@ -12,4 +12,6 @@ def member_is_effective(member: dict, data_date: str | dt.date) -> bool:
     valid_from = dt.date.fromisoformat(member["valid_from"])
     valid_to_raw = member.get("valid_to")
     valid_to = dt.date.fromisoformat(valid_to_raw) if valid_to_raw is not None else None
+    if valid_to is not None and valid_from > valid_to:
+        raise ValueError(f"membership valid_from {valid_from} is after valid_to {valid_to}")
     return valid_from <= date and (valid_to is None or date <= valid_to)

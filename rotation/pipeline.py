@@ -70,6 +70,8 @@ def build_snapshot(
         for member in theme["members"]:
             if member_is_effective(member, data_date):
                 active_membership[member["ticker"]] = active_membership.get(member["ticker"], 0) + 1
+    if not active_membership:
+        raise ValueError("global active constituent count is zero; success artifact cannot be generated")
     themes = {}
     for definition in theme_master["themes"]:
         rows = []
@@ -101,7 +103,7 @@ def build_snapshot(
             "generated_at": now.isoformat().replace("+00:00", "Z"), "data_date": data_date,
             "valid_until": (now + dt.timedelta(days=10)).isoformat().replace("+00:00", "Z"),
             "hard_stop_after": (now + dt.timedelta(days=14)).isoformat().replace("+00:00", "Z"),
-            "run_id": run_id, "source_commit": source_commit, "source_snapshot": f"output/archive/{data_date}__{run_id.rsplit('-',1)[-1]}.json", "source_sha256": "0" * 64,
+            "run_id": run_id, "source_commit": source_commit, "source_snapshot": f"output/generations/{run_id}/archive.json", "source_sha256": "0" * 64,
             "status": "success", "failure_reason": None,
             "universe_definition": {"theme_master_schema_version": "1.0", "theme_master_version": master_version, "universe_hash": universe_hash, "theme_count": len(themes), "unique_constituent_count": len(active_membership), "overlap_policy": "allow_with_warning"},
             "periods": {"1w": 5, "4w": 21, "13w": 63},

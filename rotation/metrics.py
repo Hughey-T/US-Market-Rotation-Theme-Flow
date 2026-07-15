@@ -5,6 +5,8 @@ missing value to zero or emits non-finite JSON numbers.
 """
 from __future__ import annotations
 
+from .thresholds import equal_weight_led, market_cap_led, weighting_divergence
+
 import math
 from statistics import fmean
 from typing import Iterable
@@ -63,6 +65,7 @@ def aggregate_theme(constituents: list[dict], spy_returns: dict[str, float | Non
     cap_rel, cap_coverage = market_cap_weighted_relative(relatives, [row.get("market_cap") for row in constituents])
     valid_4w = [value for value in returns["4w"] if finite(value) is not None]
     eq_rel4 = relative(eq_returns["4w"], spy_returns.get("4w"))
+    divergence = weighting_divergence(cap_rel, eq_rel4)
     metrics = {
         "equal_weight_return_1w": eq_returns["1w"],
         "equal_weight_return_4w": eq_returns["4w"],
@@ -71,7 +74,7 @@ def aggregate_theme(constituents: list[dict], spy_returns: dict[str, float | Non
         "equal_weight_rel_spy_4w": eq_rel4,
         "equal_weight_rel_spy_13w": relative(eq_returns["13w"], spy_returns.get("13w")),
         "market_cap_weight_rel_spy_4w": cap_rel,
-        "weighting_divergence_4w": None if cap_rel is None or eq_rel4 is None else cap_rel - eq_rel4,
+        "weighting_divergence_4w": divergence,
         "advance_count_4w": sum(value > 0 for value in valid_4w) if valid_4w else None,
         "advance_ratio_4w": sum(value > 0 for value in valid_4w) / len(valid_4w) if valid_4w else None,
         "above_50dma_count": sum(row.get("above_50dma") is True for row in constituents) if any(isinstance(row.get("above_50dma"), bool) for row in constituents) else None,
@@ -81,8 +84,8 @@ def aggregate_theme(constituents: list[dict], spy_returns: dict[str, float | Non
         "top1_contribution_ratio": top1,
         "top3_contribution_ratio": top3,
         "single_name_concentrated": None if top1 is None else top1 > 0.60,
-        "market_cap_led": None if cap_rel is None or eq_rel4 is None else cap_rel - eq_rel4 >= 0.03,
-        "equal_weight_led": None if cap_rel is None or eq_rel4 is None else cap_rel - eq_rel4 <= -0.03,
+        "market_cap_led": market_cap_led(divergence),
+        "equal_weight_led": equal_weight_led(divergence),
     }
     updated = []
     for row, rel4, share in zip(constituents, relatives, shares):

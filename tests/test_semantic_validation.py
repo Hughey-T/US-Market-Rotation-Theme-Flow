@@ -1,5 +1,6 @@
 import copy
 import hashlib
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -9,6 +10,7 @@ from rotation.classification import classify_theme
 from rotation.metrics import aggregate_theme
 from rotation.provenance import snapshot_source_hash
 from rotation.shortlist import apply_shortlist
+from rotation.thresholds import equal_weight_led, market_cap_led, weighting_divergence
 from rotation.validation import (
     ContractError,
     load_json,
@@ -134,15 +136,21 @@ class SemanticValidatorTests(unittest.TestCase):
         self.assertIsNone(flags["broad_concentration_pass"])
 
     def test_T63_equal_weight_led_boundary_and_null(self):
+        self.assertTrue(equal_weight_led(-0.03))
+        self.assertTrue(equal_weight_led(-0.0300001))
+        self.assertFalse(equal_weight_led(-0.0299999))
+        self.assertIsNone(equal_weight_led(None))
+        self.assertTrue(market_cap_led(0.03))
+        self.assertEqual(weighting_divergence(0.26, 0.29), -0.03)
         rows = [
-            {"return_1w": 0.0, "return_4w": 0.10, "return_13w": 0.0, "market_cap": 1.0},
-            {"return_1w": 0.0, "return_4w": 0.10, "return_13w": 0.0, "market_cap": 1.0},
-            {"return_1w": 0.0, "return_4w": 0.10, "return_13w": 0.0, "market_cap": 1.0},
-            {"return_1w": 0.0, "return_4w": 0.00, "return_13w": 0.0, "market_cap": 9.0},
+            {"return_1w": 0.0, "return_4w": 0.23, "return_13w": 0.0, "market_cap": 3.0},
+            {"return_1w": 0.0, "return_4w": 0.35, "return_13w": 0.0, "market_cap": 1.0},
         ]
         metrics, _ = aggregate_theme(rows, {"1w": 0.0, "4w": 0.0, "13w": 0.0})
-        self.assertLessEqual(metrics["weighting_divergence_4w"], -0.03)
+        self.assertEqual(metrics["weighting_divergence_4w"], -0.03)
         self.assertTrue(metrics["equal_weight_led"])
+        round_tripped = json.loads(json.dumps(metrics))
+        self.assertTrue(equal_weight_led(round_tripped["weighting_divergence_4w"]))
         for row in rows:
             row["market_cap"] = None
         metrics, _ = aggregate_theme(rows, {"1w": 0.0, "4w": 0.0, "13w": 0.0})
@@ -160,7 +168,7 @@ class SemanticValidatorTests(unittest.TestCase):
             failed["meta"].update(status="failed", failure_reason="generation failed")
             failed["meta"]["source_sha256"] = snapshot_source_hash(failed)
             with mock.patch.object(generate_weekly, "ROOT", root), mock.patch.object(generate_weekly, "OUTPUT", output), mock.patch.object(generate_weekly, "HISTORY", output / "history"), mock.patch.object(generate_weekly, "JUDGMENTS", output / "judgments"):
-                with self.assertRaisesRegex(RuntimeError, "not publishable"):
+                with self.assertRaisesRegex(ContractError, "status=success"):
                     generate_weekly.publish(failed, {"index_version": "1.0", "records": []})
             self.assertEqual(hashlib.sha256(latest_path.read_bytes()).hexdigest(), before)
 

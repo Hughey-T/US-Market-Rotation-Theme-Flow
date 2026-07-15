@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from .metrics import finite
+from .condition_audit import canonical_condition_ids
 
 DD_LEVELS = {"direct_flow_confirmed", "flow_suggested", "relative_preference_suggested"}
 
@@ -86,11 +87,14 @@ def evaluate_timing(theme: dict) -> tuple[str, str, list[str]]:
 def classify_theme(metrics: dict, trends: dict, quality: dict, by_role: dict) -> tuple[dict, dict]:
     if not quality.get("classification_eligible"):
         flags = {key: None for key in ("phase_initial", "phase_diffusion", "phase_price_overheat", "direction_improving", "direction_worsening", "direction_outflow_signal", "broad_concentration_pass", "overheat_breadth_weak")}
-        flags.update({"matched_conditions": [], "unmatched_conditions": [], "contrary_evidence": list(quality.get("quality_reasons", []))})
+        flags.update({"matched_conditions": [], "unmatched_conditions": [], "contrary_evidence": []})
         classification = {
             "phase": "unclassifiable", "direction": "unclassifiable",
             "evidence": {"level": "insufficient", "direction": "unknown", "positioning_hypothesis": "not_assessable", "direct_flow_data_available": False, "matched_conditions": []},
         }
+        matched, unmatched, contrary, evidence_ids = canonical_condition_ids(metrics, trends, quality, by_role, flags, classification)
+        flags.update(matched_conditions=matched, unmatched_conditions=unmatched, contrary_evidence=contrary)
+        classification["evidence"]["matched_conditions"] = evidence_ids
         theme = {"quality": quality, "metrics": metrics, "condition_flags": flags, "classifications": classification}
         classification["research_priority"], classification["research_priority_rule"], _ = evaluate_priority(theme)
         classification["timing_status"], classification["timing_rule"], _ = evaluate_timing(theme)
@@ -195,11 +199,11 @@ def classify_theme(metrics: dict, trends: dict, quality: dict, by_role: dict) ->
         "broad_concentration_pass": concentration, "overheat_breadth_weak": weak,
         "matched_conditions": [], "unmatched_conditions": [], "contrary_evidence": [],
     }
-    for key, value in flags.copy().items():
-        if isinstance(value, bool):
-            (flags["matched_conditions"] if value else flags["unmatched_conditions"]).append(key.upper())
     evidence = {"level": level, "direction": evidence_direction, "positioning_hypothesis": positioning, "direct_flow_data_available": False, "matched_conditions": []}
     classification = {"phase": phase, "direction": direction, "evidence": evidence}
+    matched, unmatched, contrary, evidence_ids = canonical_condition_ids(metrics, trends, quality, by_role, flags, classification)
+    flags.update(matched_conditions=matched, unmatched_conditions=unmatched, contrary_evidence=contrary)
+    evidence["matched_conditions"] = evidence_ids
     theme = {"quality": quality, "metrics": metrics, "condition_flags": flags, "classifications": classification}
     classification["research_priority"], classification["research_priority_rule"], _ = evaluate_priority(theme)
     classification["timing_status"], classification["timing_rule"], _ = evaluate_timing(theme)
