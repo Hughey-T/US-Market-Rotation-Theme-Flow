@@ -6,6 +6,24 @@ from .metrics import finite
 DD_LEVELS = {"direct_flow_confirmed", "flow_suggested", "relative_preference_suggested"}
 
 
+def _tri_all(*conditions: bool | None) -> bool | None:
+    if any(condition is None for condition in conditions):
+        return None
+    return all(conditions)
+
+
+def _finite_condition(value, predicate) -> bool | None:
+    return None if finite(value) is None else bool(predicate(value))
+
+
+def _tri_or(*conditions: bool | None) -> bool | None:
+    if any(condition is True for condition in conditions):
+        return True
+    if all(condition is False for condition in conditions):
+        return False
+    return None
+
+
 def overheat_breadth_weak(overheat, advance, above50):
     if overheat is None:
         return None
@@ -82,17 +100,39 @@ def classify_theme(metrics: dict, trends: dict, quality: dict, by_role: dict) ->
     reltrend = trends.get("rel_spy_4w_trend_3w")
     advtrend = trends.get("advance_breadth_trend_3w")
     abovetrend = trends.get("above_50dma_breadth_trend_3w")
-    improving = quality.get("direction_eligible") and reltrend == "improving" and (advtrend == "improving" or abovetrend == "improving") and advtrend != "worsening" and abovetrend != "worsening"
-    worsening = quality.get("direction_eligible") and reltrend == "worsening" and (advtrend == "worsening" or abovetrend == "worsening") and advtrend != "improving" and abovetrend != "improving"
-    outflow = bool(worsening and finite(rel4) is not None and rel4 < 0 and (finite(metrics.get("volume_ratio_20d_60d")) is not None and metrics["volume_ratio_20d_60d"] >= 1.20 or finite(metrics.get("equal_weight_return_4w")) is not None and metrics["equal_weight_return_4w"] < 0))
+    if not quality.get("direction_eligible"):
+        improving = worsening = None
+    else:
+        breadth_known = advtrend != "insufficient" or abovetrend != "insufficient"
+        improving = _tri_all(
+            None if reltrend == "insufficient" else reltrend == "improving",
+            None if not breadth_known else advtrend == "improving" or abovetrend == "improving",
+            advtrend != "worsening", abovetrend != "worsening",
+        )
+        worsening = _tri_all(
+            None if reltrend == "insufficient" else reltrend == "worsening",
+            None if not breadth_known else advtrend == "worsening" or abovetrend == "worsening",
+            advtrend != "improving", abovetrend != "improving",
+        )
+    if worsening is None:
+        outflow = None
+    elif not worsening:
+        outflow = False
+    else:
+        negative_rel = _finite_condition(rel4, lambda value: value < 0)
+        volume = _finite_condition(metrics.get("volume_ratio_20d_60d"), lambda value: value >= 1.20)
+        absolute = _finite_condition(metrics.get("equal_weight_return_4w"), lambda value: value < 0)
+        outflow = _tri_all(negative_rel, _tri_or(volume, absolute))
     if not quality.get("direction_eligible"):
         direction = "unclassifiable"
-    elif outflow:
+    elif outflow is True:
         direction = "outflow_signal"
-    elif improving:
+    elif improving is True:
         direction = "improving"
-    elif worsening:
+    elif worsening is True:
         direction = "worsening"
+    elif any(flag is None for flag in (improving, worsening, outflow)):
+        direction = "unclassifiable"
     else:
         direction = "flat"
 
@@ -101,14 +141,33 @@ def classify_theme(metrics: dict, trends: dict, quality: dict, by_role: dict) ->
     initial = None
     diffusion = None
     if quality.get("phase_initial_diffusion_eligible"):
-        initial = all((finite(metrics.get("equal_weight_rel_spy_1w")) is not None and metrics["equal_weight_rel_spy_1w"] > 0, finite(rel4) is not None and rel4 > 0, direction == "improving", finite(metrics.get("advance_ratio_4w")) is not None and 0.25 <= metrics["advance_ratio_4w"] < 0.60, finite(top1) is not None and top1 <= 0.60))
-        diffusion = all((finite(rel4) is not None and rel4 > 0, finite(metrics.get("advance_ratio_4w")) is not None and metrics["advance_ratio_4w"] >= 0.60, finite(metrics.get("pct_above_50dma")) is not None and metrics["pct_above_50dma"] >= 0.60, finite(top1) is not None and top1 <= 0.50, finite(top3) is not None and top3 <= 0.85))
+        initial = _tri_all(
+            _finite_condition(metrics.get("equal_weight_rel_spy_1w"), lambda value: value > 0),
+            _finite_condition(rel4, lambda value: value > 0), None if direction == "unclassifiable" else direction == "improving",
+            _finite_condition(metrics.get("advance_ratio_4w"), lambda value: 0.25 <= value < 0.60),
+            _finite_condition(top1, lambda value: value <= 0.60),
+        )
+        diffusion = _tri_all(
+            _finite_condition(rel4, lambda value: value > 0),
+            _finite_condition(metrics.get("advance_ratio_4w"), lambda value: value >= 0.60),
+            _finite_condition(metrics.get("pct_above_50dma"), lambda value: value >= 0.60),
+            _finite_condition(top1, lambda value: value <= 0.50),
+            _finite_condition(top3, lambda value: value <= 0.85),
+        )
     overheat = None
     if quality.get("phase_overheat_eligible"):
         peripheral = by_role.get("peripheral")
-        volume_or_peripheral = (finite(metrics.get("volume_ratio_20d_60d")) is not None and metrics["volume_ratio_20d_60d"] >= 1.30) or (isinstance(peripheral, dict) and finite(peripheral.get("advance_ratio_4w")) is not None and peripheral["advance_ratio_4w"] >= 0.67)
-        overheat = all((finite(metrics.get("equal_weight_rel_spy_13w")) is not None and metrics["equal_weight_rel_spy_13w"] >= 0.15, finite(metrics.get("pct_within_5pct_52w_high")) is not None and metrics["pct_within_5pct_52w_high"] >= 0.50, volume_or_peripheral))
-    phase = "price_overheat" if overheat else "diffusion" if diffusion else "initial" if initial else "unclassifiable"
+        peripheral_advance = peripheral.get("advance_ratio_4w") if isinstance(peripheral, dict) else None
+        volume_or_peripheral = _tri_or(
+            _finite_condition(metrics.get("volume_ratio_20d_60d"), lambda value: value >= 1.30),
+            _finite_condition(peripheral_advance, lambda value: value >= 0.67),
+        )
+        overheat = _tri_all(
+            _finite_condition(metrics.get("equal_weight_rel_spy_13w"), lambda value: value >= 0.15),
+            _finite_condition(metrics.get("pct_within_5pct_52w_high"), lambda value: value >= 0.50),
+            volume_or_peripheral,
+        )
+    phase = "price_overheat" if overheat is True else "diffusion" if diffusion is True else "initial" if initial is True else "unclassifiable"
 
     if not quality.get("evidence_eligible") or finite(rel4) is None:
         level, evidence_direction = "insufficient", "unknown"

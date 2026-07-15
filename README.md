@@ -4,6 +4,8 @@
 
 数値計算、欠損処理、market regime、phase、direction、evidence、research priority、テーマ市場状態、shortlistはコードが決定します。Custom GPTは結果を変更せず、説明、反対証拠、定性補足、個別DD引継ぎを担当します。価格上昇を直接的な資金流入とは扱いません。
 
+Theme membershipはsnapshotのdata dateに対する`active/valid_from/valid_to`でpoint-in-time選択します。50DMA breadthは実測countをweekly historyへ保存し、旧履歴にcountがなければ推定しません。`equal_weight_led`はmethodologyに既存定義があり、1.1の正式なcode-side fieldとして採用しました。
+
 ## 1.1の主要変更
 
 - `phase=initial|diffusion|price_overheat|unclassifiable`と`direction=improving|flat|worsening|outflow_signal|unclassifiable`を分離
@@ -48,6 +50,11 @@ python -m venv .venv
 .venv/Scripts/python scripts/validate_repository.py
 .venv/Scripts/python scripts/generate_weekly.py --fixture tests/fixtures/latest_normal.json --dry-run
 ```
+
+Test ownership and stable specification IDs are documented in
+[`tests/TEST_CLASSIFICATION.md`](tests/TEST_CLASSIFICATION.md). The required PR
+checks are `schema-and-fixture-validation`, `unit-and-rule-contracts`, and
+`generation-e2e`; all use offline fixtures and fixed clocks.
 
 Linux/macOSでは`.venv/bin/python`を使用します。PR必須checkは架空データだけを使い、networkと実時刻に依存しません。live取得はschedule/manualのweekly workflowだけです。
 

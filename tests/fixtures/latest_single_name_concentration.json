@@ -97,13 +97,15 @@
         "weighting_divergence_4w": 0.07,
         "advance_count_4w": 2,
         "advance_ratio_4w": 0.3333,
+        "above_50dma_count": 2,
         "pct_above_50dma": 0.3333,
         "pct_within_5pct_52w_high": 0.1667,
         "volume_ratio_20d_60d": 1.6,
         "top1_contribution_ratio": 1.0,
         "top3_contribution_ratio": 1.0,
         "single_name_concentrated": true,
-        "market_cap_led": true
+        "market_cap_led": true,
+        "equal_weight_led": false
       },
       "trends": {
         "rel_spy_4w_change_1w": 0.01,
@@ -138,7 +140,7 @@
         "evidence": {
           "level": "price_only",
           "direction": "up",
-          "positioning_hypothesis": "possible_short_term_adjustment",
+          "positioning_hypothesis": "not_supported",
           "direct_flow_data_available": false,
           "matched_conditions": ["EV_REL_POS", "CONCENTRATION_TOP1_GT_60", "POSITIONING_REL1_OR_VOLUME_SPIKE"]
         },
@@ -174,9 +176,9 @@
     "quality_reasons": ["SHORTLIST_BELOW_MINIMUM_3"]
   },
   "history_weekly": [
-    {"data_date": "2026-06-19", "schema_version": "1.1", "methodology_version": "1.1.0", "theme_master_version": "fixture-1", "themes": {"fixture_theme": {"equal_weight_rel_spy_4w": -0.02, "advance_count_4w": 0, "pct_above_50dma": 0.0, "volume_ratio_20d_60d": 1.0}}},
-    {"data_date": "2026-06-26", "schema_version": "1.1", "methodology_version": "1.1.0", "theme_master_version": "fixture-1", "themes": {"fixture_theme": {"equal_weight_rel_spy_4w": -0.01, "advance_count_4w": 1, "pct_above_50dma": 0.1667, "volume_ratio_20d_60d": 1.05}}},
-    {"data_date": "2026-07-03", "schema_version": "1.1", "methodology_version": "1.1.0", "theme_master_version": "fixture-1", "themes": {"fixture_theme": {"equal_weight_rel_spy_4w": 0.0, "advance_count_4w": 1, "pct_above_50dma": 0.1667, "volume_ratio_20d_60d": 1.1}}}
+    {"data_date": "2026-06-19", "schema_version": "1.1", "methodology_version": "1.1.0", "theme_master_version": "fixture-1", "themes": {"fixture_theme": {"equal_weight_rel_spy_4w": -0.02, "advance_count_4w": 0, "above_50dma_count": 0, "pct_above_50dma": 0.0, "volume_ratio_20d_60d": 1.0}}},
+    {"data_date": "2026-06-26", "schema_version": "1.1", "methodology_version": "1.1.0", "theme_master_version": "fixture-1", "themes": {"fixture_theme": {"equal_weight_rel_spy_4w": -0.01, "advance_count_4w": 1, "above_50dma_count": 1, "pct_above_50dma": 0.1667, "volume_ratio_20d_60d": 1.05}}},
+    {"data_date": "2026-07-03", "schema_version": "1.1", "methodology_version": "1.1.0", "theme_master_version": "fixture-1", "themes": {"fixture_theme": {"equal_weight_rel_spy_4w": 0.0, "advance_count_4w": 1, "above_50dma_count": 1, "pct_above_50dma": 0.1667, "volume_ratio_20d_60d": 1.1}}}
   ],
   "previous_judgments": {
     "source": "output/judgments/index.json",

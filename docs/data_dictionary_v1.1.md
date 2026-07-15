@@ -109,6 +109,7 @@
 | `.weighting_divergence_4w` | decimal | yes | market-cap-weight−equal-weight |
 | `.advance_count_4w` | integer | yes | positive 4週return constituent count |
 | `.advance_ratio_4w` | [0,1] | yes | advance/valid |
+| `.above_50dma_count` | integer | yes | 50DMA超過constituent count。field-valid 5社未満はnull |
 | `.pct_above_50dma` | [0,1] | yes | field-valid denominator |
 | `.pct_within_5pct_52w_high` | [0,1] | yes | field-valid denominator |
 | `.volume_ratio_20d_60d` | number | yes | constituent ratio mean |
@@ -116,6 +117,7 @@
 | `.top3_contribution_ratio` | [0,1] | yes | top3 positive relative contribution share |
 | `.single_name_concentrated` | boolean | yes | top1>0.60 |
 | `.market_cap_led` | boolean | yes | weighting divergence>=0.03 |
+| `.equal_weight_led` | boolean | yes | weighting divergence<=-0.03。market-cap input不足時はnull |
 
 ## 6. theme trends
 
@@ -182,6 +184,7 @@
 | `.schema_version/methodology_version/theme_master_version` | string | no | continuity gate |
 | `.themes.<id>.equal_weight_rel_spy_4w` | number | yes | trend input |
 | `.advance_count_4w` | integer | yes | trend input |
+| `.above_50dma_count` | integer | yes | count-based 50DMA breadth trend input。旧履歴にない場合は推定せずnull扱い |
 | `.pct_above_50dma` | number | yes | trend input |
 | `.volume_ratio_20d_60d` | number | yes | trend input |
 | `previous_judgments.source` | const path | no | validated index |
@@ -256,6 +259,6 @@
 | `overlap_policy` | allow_with_warning | no | duplication |
 | `themes[].theme_id/label/definition` | string | no | identity/scope |
 | `.reference_etfs[]` | ticker[] | no | reference only、automatic membershipではない |
-| `.members[].ticker/role/active` | string/enum/bool | no | membership |
-| `.valid_from/valid_to` | date/date|null | valid_to yes | point-in-time membership |
+| `.members[].ticker/role/active` | string/enum/bool | no | membership。active=falseは常に除外 |
+| `.valid_from/valid_to` | date/date|null | valid_to yes | `valid_from <= data_date <= valid_to`（nullは上限なし）のpoint-in-time membership |
 | `.rationale` | string | no | role assignment reason |

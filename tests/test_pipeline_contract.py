@@ -42,7 +42,7 @@ def synthetic_inputs():
     for date, rel, advance in (("2026-06-19", 0.01, 3), ("2026-06-26", 0.02, 4), ("2026-07-03", 0.03, 4)):
         history.append({
             "data_date": date, "schema_version": "1.1", "methodology_version": "1.1.0", "theme_master_version": "fixture-1",
-            "themes": {"fixture_theme": {"equal_weight_rel_spy_4w": rel, "advance_count_4w": advance, "pct_above_50dma": advance / 6, "volume_ratio_20d_60d": 1.0}},
+            "themes": {"fixture_theme": {"equal_weight_rel_spy_4w": rel, "advance_count_4w": advance, "above_50dma_count": advance, "pct_above_50dma": advance / 6, "volume_ratio_20d_60d": 1.0}},
         })
     previous = {"source": "output/judgments/index.json", "available": False, "latest_data_date": None, "records": []}
     return config, master, observations, history, previous
@@ -100,7 +100,8 @@ class PipelineContractTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory) / "judgment.json"
             target.write_bytes((FIXTURES / "judgment_record.json").read_bytes())
-            index = build_index(Path(directory), schema)
+            source = load_json(FIXTURES / "latest_normal.json")
+            index = build_index(Path(directory), schema, lambda _: source)
             current = load_json(FIXTURES / "latest_normal.json")
             projection = project_previous_judgments(index, current, current["history_weekly"])
             self.assertTrue(projection["available"])
@@ -111,12 +112,13 @@ class PipelineContractTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory) / "judgment.json"
             target.write_bytes((FIXTURES / "judgment_record.json").read_bytes())
-            index = build_index(Path(directory), schema)
+            source = load_json(FIXTURES / "latest_normal.json")
+            index = build_index(Path(directory), schema, lambda _: source)
             value = load_json(target)
             value["theme_judgments"][0]["one_line"] += " changed"
             target.write_text(json.dumps(value, ensure_ascii=False), encoding="utf-8")
             with self.assertRaises(ContractError):
-                verify_index(Path(directory), index, schema)
+                verify_index(Path(directory), index, schema, lambda _: source)
 
     def test_legacy_is_rejected_by_default(self):
         legacy = {"meta": {"schema_version": "1.0"}, "themes": {}}

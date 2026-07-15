@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from rotation.judgments import build_index, project_previous_judgments
+from rotation.membership import member_is_effective
 from rotation.pipeline import build_snapshot
 from rotation.provenance import atomic_write_json, canonical_bytes, snapshot_source_hash
 from rotation.validation import load_json, validate_latest_semantics, validate_schema
@@ -78,25 +79,36 @@ def ticker_observation(frame: pd.DataFrame) -> dict:
     return result
 
 
-def configured_tickers(config: dict, master: dict) -> list[str]:
+def configured_market_tickers(config: dict) -> list[str]:
     tickers = {config.get("vix", "^VIX"), "SPY"}
     for group in ("regime_assets", "style_factor", "sectors", "industries"):
         tickers.update(config.get(group, {}))
+    return sorted(tickers)
+
+
+def configured_tickers(config: dict, master: dict, data_date: str) -> list[str]:
+    tickers = set(configured_market_tickers(config))
     for theme in master["themes"]:
-        tickers.update(member["ticker"] for member in theme["members"] if member["active"])
+        tickers.update(member["ticker"] for member in theme["members"] if member_is_effective(member, data_date))
     return sorted(tickers)
 
 
 def download_observations(config: dict, master: dict) -> tuple[dict, str]:
     import yfinance as yf
 
-    tickers = configured_tickers(config, master)
-    print(f"downloading {len(tickers)} tickers")
-    data = yf.download(tickers, period="2y", auto_adjust=True, group_by="ticker", progress=False, threads=True)
-    raw = {ticker: get_frame(data, ticker) for ticker in tickers}
+    market_tickers = configured_market_tickers(config)
+    print(f"downloading {len(market_tickers)} market tickers")
+    market_data = yf.download(market_tickers, period="2y", auto_adjust=True, group_by="ticker", progress=False, threads=True)
+    raw = {ticker: get_frame(market_data, ticker) for ticker in market_tickers}
     if raw.get("SPY") is None:
         raise RuntimeError("SPY is unavailable; publication stopped")
     date = raw["SPY"].index[-1].date()
+    tickers = configured_tickers(config, master, str(date))
+    theme_only = sorted(set(tickers) - set(market_tickers))
+    if theme_only:
+        print(f"downloading {len(theme_only)} effective theme tickers")
+        theme_data = yf.download(theme_only, period="2y", auto_adjust=True, group_by="ticker", progress=False, threads=True)
+        raw.update({ticker: get_frame(theme_data, ticker) for ticker in theme_only})
     observations = {}
     for ticker in tickers:
         frame = raw[ticker]
@@ -125,6 +137,16 @@ def load_history() -> list[dict]:
     return values[-12:]
 
 
+def load_judgment_source(record: dict) -> dict:
+    path = ROOT / record["source_snapshot"]
+    if not path.is_file():
+        raise RuntimeError(f"judgment source latest is unavailable: {path}")
+    value = load_json(path)
+    validate_schema(value, load_json(LATEST_SCHEMA), str(path))
+    validate_latest_semantics(value, verify_source_hash=True)
+    return value
+
+
 def history_item(snapshot: dict) -> dict:
     return {
         "data_date": snapshot["meta"]["data_date"], "schema_version": "1.1", "methodology_version": "1.1.0",
@@ -133,6 +155,7 @@ def history_item(snapshot: dict) -> dict:
             theme_id: {
                 "equal_weight_rel_spy_4w": theme["metrics"]["equal_weight_rel_spy_4w"],
                 "advance_count_4w": theme["metrics"]["advance_count_4w"],
+                "above_50dma_count": theme["metrics"]["above_50dma_count"],
                 "pct_above_50dma": theme["metrics"]["pct_above_50dma"],
                 "volume_ratio_20d_60d": theme["metrics"]["volume_ratio_20d_60d"],
             }
@@ -142,6 +165,9 @@ def history_item(snapshot: dict) -> dict:
 
 
 def publish(snapshot: dict, index: dict) -> None:
+    validate_latest_semantics(snapshot, verify_source_hash=True)
+    if snapshot.get("meta", {}).get("status") != "success":
+        raise RuntimeError("failed artifacts are not publishable")
     archive_path = ROOT / snapshot["meta"]["source_snapshot"]
     if archive_path.exists() and canonical_bytes(load_json(archive_path)) != canonical_bytes(snapshot):
         raise RuntimeError(f"immutable archive already exists with different bytes: {archive_path}")
@@ -172,7 +198,7 @@ def main() -> int:
     observations, data_date = download_observations(config, master)
     history = load_history()
     judgment_schema = load_json(JUDGMENT_SCHEMA)
-    index = build_index(JUDGMENTS, judgment_schema)
+    index = build_index(JUDGMENTS, judgment_schema, load_judgment_source)
     empty_projection = {"source": "output/judgments/index.json", "available": False, "latest_data_date": None, "records": []}
     generated_at = dt.datetime.now(dt.timezone.utc)
     snapshot = build_snapshot(config=config, theme_master=master, observations=observations, history=history, previous_judgments=empty_projection, generated_at=generated_at, data_date=data_date, source_commit=source_commit())

@@ -5,16 +5,19 @@ import json
 from pathlib import Path
 
 from .provenance import file_sha256
-from .validation import ContractError, load_json, validate_schema
+from .validation import ContractError, load_json, validate_judgment_semantics, validate_schema
 
 
-def build_index(directory: Path, schema: dict) -> dict:
+def build_index(directory: Path, schema: dict, source_loader=None) -> dict:
     entries, seen_ids = [], set()
     for path in sorted(directory.glob("*.json")):
         if path.name == "index.json":
             continue
         value = load_json(path)
         validate_schema(value, schema, str(path))
+        if source_loader is None:
+            raise ContractError(f"{path}: judgment source loader is required")
+        validate_judgment_semantics(value, source_loader(value))
         judgment_id = value["judgment_id"]
         if judgment_id in seen_ids:
             raise ContractError(f"duplicate judgment_id: {judgment_id}")
@@ -24,8 +27,8 @@ def build_index(directory: Path, schema: dict) -> dict:
     return {"index_version": "1.0", "records": entries}
 
 
-def verify_index(directory: Path, index: dict, schema: dict) -> None:
-    rebuilt = build_index(directory, schema)
+def verify_index(directory: Path, index: dict, schema: dict, source_loader=None) -> None:
+    rebuilt = build_index(directory, schema, source_loader)
     if rebuilt != index:
         raise ContractError("output/judgments/index.json does not match immutable judgment files")
 

@@ -6,6 +6,7 @@ import datetime as dt
 from . import DATA_SCHEMA_VERSION, METHODOLOGY_VERSION
 from .classification import classify_theme
 from .metrics import aggregate_theme, role_aggregates
+from .membership import member_is_effective
 from .provenance import snapshot_source_hash, stable_hash
 from .quality import assess_quality
 from .regime import classify_market_regime
@@ -67,22 +68,25 @@ def build_snapshot(
     active_membership: dict[str, int] = {}
     for theme in theme_master["themes"]:
         for member in theme["members"]:
-            if member["active"]:
+            if member_is_effective(member, data_date):
                 active_membership[member["ticker"]] = active_membership.get(member["ticker"], 0) + 1
     themes = {}
     for definition in theme_master["themes"]:
         rows = []
         for member in definition["members"]:
-            if not member["active"]:
+            if not member_is_effective(member, data_date):
                 continue
             observed = observations.get(member["ticker"], {})
             rows.append({**observed, **member, "valid": observed.get("return_1w") is not None and observed.get("return_4w") is not None, "overlap_theme_count": active_membership[member["ticker"]]})
         metrics, rows = aggregate_theme(rows, {h: spy.get(f"return_{h}") for h in ("1w", "4w", "13w")})
         cap_coverage = metrics.pop("_market_cap_coverage")
         by_role, _ = role_aggregates(rows, spy.get("return_4w"))
-        current_history = {"equal_weight_rel_spy_4w": metrics["equal_weight_rel_spy_4w"], "advance_count_4w": metrics["advance_count_4w"], "above_50dma_count": None, "pct_above_50dma": metrics["pct_above_50dma"], "volume_ratio_20d_60d": metrics["volume_ratio_20d_60d"]}
-        trends = compute_theme_trends(compatible, definition["theme_id"], current_history)
         quality = assess_quality(rows, len(compatible) + 1, cap_coverage)
+        if quality["metric_valid_counts"]["above_50dma"] < 5:
+            metrics["above_50dma_count"] = None
+            metrics["pct_above_50dma"] = None
+        current_history = {"equal_weight_rel_spy_4w": metrics["equal_weight_rel_spy_4w"], "advance_count_4w": metrics["advance_count_4w"], "above_50dma_count": metrics["above_50dma_count"], "pct_above_50dma": metrics["pct_above_50dma"], "volume_ratio_20d_60d": metrics["volume_ratio_20d_60d"]}
+        trends = compute_theme_trends(compatible, definition["theme_id"], current_history)
         flags, classifications = classify_theme(metrics, trends, quality, by_role)
         constituents = [{key: row.get(key) for key in ("ticker", "role", "valid", "return_4w", "rel_spy_4w", "market_cap", "positive_contribution_ratio", "overlap_theme_count")} for row in rows]
         themes[definition["theme_id"]] = {"theme_id": definition["theme_id"], "label": definition["label"], "quality": quality, "metrics": metrics, "trends": trends, "condition_flags": flags, "classifications": classifications, "relative_strength_rank_4w": None, "selected_for_deep_dive": False, "shortlist_rank": None, "shortlist_reason_codes": [], "by_role": by_role, "constituents": constituents}

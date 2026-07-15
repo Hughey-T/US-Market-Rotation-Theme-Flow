@@ -20,6 +20,11 @@ The command emits a non-publishable report. For legacy `phase=流出`, it record
 
 Legacy prediction records are not converted to judgment records. Their meanings and required provenance differ.
 
+Older locally generated 1.1 weekly history rows that do not contain
+`above_50dma_count` remain readable only as insufficient 50DMA history. The
+reader does not infer a count from `pct_above_50dma` and never fills the missing
+value with zero. Newly generated history always persists the observed count.
+
 ## Theme master
 
 `scripts/migrate_theme_master.py` converts the provisional object map to schema 1.0 with explicit membership validity and rationale. Structure version and content version are independent. Cross-theme overlap is a warning; within-theme duplicate tickers are errors.

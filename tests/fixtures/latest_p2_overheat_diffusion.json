@@ -97,13 +97,15 @@
         "weighting_divergence_4w": -0.005,
         "advance_count_4w": 5,
         "advance_ratio_4w": 0.8333,
+        "above_50dma_count": 5,
         "pct_above_50dma": 0.8333,
         "pct_within_5pct_52w_high": 0.6667,
         "volume_ratio_20d_60d": 1.4,
         "top1_contribution_ratio": 0.28,
         "top3_contribution_ratio": 0.68,
         "single_name_concentrated": false,
-        "market_cap_led": false
+        "market_cap_led": false,
+        "equal_weight_led": false
       },
       "trends": {
         "rel_spy_4w_change_1w": 0.02,
@@ -174,9 +176,9 @@
     "quality_reasons": ["SHORTLIST_BELOW_MINIMUM_3"]
   },
   "history_weekly": [
-    {"data_date": "2026-06-19", "schema_version": "1.1", "methodology_version": "1.1.0", "theme_master_version": "fixture-1", "themes": {"fixture_theme": {"equal_weight_rel_spy_4w": 0.04, "advance_count_4w": 3, "pct_above_50dma": 0.5, "volume_ratio_20d_60d": 1.0}}},
-    {"data_date": "2026-06-26", "schema_version": "1.1", "methodology_version": "1.1.0", "theme_master_version": "fixture-1", "themes": {"fixture_theme": {"equal_weight_rel_spy_4w": 0.05, "advance_count_4w": 4, "pct_above_50dma": 0.6667, "volume_ratio_20d_60d": 1.05}}},
-    {"data_date": "2026-07-03", "schema_version": "1.1", "methodology_version": "1.1.0", "theme_master_version": "fixture-1", "themes": {"fixture_theme": {"equal_weight_rel_spy_4w": 0.05, "advance_count_4w": 4, "pct_above_50dma": 0.6667, "volume_ratio_20d_60d": 1.1}}}
+    {"data_date": "2026-06-19", "schema_version": "1.1", "methodology_version": "1.1.0", "theme_master_version": "fixture-1", "themes": {"fixture_theme": {"equal_weight_rel_spy_4w": 0.04, "advance_count_4w": 3, "above_50dma_count": 3, "pct_above_50dma": 0.5, "volume_ratio_20d_60d": 1.0}}},
+    {"data_date": "2026-06-26", "schema_version": "1.1", "methodology_version": "1.1.0", "theme_master_version": "fixture-1", "themes": {"fixture_theme": {"equal_weight_rel_spy_4w": 0.05, "advance_count_4w": 4, "above_50dma_count": 4, "pct_above_50dma": 0.6667, "volume_ratio_20d_60d": 1.05}}},
+    {"data_date": "2026-07-03", "schema_version": "1.1", "methodology_version": "1.1.0", "theme_master_version": "fixture-1", "themes": {"fixture_theme": {"equal_weight_rel_spy_4w": 0.05, "advance_count_4w": 4, "above_50dma_count": 4, "pct_above_50dma": 0.6667, "volume_ratio_20d_60d": 1.1}}}
   ],
   "previous_judgments": {
     "source": "output/judgments/index.json",

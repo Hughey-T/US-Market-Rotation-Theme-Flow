@@ -74,6 +74,7 @@ def aggregate_theme(constituents: list[dict], spy_returns: dict[str, float | Non
         "weighting_divergence_4w": None if cap_rel is None or eq_rel4 is None else cap_rel - eq_rel4,
         "advance_count_4w": sum(value > 0 for value in valid_4w) if valid_4w else None,
         "advance_ratio_4w": sum(value > 0 for value in valid_4w) / len(valid_4w) if valid_4w else None,
+        "above_50dma_count": sum(row.get("above_50dma") is True for row in constituents) if any(isinstance(row.get("above_50dma"), bool) for row in constituents) else None,
         "pct_above_50dma": ratio_true(row.get("above_50dma") for row in constituents),
         "pct_within_5pct_52w_high": ratio_true(row.get("within_5pct_52w_high") for row in constituents),
         "volume_ratio_20d_60d": mean(row.get("volume_ratio_20d_60d") for row in constituents),
@@ -81,6 +82,7 @@ def aggregate_theme(constituents: list[dict], spy_returns: dict[str, float | Non
         "top3_contribution_ratio": top3,
         "single_name_concentrated": None if top1 is None else top1 > 0.60,
         "market_cap_led": None if cap_rel is None or eq_rel4 is None else cap_rel - eq_rel4 >= 0.03,
+        "equal_weight_led": None if cap_rel is None or eq_rel4 is None else cap_rel - eq_rel4 <= -0.03,
     }
     updated = []
     for row, rel4, share in zip(constituents, relatives, shares):

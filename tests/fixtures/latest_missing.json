@@ -97,13 +97,15 @@
         "weighting_divergence_4w": null,
         "advance_count_4w": null,
         "advance_ratio_4w": null,
+        "above_50dma_count": null,
         "pct_above_50dma": null,
         "pct_within_5pct_52w_high": null,
         "volume_ratio_20d_60d": null,
         "top1_contribution_ratio": null,
         "top3_contribution_ratio": null,
         "single_name_concentrated": null,
-        "market_cap_led": null
+        "market_cap_led": null,
+        "equal_weight_led": null
       },
       "trends": {
         "rel_spy_4w_change_1w": null,

@@ -8,7 +8,7 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator, FormatChecker
 
-from .classification import evaluate_priority, evaluate_timing, overheat_breadth_weak, priority_matches
+from .classification import classify_theme, evaluate_priority, evaluate_timing, overheat_breadth_weak, priority_matches
 from .provenance import snapshot_source_hash
 from .shortlist import apply_shortlist
 
@@ -68,6 +68,17 @@ def validate_theme_master_semantics(master: dict) -> list[str]:
 def validate_latest_semantics(latest: dict, verify_source_hash: bool = False) -> None:
     _walk_finite(latest)
     errors = []
+    meta = latest.get("meta", {})
+    status = meta.get("status")
+    failure_reason = meta.get("failure_reason")
+    critical_missing = meta.get("global_quality", {}).get("critical_missing", [])
+    if status == "success":
+        if critical_missing:
+            errors.append("successful artifact has critical_missing inputs")
+        if failure_reason not in (None, ""):
+            errors.append("successful artifact has failure_reason")
+    elif status == "failed" and (not isinstance(failure_reason, str) or not failure_reason.strip()):
+        errors.append("failed artifact requires a non-empty failure_reason")
     if "previous_predictions" in latest:
         errors.append("legacy previous_predictions is not accepted as previous_judgments")
     themes = latest.get("themes", {})
@@ -90,6 +101,16 @@ def validate_latest_semantics(latest: dict, verify_source_hash: bool = False) ->
         if not evidence.get("direct_flow_data_available") and evidence.get("level") == "direct_flow_confirmed":
             errors.append(f"{theme_id}: direct_flow_confirmed without direct-flow data")
         flags, metrics = theme.get("condition_flags", {}), theme.get("metrics", {})
+        expected_flags, expected_classifications = classify_theme(metrics, theme.get("trends", {}), theme.get("quality", {}), theme.get("by_role", {}))
+        for field in ("phase_initial", "phase_diffusion", "phase_price_overheat", "direction_improving", "direction_worsening", "direction_outflow_signal", "broad_concentration_pass", "overheat_breadth_weak"):
+            if flags.get(field) != expected_flags.get(field):
+                errors.append(f"{theme_id}: {field} mismatch; expected {expected_flags.get(field)}")
+        for field in ("phase", "direction", "research_priority", "research_priority_rule", "timing_status", "timing_rule"):
+            if classifications.get(field) != expected_classifications.get(field):
+                errors.append(f"{theme_id}: classifications.{field} mismatch; expected {expected_classifications.get(field)}")
+        for field in ("level", "direction", "positioning_hypothesis", "direct_flow_data_available"):
+            if evidence.get(field) != expected_classifications["evidence"].get(field):
+                errors.append(f"{theme_id}: evidence.{field} mismatch; expected {expected_classifications['evidence'].get(field)}")
         expected_weak = overheat_breadth_weak(flags.get("phase_price_overheat"), metrics.get("advance_ratio_4w"), metrics.get("pct_above_50dma"))
         if flags.get("overheat_breadth_weak") != expected_weak:
             errors.append(f"{theme_id}: overheat_breadth_weak mismatch; expected {expected_weak}")
@@ -99,18 +120,109 @@ def validate_latest_semantics(latest: dict, verify_source_hash: bool = False) ->
         top1 = metrics.get("top1_contribution_ratio")
         if top1 is not None and metrics.get("single_name_concentrated") != (top1 > 0.60):
             errors.append(f"{theme_id}: single_name_concentrated mismatch")
+        divergence = metrics.get("weighting_divergence_4w")
+        if divergence is not None:
+            if metrics.get("market_cap_led") != (divergence >= 0.03):
+                errors.append(f"{theme_id}: market_cap_led mismatch")
+            if metrics.get("equal_weight_led") != (divergence <= -0.03):
+                errors.append(f"{theme_id}: equal_weight_led mismatch")
+        above_count = metrics.get("above_50dma_count")
+        above_ratio = metrics.get("pct_above_50dma")
+        above_valid = theme.get("quality", {}).get("metric_valid_counts", {}).get("above_50dma")
+        if isinstance(above_valid, int) and above_valid >= 5:
+            if above_count is None or above_ratio is None or abs(above_ratio - above_count / above_valid) > 1e-4:
+                errors.append(f"{theme_id}: above_50dma_count/pct_above_50dma mismatch")
+        elif above_count is not None or above_ratio is not None:
+            errors.append(f"{theme_id}: 50DMA breadth exists without valid observations")
     recomputed, shortlist = apply_shortlist(themes)
     stored_ids = latest.get("theme_shortlist", {}).get("selected_theme_ids", [])
     if shortlist["selected_theme_ids"] != stored_ids:
         errors.append(f"theme_shortlist order mismatch; expected {shortlist['selected_theme_ids']}")
     for theme_id in themes:
-        for field in ("relative_strength_rank_4w", "selected_for_deep_dive", "shortlist_rank"):
+        for field in ("relative_strength_rank_4w", "selected_for_deep_dive", "shortlist_rank", "shortlist_reason_codes"):
             if recomputed[theme_id].get(field) != themes[theme_id].get(field):
                 errors.append(f"{theme_id}: {field} mismatch")
     if verify_source_hash and latest.get("meta", {}).get("source_sha256") != snapshot_source_hash(latest):
         errors.append("meta.source_sha256 mismatch")
     if errors:
         raise ContractError("latest semantic validation failed:\n" + "\n".join(f"- {error}" for error in errors))
+
+
+def validate_judgment_semantics(record: dict, source_latest: dict | None) -> None:
+    """Reject judgment records that do not faithfully project a validated source snapshot."""
+    _walk_finite(record)
+    if source_latest is None:
+        raise ContractError("judgment source latest is unavailable")
+    errors = []
+    source_meta = source_latest.get("meta", {})
+    identity = {
+        "run_id": "run_id", "data_date": "data_date", "source_commit": "source_commit",
+        "source_snapshot": "source_snapshot", "source_sha256": "source_sha256",
+    }
+    for record_field, source_field in identity.items():
+        if record.get(record_field) != source_meta.get(source_field):
+            errors.append(f"judgment {record_field} does not match source latest")
+    source_regime = source_latest.get("market_regime", {}).get("classification", {})
+    for field in ("primary_regime", "secondary_regimes", "confidence", "matched_conditions", "contrary_evidence"):
+        if record.get("regime", {}).get(field) != source_regime.get(field):
+            errors.append(f"judgment regime.{field} does not match source latest")
+    priority_by_rule = {"P0": "unclassifiable", "P1": "dd_priority", "P2": "dd_priority", "P3": "dd_candidate", "P4": "watch", "P5": "low_priority", "fallback": "watch"}
+    timing_by_rule = {"T0": "unclassifiable", "T1": "price_overheat", "T2": "deteriorating", "T3": "early_unconfirmed", "T4": "favorable", "fallback": "unclassifiable"}
+    ranks, seen_theme_ids = [], set()
+    key_metric_fields = (
+        "equal_weight_rel_spy_1w", "equal_weight_rel_spy_4w", "equal_weight_rel_spy_13w",
+        "market_cap_weight_rel_spy_4w", "advance_ratio_4w", "pct_above_50dma",
+        "volume_ratio_20d_60d", "top1_contribution_ratio", "top3_contribution_ratio",
+    )
+    for theme in record.get("theme_judgments", []):
+        theme_id = theme.get("theme_id")
+        if theme_id in seen_theme_ids:
+            errors.append(f"duplicate judgment theme_id: {theme_id}")
+        seen_theme_ids.add(theme_id)
+        source_theme = source_latest.get("themes", {}).get(theme_id)
+        if source_theme is None:
+            errors.append(f"judgment theme_id not found in source latest: {theme_id}")
+            continue
+        rule = theme.get("research_priority_rule")
+        if theme.get("research_priority") != priority_by_rule.get(rule):
+            errors.append(f"{theme_id}: research_priority is inconsistent with {rule}")
+        timing_rule = theme.get("timing_rule")
+        if theme.get("timing_status") != timing_by_rule.get(timing_rule):
+            errors.append(f"{theme_id}: timing_status is inconsistent with {timing_rule}")
+        if rule in {"P1", "P2", "P3"} and theme.get("evidence", {}).get("direction") != "inflow":
+            errors.append(f"{theme_id}: {rule} requires evidence.direction=inflow")
+        if rule == "P1" and theme.get("phase") != "diffusion":
+            errors.append(f"{theme_id}: P1 requires phase=diffusion")
+        if rule == "P2" and (theme.get("phase") != "price_overheat" or source_theme.get("condition_flags", {}).get("phase_diffusion") is not True):
+            errors.append(f"{theme_id}: P2 requires price_overheat with diffusion flag")
+        selected, rank = theme.get("selected_for_deep_dive"), theme.get("shortlist_rank")
+        if selected != (rank is not None):
+            errors.append(f"{theme_id}: selected_for_deep_dive and shortlist_rank disagree")
+        if selected and theme.get("research_priority") not in {"dd_priority", "dd_candidate", "watch"}:
+            errors.append(f"{theme_id}: shortlist-ineligible priority is selected")
+        if rank is not None:
+            ranks.append(rank)
+        source_cls = source_theme.get("classifications", {})
+        copied = {
+            "phase": source_cls.get("phase"), "direction": source_cls.get("direction"),
+            "research_priority": source_cls.get("research_priority"), "research_priority_rule": source_cls.get("research_priority_rule"),
+            "timing_status": source_cls.get("timing_status"), "timing_rule": source_cls.get("timing_rule"),
+            "selected_for_deep_dive": source_theme.get("selected_for_deep_dive"), "shortlist_rank": source_theme.get("shortlist_rank"),
+            "shortlist_reason_codes": source_theme.get("shortlist_reason_codes"),
+        }
+        for field, expected in copied.items():
+            if theme.get(field) != expected:
+                errors.append(f"{theme_id}: {field} does not match source latest")
+        for field in ("level", "direction"):
+            if theme.get("evidence", {}).get(field) != source_cls.get("evidence", {}).get(field):
+                errors.append(f"{theme_id}: evidence.{field} does not match source latest")
+        for field in key_metric_fields:
+            if theme.get("key_metrics", {}).get(field) != source_theme.get("metrics", {}).get(field):
+                errors.append(f"{theme_id}: key_metrics.{field} does not match source latest")
+    if len(ranks) != len(set(ranks)):
+        errors.append("judgment shortlist ranks are duplicated")
+    if errors:
+        raise ContractError("judgment semantic validation failed:\n" + "\n".join(f"- {error}" for error in errors))
 
 
 def freshness_status(latest: dict, now: dt.datetime) -> str:

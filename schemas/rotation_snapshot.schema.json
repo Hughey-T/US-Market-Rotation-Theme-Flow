@@ -175,7 +175,7 @@
     "themeMetrics": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["equal_weight_return_1w", "equal_weight_return_4w", "equal_weight_return_13w", "equal_weight_rel_spy_1w", "equal_weight_rel_spy_4w", "equal_weight_rel_spy_13w", "market_cap_weight_rel_spy_4w", "weighting_divergence_4w", "advance_count_4w", "advance_ratio_4w", "pct_above_50dma", "pct_within_5pct_52w_high", "volume_ratio_20d_60d", "top1_contribution_ratio", "top3_contribution_ratio", "single_name_concentrated", "market_cap_led"],
+      "required": ["equal_weight_return_1w", "equal_weight_return_4w", "equal_weight_return_13w", "equal_weight_rel_spy_1w", "equal_weight_rel_spy_4w", "equal_weight_rel_spy_13w", "market_cap_weight_rel_spy_4w", "weighting_divergence_4w", "advance_count_4w", "advance_ratio_4w", "above_50dma_count", "pct_above_50dma", "pct_within_5pct_52w_high", "volume_ratio_20d_60d", "top1_contribution_ratio", "top3_contribution_ratio", "single_name_concentrated", "market_cap_led", "equal_weight_led"],
       "properties": {
         "equal_weight_return_1w": {"$ref": "#/$defs/nullableNumber"},
         "equal_weight_return_4w": {"$ref": "#/$defs/nullableNumber"},
@@ -187,13 +187,15 @@
         "weighting_divergence_4w": {"$ref": "#/$defs/nullableNumber"},
         "advance_count_4w": {"$ref": "#/$defs/nullableInteger"},
         "advance_ratio_4w": {"$ref": "#/$defs/nullableNumber"},
+        "above_50dma_count": {"$ref": "#/$defs/nullableInteger"},
         "pct_above_50dma": {"$ref": "#/$defs/nullableNumber"},
         "pct_within_5pct_52w_high": {"$ref": "#/$defs/nullableNumber"},
         "volume_ratio_20d_60d": {"$ref": "#/$defs/nullableNumber"},
         "top1_contribution_ratio": {"$ref": "#/$defs/nullableNumber"},
         "top3_contribution_ratio": {"$ref": "#/$defs/nullableNumber"},
         "single_name_concentrated": {"type": ["boolean", "null"]},
-        "market_cap_led": {"type": ["boolean", "null"]}
+        "market_cap_led": {"type": ["boolean", "null"]},
+        "equal_weight_led": {"type": ["boolean", "null"]}
       }
     },
     "themeTrends": {
@@ -324,6 +326,7 @@
       "properties": {
         "equal_weight_rel_spy_4w": {"$ref": "#/$defs/nullableNumber"},
         "advance_count_4w": {"$ref": "#/$defs/nullableInteger"},
+        "above_50dma_count": {"$ref": "#/$defs/nullableInteger"},
         "pct_above_50dma": {"$ref": "#/$defs/nullableNumber"},
         "volume_ratio_20d_60d": {"$ref": "#/$defs/nullableNumber"}
       }

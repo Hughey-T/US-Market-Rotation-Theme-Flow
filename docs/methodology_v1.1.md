@@ -26,7 +26,7 @@
 - `advance_breadth_trend_3w`, `above_50dma_breadth_trend_3w`
 - `volume_ratio_change_1w`
 
-`slope_Nw`は等間隔weekly observationsのordinary least squares slope（週あたりdecimal return）。欠週、methodology/theme-master変更、N未満は`null`。
+`slope_Nw`は等間隔weekly observationsのordinary least squares slope（週あたりdecimal return）。欠週、methodology/theme-master変更、N未満は`null`。50DMA breadth trendはcurrentと新規weekly historyへ保存する実測`above_50dma_count`だけを使い、旧履歴にfieldがなければ0補完・比率からの推定をせず`insufficient`とする。
 
 ### trend state（暫定）
 
@@ -97,6 +97,7 @@ defensive basket=`XLP, XLV, XLU` equal-weight、cyclical basket=`XLY, XLI, XLF, 
 - high/13週不足: overheat flag=`null`。initial/diffusionは継続可。
 - role valid<2: そのrole比率だけ`null`。peripheral不足時はoverheatのperipheral conditionを使わず、volume conditionが必須になる。
 - market cap不足: market-cap fields=`null`。equal-weight、top1/top3に基づく分類は継続可。
+- condition flagはtri-stateで、必要データが揃って成立=`true`、揃って不成立=`false`、必須入力不足=`null`とする。
 
 ## 5. concentration定義
 
@@ -208,11 +209,13 @@ T1をT2より先に適用し、`phase=price_overheat`, `direction=outflow_signal
 
 各themeへ`selected_for_deep_dive`, `shortlist_rank`, `shortlist_reason_codes`, `relative_strength_rank_4w`を保存し、top-level `theme_shortlist.selected_theme_ids`にも同順で保存する。候補が3件未満でもlow/unclassifiableを穴埋めせず、全候補を選んで`SHORTLIST_BELOW_MINIMUM_3`を記録する。GPTは順位も選定も変更しない。
 
+`shortlist_reason_codes`はpriority/rule/evidence/phase/diffusion/concentration/弱化・集中・除外理由からcode-sideでcanonical順に生成し、semantic validatorは保存配列との完全一致を要求する。
+
 ## 12. previous judgment・撤回条件
 
 ### source
 
-`output/judgments/*.json`のschema-valid・immutable recordからindexを構築し、各themeの直前recordのphase/direction/priority/theme market state/shortlistとwithdrawal評価だけを`latest.json.previous_judgments.records`へprojectionする。会話記憶、過去session、モデル知識は使用しない。
+`output/judgments/*.json`のschema-validかつsource latestとのsemantic一致を確認したimmutable recordだけからindexを構築し、各themeの直前recordのphase/direction/priority/theme market state/shortlistとwithdrawal評価だけを`latest.json.previous_judgments.records`へprojectionする。source run/hashまたは転記値が一致しないrecordはindexへ追加しない。会話記憶、過去session、モデル知識は使用しない。
 
 ### code-side evaluation
 

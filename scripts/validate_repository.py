@@ -15,6 +15,7 @@ from rotation.validation import (
     ContractError,
     load_json,
     validate_latest_semantics,
+    validate_judgment_semantics,
     validate_schema,
     validate_theme_master_semantics,
 )
@@ -38,7 +39,9 @@ def main() -> int:
             value = load_json(path)
             validate_schema(value, schemas["latest"], str(path.relative_to(ROOT)))
             validate_latest_semantics(value)
-        validate_schema(load_json(fixture_dir / "judgment_record.json"), schemas["judgment"], "fixture judgment")
+        fixture_judgment = load_json(fixture_dir / "judgment_record.json")
+        validate_schema(fixture_judgment, schemas["judgment"], "fixture judgment")
+        validate_judgment_semantics(fixture_judgment, load_json(fixture_dir / "latest_normal.json"))
         fixture_master = load_json(fixture_dir / "theme_master.json")
         validate_schema(fixture_master, schemas["master"], "fixture master")
         validate_theme_master_semantics(fixture_master)
@@ -51,9 +54,17 @@ def main() -> int:
             validate_latest_semantics(latest, verify_source_hash=True)
         judgment_dir = ROOT / "output" / "judgments"
         index_path = judgment_dir / "index.json"
-        rebuilt = build_index(judgment_dir, schemas["judgment"])
+        def source_loader(record):
+            path = ROOT / record["source_snapshot"]
+            if not path.is_file():
+                raise ContractError(f"judgment source latest is unavailable: {path}")
+            source = load_json(path)
+            validate_schema(source, schemas["latest"], str(path.relative_to(ROOT)))
+            validate_latest_semantics(source, verify_source_hash=True)
+            return source
+        rebuilt = build_index(judgment_dir, schemas["judgment"], source_loader)
         if index_path.exists():
-            verify_index(judgment_dir, load_json(index_path), schemas["judgment"])
+            verify_index(judgment_dir, load_json(index_path), schemas["judgment"], source_loader)
         instructions = (ROOT / "docs" / "custom_gpt_instructions_v1.1.md").read_text(encoding="utf-8")
         if len(instructions) > 8000:
             raise ContractError(f"Custom GPT instructions exceed 8,000 characters: {len(instructions)}")
