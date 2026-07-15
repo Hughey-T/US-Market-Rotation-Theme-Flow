@@ -1,15 +1,34 @@
 # Manual merge gate
 
-This private repository's current GitHub plan does not permit branch-protection required checks. Do not make the repository public, retry the unavailable setting, or merge while a PR is Draft.
+This repository is public. GitHub branch protection is configured on `main` and is the primary server-side merge control. The manual checklist below supplements that protection; it does not replace or weaken it.
+
+The protected branch requires:
+
+- All changes to reach `main` through a pull request.
+- The pull request branch to be up to date with `main` before merging.
+- These eight status checks to succeed for the merge candidate:
+  - `schema-and-canonical-fixtures`
+  - `unit-and-rule-contracts`
+  - `judgment-projection-semantics`
+  - `pipeline-integration`
+  - `repository-operations-and-transactional-publish`
+  - `production-orchestration-e2e`
+  - `publication-recovery-e2e`
+  - `workflow-contracts`
+- All review conversations to be resolved.
+- Force pushes and deletion of `main` to remain disabled.
+
+The configured approving-review count is zero, so an external approval is not required. Administrator enforcement is disabled to preserve an owner/admin emergency bypass path. That path is for recovery only and must not be used for routine merges.
 
 Before a human merge, record and verify every item:
 
-- PR is explicitly Ready for review; a Draft PR must never be merged.
+- Final independent review is complete with Blocker 0 and Major 0.
+- Only after that review, the PR is explicitly changed from Draft to Ready for review; a Draft PR must never be merged.
 - Expected head SHA exactly matches the reviewed SHA.
-- All eight non-overlapping required CI categories (the original six plus publication recovery and workflow contracts) are green for that SHA.
-- Independent review is complete with Blocker 0 and Major 0.
+- All eight required checks above are green for that exact SHA, and the branch is up to date with `main`.
+- All review conversations are resolved.
 - Local worktree is clean and the expected `main` SHA is recorded.
 - The chosen squash/merge strategy and resulting commit identity are confirmed.
 - Post-merge CI is observed and green.
 
-The missing server-side branch protection remains an operational risk. This checklist is the required manual control until repository settings support enforcement.
+If the emergency admin path is used, record the reason, actor, affected SHA, validation evidence, and follow-up action. Do not bypass the Draft lifecycle, independent review, or artifact validation for convenience.
