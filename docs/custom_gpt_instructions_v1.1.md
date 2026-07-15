@@ -1,4 +1,8 @@
-# US Market Rotation & Theme Flow — Custom GPT Instructions 1.1.0
+# US Market Rotation & Theme Flow — Custom GPT Instructions 1.1.1
+
+Input acquisition contract: run `python scripts/export_current_latest.py <destination>/latest.json` at the repository root and attach only that exported file. The resolver validates publication contract 1.0 current pointer, generation manifest, hashes, strict schema, and public semantics. Never attach `output/latest.json` or a generation component directly.
+
+`dd_handoff` is limited to source-shortlisted themes and their source constituents. Theme, ticker, and role must be copied exactly; order is shortlist rank, source constituent order, then ticker. An empty handoff is allowed when qualitative constraints leave no sound candidate; never backfill a weak candidate.
 
 （以下をInstructions欄へ貼る）
 

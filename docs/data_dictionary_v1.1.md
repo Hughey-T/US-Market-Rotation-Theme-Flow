@@ -1,5 +1,11 @@
 # データ辞書
 
+## Publication contract 1.0
+
+This is versioned independently of data schema 1.1. `output/current.json` and each manifest carry `publication_contract_version=1.0`. A manifest stores `analysis_id`, `generation_id`, `generated_at`, `source_commit`, `previous_generation_id`, and hashes for all components. IDs are 64-character lowercase hexadecimal values. `meta.run_id` is the analysis identity; `meta.source_snapshot` is `output/generations/<generation_id>/archive.json`. Consumers obtain a validated copy through `scripts/export_current_latest.py`.
+
+`dd_handoff` has at most five entries. Every theme must be selected in the source shortlist; every ticker must be an active source constituent and its role must match. Tickers and theme/ticker pairs are unique. Order is shortlist rank, source constituent order, then ticker. Empty is permitted when qualitative constraints leave no sound candidate, including when a selected theme exists; no backfill is allowed.
+
 `R`=required、`O`=optional。単位`decimal`は0.01=1%。全数値は有限値だけを許可し、取得・計算不能はnullable fieldへ`null`を入れる。`NaN/Infinity`は禁止。
 
 ## 1. `latest.json` top/meta
@@ -12,9 +18,9 @@
 | `meta.data_date` | date | R | no | SPYの最新market session | 1 |
 | `meta.valid_until` | datetime | R | no | generated_atから10暦日後 | 1 |
 | `meta.hard_stop_after` | datetime | R | no | generated_atから14暦日後 | 1 |
-| `meta.run_id` | string | R | no | data date＋quantitative hash短縮値 | all |
+| `meta.run_id` | 64hex | R | no | deterministic analysis identity | all |
 | `meta.source_commit` | 40hex | R | no | workflow開始時`GITHUB_SHA` | 1/record |
-| `meta.source_snapshot` | path | R | no | `output/generations/<run_id>/archive.json` | all |
+| `meta.source_snapshot` | path | R | no | `output/generations/<generation_id>/archive.json` | all |
 | `meta.source_sha256` | 64hex | R | no | archive quantitative payload hash | all/record |
 | `meta.status` | success/failed | R | no | pipeline outcome | 1 |
 | `meta.failure_reason` | string | R | yes | failed reason。success時null | 1 |
@@ -206,7 +212,7 @@
 | path | 型 | null | 定義 |
 |---|---|---|---|
 | `judgment_schema_version` | const `1.0` | no | new record contract |
-| `instruction_version` | const `1.1.0` | no | GPT instructions |
+| `instruction_version` | const `1.1.1` | no | GPT instructions |
 | `data_schema_version` | const `1.1` | no | source latest contract |
 | `methodology_version` | const `1.1.0` | no | decision table |
 | `judgment_id` | string | no | `judgment_<run_id>` |

@@ -1,14 +1,14 @@
 {
   "judgment_schema_version": "1.0",
-  "instruction_version": "1.1.0",
+  "instruction_version": "1.1.1",
   "data_schema_version": "1.1",
   "methodology_version": "1.1.0",
   "judgment_id": "judgment_fixture-normal-20260710",
-  "run_id": "fixture-normal-20260710",
+  "run_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "data_date": "2026-07-10",
   "generated_at": "2026-07-11T01:00:00Z",
   "source_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-  "source_snapshot": "output/archive/fixture-normal-20260710.json",
+  "source_snapshot": "output/generations/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/archive.json",
   "source_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "previous_judgment_date": null,
   "regime": {

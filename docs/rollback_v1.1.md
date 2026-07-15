@@ -1,5 +1,7 @@
 # Rollback plan
 
+Publication contract 1.0 rollback validates a retained generation and the exact candidate pointer before atomically replacing `output/current.json`. Never mix component files or treat an exported fixed latest as authoritative. Re-run `scripts/export_current_latest.py` after a pointer rollback.
+
 1. Revert the 1.1 implementation commit(s) with a normal revert commit; do not rewrite history or force-push.
 2. Restore the matching 1.0 generator, workflow, schema, and Custom GPT instructions together. Never read a 1.1 artifact with 1.0 instructions.
 3. Retain 1.1 archives and immutable judgments. Do not delete or rewrite them during rollback.

@@ -1,5 +1,9 @@
 # Migration to Market Rotation data 1.1
 
+## Publication contract 1.0 migration
+
+A fresh clone with neither current nor a fixed legacy publication starts normally. If a fixed legacy latest or legacy archive directory exists without current, scheduled generation stops. Run `python scripts/migrate_publication_v1.py --explicit`; it validates the legacy latest and creates a fully validated generation/current pointer. Legacy latest, archive, history, and judgments are never deleted or modified. Failure preserves all legacy files and any prior public state. Consumers then use `scripts/export_current_latest.py`.
+
 ## Compatibility
 
 Data 1.1 is intentionally incompatible with local 1.0. Consumers must require `meta.schema_version=1.1` and `meta.methodology_version=1.1.0`. Silent fallback is prohibited.

@@ -1,5 +1,11 @@
 # 方法論仕様書 1.1.0
 
+## Publication contract 1.0
+
+Publication is versioned separately from data schema 1.1. Before rename, latest, identical archive, history, judgment index, and manifest pass strict schema, semantic, finite-number, identity, version, source-hash, and component-hash validation. The exact current pointer is validated against that successful generation before atomic replacement. Failure leaves the previous current readable.
+
+`analysis_id` includes data date, raw input, theme master, schema/methodology/instruction/config versions, source commit, and quantitative content, but not execution time. `generation_id` distinguishes executions. Retry reuses the earliest valid same-analysis orphan by `(generated_at, generation_id)`; invalid orphans are ignored and a current same-analysis run is a no-op.
+
 すべての閾値は**未較正の暫定値**である。初期実装では再現性、欠損時停止、撤回規律を検証し、収益率へ合わせて変更しない。
 
 ## 1. 共通原則

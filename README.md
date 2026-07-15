@@ -1,6 +1,8 @@
 # US Market Rotation & Theme Flow v1.1
 
-米国株を市場環境→スタイル→セクター・業種→テーマ→個別DDの順に調べる週次データ基盤です。data schema `1.1`、methodology `1.1.0`、Custom GPT instruction `1.1.0`を使用します。
+Versions: data schema `1.1`, methodology `1.1.0`, Custom GPT instruction `1.1.1`, publication contract `1.0`.
+
+米国株を市場環境→スタイル→セクター・業種→テーマ→個別DDの順に調べる週次データ基盤です。data schema `1.1`、methodology `1.1.0`、Custom GPT instruction `1.1.1`、publication contract `1.0`を使用します。
 
 数値計算、欠損処理、market regime、phase、direction、evidence、research priority、テーマ市場状態、shortlistはコードが決定します。Custom GPTは結果を変更せず、説明、反対証拠、定性補足、個別DD引継ぎを担当します。価格上昇を直接的な資金流入とは扱いません。
 
@@ -38,7 +40,7 @@ schemas/theme_master.schema.json       theme master 1.0
 schemas/legacy/                    latest 1.0 schemaの保存
 tests/fixtures/                    架空fixture
 output/judgments/                  immutable judgmentと再生成index
-output/generations/<run_id>/       同一世代のlatest/archive/history/judgment index/manifest
+output/generations/<generation_id>/ 同一世代のlatest/archive/history/judgment index/manifest
 output/current.json                検証済み公開世代を指すatomic pointer
 output/predictions/                legacy prediction 1.0（read-only）
 output/verifications/              legacy verification 1.0（read-only）
@@ -69,7 +71,7 @@ python scripts/generate_weekly.py --dry-run
 python scripts/generate_weekly.py
 ```
 
-生成開始時のcommit SHA、data date、固定clockからrun identityを作ります。`output/.staging-*`へarchive、history、judgment index、latest、manifestを全生成し、Schema・semantic・hash・run ID・data dateを照合します。完成したdirectoryを`output/generations/<run_id>/`へrenameした後、small pointer `output/current.json`だけをatomic replaceします。consumerはpointerが指す同一世代だけを読み、orphan staging/generationを参照しません。同一run再実行はidempotent、同一data dateの異内容は明示拒否です。
+data date、raw input、theme master、各version、source commit、quantitative contentからclock非依存のanalysis identityを作り、実行時刻を含むgeneration identityを別に作ります。`output/.staging-*`へ全componentを生成し、各strict Schema・semantic・finite・hash・identity・versionを検証します。完成directoryを`output/generations/<generation_id>/`へrenameし、検証済みpointerだけをatomic replaceします。同一analysisの再実行はno-op、同一analysisのvalid orphanは決定的に再利用し、同一data dateでも異なるanalysisは新世代として明示公開します。
 
 汎用semantic validatorは診断用の`status=failed`も原因付きで検証できますが、公開validatorは`status=success`、`failure_reason=null`、`critical_missing=[]`、source hash一致を必須とします。固定互換パス`output/latest.json`が存在する場合にも同じ公開validatorを適用します。
 
@@ -97,4 +99,15 @@ Market Rotation 1.0はdefaultで拒否します。`scripts/migrate_1_0_to_1_1.py
 - theme masterは市場全体の自動発見ではなく、四半期review対象
 - 閾値は未較正の暫定値で、履歴へ合わせて事後最適化しない
 
-方法論は[Methodology 1.1.0](docs/methodology_v1.1.md)、field定義は[Data Dictionary](docs/data_dictionary_v1.1.md)、Custom GPT契約は[Instructions 1.1.0](docs/custom_gpt_instructions_v1.1.md)が正本です。
+方法論は[Methodology 1.1.0](docs/methodology_v1.1.md)、field定義は[Data Dictionary](docs/data_dictionary_v1.1.md)、Custom GPT契約は[Instructions 1.1.1](docs/custom_gpt_instructions_v1.1.md)が正本です。
+## Publication contract 1.0
+
+`output/current.json` is the only authoritative generation pointer. Manifests and pointers carry `publication_contract_version=1.0`. `analysis_id` identifies deterministic inputs and logic without the clock; `generation_id` identifies one execution. Consumers must not read a fixed `output/latest.json`. Export and revalidate the current artifact with:
+
+```bash
+python scripts/export_current_latest.py exported/latest.json
+```
+
+Attach only that exported `latest.json` to Custom GPT. A legacy fixed publication is migrated explicitly with `python scripts/migrate_publication_v1.py --explicit`; scheduled generation stops safely until migration. Inspect a lock with `python scripts/publication_lock.py inspect`; recover only an expired, non-live lock with `python scripts/publication_lock.py recover --stale-after-hours 6`.
+
+GitHub branch protection is unavailable on the current private-repository plan. The required operational control is [Manual merge gate](docs/manual_merge_gate.md); Draft PRs are never merged.
