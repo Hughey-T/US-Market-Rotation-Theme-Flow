@@ -9,7 +9,25 @@ permissions:
   contents: read
 
 jobs:
-  offline-contract:
+  schema-and-fixture-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Strict schema and semantic repository validation
+        run: python scripts/validate_repository.py
+      - name: Canonical fixture dry-run
+        run: python scripts/generate_weekly.py --fixture tests/fixtures/latest_normal.json --dry-run
+      - name: Semantic consistency contracts
+        run: python -m unittest tests.test_semantic_validation -v
+
+  unit-and-rule-contracts:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -22,9 +40,21 @@ jobs:
         run: python -m pip install -r requirements.txt
       - name: Compile
         run: python -m compileall -q rotation scripts tests
-      - name: Unit, T01-T49, and rule reachability
-        run: python -m unittest discover -s tests -v
-      - name: Strict schema and semantic repository validation
-        run: python scripts/validate_repository.py
-      - name: Offline fixture end-to-end
-        run: python scripts/generate_weekly.py --fixture tests/fixtures/latest_normal.json --dry-run
+      - name: T01-T49 and rule reachability
+        run: python -m unittest tests.test_spec_cases tests.test_rule_reachability -v
+      - name: Repository operation contracts
+        run: python -m unittest tests.test_pipeline_contract -v
+
+  generation-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Raw input to publish-boundary generation E2E
+        run: python -m unittest tests.test_generation_e2e -v

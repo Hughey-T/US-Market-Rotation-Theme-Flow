@@ -1,7 +1,7 @@
 import unittest
 
 from rotation.classification import evaluate_priority, evaluate_timing, priority_matches, timing_matches
-from test_spec_cases import direct_theme, fixture_theme
+from tests.test_spec_cases import direct_theme, fixture_theme
 
 
 class PriorityReachability(unittest.TestCase):
