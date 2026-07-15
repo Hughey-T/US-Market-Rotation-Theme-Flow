@@ -8,24 +8,22 @@ on:
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
-  schema-and-fixture-validation:
+  schema-and-canonical-fixtures:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-      - name: Install dependencies
-        run: python -m pip install -r requirements.txt
-      - name: Strict schema and semantic repository validation
-        run: python scripts/validate_repository.py
-      - name: Canonical fixture dry-run
-        run: python scripts/generate_weekly.py --fixture tests/fixtures/latest_normal.json --dry-run
-      - name: Semantic consistency contracts
-        run: python -m unittest tests.test_semantic_validation -v
+        with: {python-version: "3.12", cache: pip}
+      - run: python -m pip install -r requirements.txt
+      - run: python scripts/validate_repository.py
+      - run: python scripts/generate_weekly.py --fixture tests/fixtures/latest_normal.json --dry-run
+      - run: python -m unittest tests.test_condition_audit -v
 
   unit-and-rule-contracts:
     runs-on: ubuntu-latest
@@ -33,28 +31,47 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-      - name: Install dependencies
-        run: python -m pip install -r requirements.txt
-      - name: Compile
-        run: python -m compileall -q rotation scripts tests
-      - name: T01-T49 and rule reachability
-        run: python -m unittest tests.test_spec_cases tests.test_rule_reachability -v
-      - name: Repository operation contracts
-        run: python -m unittest tests.test_pipeline_contract -v
+        with: {python-version: "3.12", cache: pip}
+      - run: python -m pip install -r requirements.txt
+      - run: python -m compileall -q rotation scripts tests
+      - run: python -m unittest tests.test_spec_cases tests.test_rule_reachability tests.test_semantic_validation -v
 
-  generation-e2e:
+  pipeline-integration:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-      - name: Install dependencies
-        run: python -m pip install -r requirements.txt
-      - name: Raw input to publish-boundary generation E2E
-        run: python -m unittest tests.test_generation_e2e -v
+        with: {python-version: "3.12", cache: pip}
+      - run: python -m pip install -r requirements.txt
+      - run: python -m unittest tests.test_pipeline_contract tests.test_generation_e2e -v
+
+  production-orchestration-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12", cache: pip}
+      - run: python -m pip install -r requirements.txt
+      - run: python -m unittest tests.test_production_orchestration_e2e -v
+
+  repository-operations-and-transactional-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12", cache: pip}
+      - run: python -m pip install -r requirements.txt
+      - run: python -m unittest tests.test_publication_contract tests.test_membership_contract -v
+
+  judgment-projection-semantics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12", cache: pip}
+      - run: python -m pip install -r requirements.txt
+      - run: python -m unittest tests.test_judgment_projection -v
