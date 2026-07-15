@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/us-market-rotation/publication_pointer.schema.1.0.json",
+  "title": "Market Rotation current generation pointer 1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["pointer_version", "run_id", "data_date", "generation", "manifest_sha256"],
+  "properties": {
+    "pointer_version": {"const": "1.0"},
+    "run_id": {"type": "string", "minLength": 8},
+    "data_date": {"type": "string", "format": "date"},
+    "generation": {"type": "string", "pattern": "^generations/[A-Za-z0-9._-]+$"},
+    "manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

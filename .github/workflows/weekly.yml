@@ -31,7 +31,7 @@ jobs:
         run: |
           python -m unittest discover -s tests -v
           python scripts/validate_repository.py
-      - name: Generate, validate, and atomically publish
+      - name: Generate, validate, and publish a transactional generation
         id: generate
         run: python scripts/generate_weekly.py
       - name: Validate published repository
@@ -41,10 +41,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git diff --check
-          git add output/latest.json output/archive/ output/history/ output/judgments/index.json
+          git add output/current.json output/generations/ output/judgments/
           git commit -m "weekly data $(date -u +%F)" || echo "no changes to commit"
           git push
       - name: Failure summary
         if: failure()
         run: |
-          echo "Generation or validation failed. The generator publishes latest.json last, so the previous successful artifact was not replaced." >> "$GITHUB_STEP_SUMMARY"
+          echo "Generation or validation failed. The atomic current pointer still references the previous validated generation." >> "$GITHUB_STEP_SUMMARY"

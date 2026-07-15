@@ -18,8 +18,9 @@ sys.path.insert(0, str(ROOT))
 from rotation.judgments import build_index, project_previous_judgments
 from rotation.membership import member_is_effective
 from rotation.pipeline import build_snapshot
-from rotation.provenance import atomic_write_json, canonical_bytes, snapshot_source_hash
-from rotation.validation import load_json, validate_latest_semantics, validate_schema
+from rotation.provenance import snapshot_source_hash
+from rotation.publication import committed_history, load_current_generation, publish_generation
+from rotation.validation import load_json, validate_public_latest, validate_schema, validate_theme_master_semantics
 
 CONFIG = ROOT / "config" / "universe.json"
 MASTER = ROOT / "data" / "themes.json"
@@ -27,7 +28,6 @@ LATEST_SCHEMA = ROOT / "schemas" / "rotation_snapshot.schema.json"
 JUDGMENT_SCHEMA = ROOT / "schemas" / "judgment_record.schema.json"
 OUTPUT = ROOT / "output"
 HISTORY = OUTPUT / "history"
-ARCHIVE = OUTPUT / "archive"
 JUDGMENTS = OUTPUT / "judgments"
 PERIODS = {"1w": 5, "4w": 21, "13w": 63}
 
@@ -128,6 +128,9 @@ def download_observations(config: dict, master: dict) -> tuple[dict, str]:
 
 
 def load_history() -> list[dict]:
+    committed = committed_history(OUTPUT)
+    if committed:
+        return committed
     values = []
     for path in sorted(HISTORY.glob("*.json")):
         try:
@@ -143,7 +146,7 @@ def load_judgment_source(record: dict) -> dict:
         raise RuntimeError(f"judgment source latest is unavailable: {path}")
     value = load_json(path)
     validate_schema(value, load_json(LATEST_SCHEMA), str(path))
-    validate_latest_semantics(value, verify_source_hash=True)
+    validate_public_latest(value, verify_source_hash=True)
     return value
 
 
@@ -164,37 +167,27 @@ def history_item(snapshot: dict) -> dict:
     }
 
 
-def publish(snapshot: dict, index: dict) -> None:
-    validate_latest_semantics(snapshot, verify_source_hash=True)
-    if snapshot.get("meta", {}).get("status") != "success":
-        raise RuntimeError("failed artifacts are not publishable")
-    archive_path = ROOT / snapshot["meta"]["source_snapshot"]
-    if archive_path.exists() and canonical_bytes(load_json(archive_path)) != canonical_bytes(snapshot):
-        raise RuntimeError(f"immutable archive already exists with different bytes: {archive_path}")
-    if not archive_path.exists():
-        atomic_write_json(archive_path, snapshot)
-    atomic_write_json(HISTORY / f"{snapshot['meta']['data_date']}.json", history_item(snapshot))
-    atomic_write_json(JUDGMENTS / "index.json", index)
-    # latest is deliberately last: earlier validation or publication failures cannot replace it.
-    atomic_write_json(OUTPUT / "latest.json", snapshot)
+def publish(snapshot: dict, index: dict, failure_injector=None) -> dict:
+    return publish_generation(OUTPUT, snapshot, history_item(snapshot), index, failure_injector)
 
 
 def validate_fixture(path: Path) -> int:
     snapshot = load_json(path)
     validate_schema(snapshot, load_json(LATEST_SCHEMA), str(path))
-    validate_latest_semantics(snapshot)
+    validate_public_latest(snapshot, verify_source_hash=False)
     print(f"offline fixture valid: {path}")
     return 0
 
 
-def main() -> int:
+def main(argv=None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true", help="generate and validate without publishing")
     parser.add_argument("--fixture", type=Path, help="validate an offline latest fixture; no network or writes")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     if args.fixture:
         return validate_fixture(args.fixture)
     config, master = load_json(CONFIG), load_json(MASTER)
+    validate_theme_master_semantics(master)
     observations, data_date = download_observations(config, master)
     history = load_history()
     judgment_schema = load_json(JUDGMENT_SCHEMA)
@@ -205,7 +198,7 @@ def main() -> int:
     snapshot["previous_judgments"] = project_previous_judgments(index, snapshot, history)
     snapshot["meta"]["source_sha256"] = snapshot_source_hash(snapshot)
     validate_schema(snapshot, load_json(LATEST_SCHEMA), "generated latest")
-    validate_latest_semantics(snapshot, verify_source_hash=True)
+    validate_public_latest(snapshot, verify_source_hash=True)
     if args.dry_run:
         print(f"dry-run valid: {snapshot['meta']['run_id']}")
     else:
