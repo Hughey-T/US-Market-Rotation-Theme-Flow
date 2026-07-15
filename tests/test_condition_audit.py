@@ -3,6 +3,7 @@ import unittest
 from pathlib import Path
 
 from rotation.classification import classify_theme
+from rotation.condition_audit import positioning_predicate
 from rotation.validation import ContractError, load_json, validate_latest_semantics
 from tests.test_pipeline_contract import build_synthetic, synthetic_inputs
 from tests.test_generation_e2e import generate
@@ -13,6 +14,19 @@ FIXTURES = ROOT / "tests" / "fixtures"
 
 
 class CanonicalConditionAuditTests(unittest.TestCase):
+    def test_positioning_truth_table_has_explicit_expected_results(self):
+        cases = (
+            (0.08, 0.61, 1.00, 0.60, True),
+            (0.00, 0.40, 1.80, 0.39, True),
+            (-0.08, 0.61, 1.80, 0.39, True),
+            (0.00, 0.61, 1.00, 0.60, False),
+            (0.07, 0.61, 1.79, 0.39, False),
+            (0.00, 0.40, 1.00, 0.60, False),
+            (None, 0.61, 1.80, 0.39, None),
+        )
+        for rel1, top1, volume, advance, expected in cases:
+            with self.subTest(values=(rel1, top1, volume, advance)):
+                self.assertIs(positioning_predicate(rel1, top1, volume, advance), expected)
     def test_all_canonical_fixtures_have_independent_explicit_condition_ids(self):
         for path in sorted(FIXTURES.glob("latest_*.json")):
             source = load_json(path)

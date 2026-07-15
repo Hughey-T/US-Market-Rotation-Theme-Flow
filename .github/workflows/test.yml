@@ -75,3 +75,23 @@ jobs:
         with: {python-version: "3.12", cache: pip}
       - run: python -m pip install -r requirements.txt
       - run: python -m unittest tests.test_judgment_projection -v
+
+  publication-recovery-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12", cache: pip}
+      - run: python -m pip install -r requirements.txt
+      - run: python -m unittest tests.test_publication_hardening -v
+
+  workflow-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12", cache: pip}
+      - run: python -m pip install -r requirements.txt
+      - run: python -m unittest tests.test_lock_and_workflow_contract -v

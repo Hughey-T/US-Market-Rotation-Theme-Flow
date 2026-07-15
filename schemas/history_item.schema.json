@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/us-market-rotation/history_item.schema.1.1.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["data_date", "schema_version", "methodology_version", "theme_master_version", "themes"],
+  "properties": {
+    "data_date": {"type": "string", "format": "date"},
+    "schema_version": {"const": "1.1"},
+    "methodology_version": {"const": "1.1.0"},
+    "theme_master_version": {"type": "string", "minLength": 1},
+    "themes": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/theme"}}
+  },
+  "$defs": {"nullableNumber": {"type": ["number", "null"]}, "theme": {
+    "type": "object", "additionalProperties": false,
+    "required": ["equal_weight_rel_spy_4w", "advance_count_4w", "above_50dma_count", "pct_above_50dma", "volume_ratio_20d_60d"],
+    "properties": {
+      "equal_weight_rel_spy_4w": {"$ref": "#/$defs/nullableNumber"},
+      "advance_count_4w": {"type": ["integer", "null"], "minimum": 0},
+      "above_50dma_count": {"type": ["integer", "null"], "minimum": 0},
+      "pct_above_50dma": {"anyOf": [{"type": "null"}, {"type": "number", "minimum": 0, "maximum": 1}]},
+      "volume_ratio_20d_60d": {"$ref": "#/$defs/nullableNumber"}
+    }
+  }}
+}

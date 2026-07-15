@@ -8,6 +8,13 @@ def _number(value) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
 
 
+def positioning_predicate(rel1, top1, volume, advance) -> bool | None:
+    """The single predicate used for both the hypothesis and its audit ID."""
+    if not all(_number(value) for value in (rel1, top1, volume, advance)):
+        return None
+    return (abs(rel1) >= 0.08 and top1 > 0.60) or (volume >= 1.80 and advance < 0.40)
+
+
 def canonical_condition_ids(
     metrics: dict,
     trends: dict,
@@ -142,6 +149,6 @@ def canonical_condition_ids(
             evidence_ids.append("EV_REL_POS")
         if _number(top1) and top1 > 0.60:
             evidence_ids.append("CONCENTRATION_TOP1_GT_60")
-        if evidence.get("positioning_hypothesis") == "possible_short_term_adjustment" or (_number(top1) and top1 > 0.60):
+        if positioning_predicate(rel1, top1, volume, advance) is True:
             evidence_ids.append("POSITIONING_REL1_OR_VOLUME_SPIKE")
     return matched, unmatched, contrary, evidence_ids

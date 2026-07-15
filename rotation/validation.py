@@ -8,6 +8,7 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator, FormatChecker
 
+from . import INSTRUCTION_VERSION
 from .classification import classify_theme, evaluate_priority, evaluate_timing, overheat_breadth_weak, priority_matches
 from .provenance import snapshot_source_hash
 from .shortlist import apply_shortlist
@@ -209,7 +210,7 @@ def validate_judgment_semantics(record: dict, source_latest: dict | None) -> Non
     versions = {
         "data_schema_version": source_meta.get("schema_version"),
         "methodology_version": source_meta.get("methodology_version"),
-        "instruction_version": "1.1.0",
+        "instruction_version": INSTRUCTION_VERSION,
     }
     for field, expected in versions.items():
         if record.get(field) != expected:
@@ -303,6 +304,36 @@ def validate_judgment_semantics(record: dict, source_latest: dict | None) -> Non
         errors.append(f"judgment shortlist selection/order does not match source latest; expected {source_selected}")
     if sorted(ranks) != list(range(1, len(ranks) + 1)):
         errors.append("judgment shortlist ranks must be contiguous from 1")
+    source_rank = {theme_id: rank for rank, theme_id in enumerate(source_selected, 1)}
+    source_constituents = {
+        theme_id: {row.get("ticker"): (row.get("role"), position) for position, row in enumerate(theme.get("constituents", []))}
+        for theme_id, theme in source_themes.items()
+    }
+    seen_tickers, seen_pairs, ordering = set(), set(), []
+    for candidate in record.get("dd_handoff", []):
+        theme_id, ticker = candidate.get("theme_id"), candidate.get("ticker")
+        pair = (theme_id, ticker)
+        source_theme = source_themes.get(theme_id)
+        if source_theme is None:
+            errors.append(f"dd_handoff theme is absent from source latest: {theme_id}")
+            continue
+        if not source_theme.get("selected_for_deep_dive") or theme_id not in source_rank:
+            errors.append(f"dd_handoff theme is not selected in source shortlist: {theme_id}")
+        constituent = source_constituents.get(theme_id, {}).get(ticker)
+        if constituent is None:
+            errors.append(f"dd_handoff ticker is not an active source constituent: {theme_id}/{ticker}")
+        else:
+            role, position = constituent
+            if candidate.get("role") != role:
+                errors.append(f"dd_handoff role does not match source constituent: {theme_id}/{ticker}")
+            ordering.append((source_rank.get(theme_id, 10**9), position, ticker))
+        if ticker in seen_tickers:
+            errors.append(f"duplicate dd_handoff ticker: {ticker}")
+        if pair in seen_pairs:
+            errors.append(f"duplicate dd_handoff theme/ticker: {theme_id}/{ticker}")
+        seen_tickers.add(ticker); seen_pairs.add(pair)
+    if ordering != sorted(ordering):
+        errors.append("dd_handoff order must follow shortlist rank, source constituent order, then ticker")
     if errors:
         raise ContractError("judgment semantic validation failed:\n" + "\n".join(f"- {error}" for error in errors))
 

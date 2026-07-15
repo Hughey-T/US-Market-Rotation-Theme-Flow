@@ -1,4 +1,5 @@
 import copy
+import datetime as dt
 import json
 import os
 import shutil
@@ -80,8 +81,10 @@ def history_for(master, rels, advances, above_counts):
     return values
 
 
-def run_main(master, profile, history, *, reverse=False, omit_spy=False, output=None):
+def run_main(master, profile, history, *, reverse=False, omit_spy=False, output=None, mutate_frames=None):
     config, frames = raw_inputs(master, profile, reverse=reverse, omit_spy=omit_spy)
+    if mutate_frames:
+        mutate_frames(frames, config)
     temporary = tempfile.TemporaryDirectory() if output is None else None
     root = Path(temporary.name) if temporary else output.parent
     output = output or root / "output"
@@ -115,6 +118,99 @@ def run_main(master, profile, history, *, reverse=False, omit_spy=False, output=
 
 
 class ProductionOrchestrationE2E(unittest.TestCase):
+    def test_main_different_clock_retry_recovers_orphan_after_rename(self):
+        _, master, _, _, _ = synthetic_inputs()
+        history = history_for(master, (0.00, 0.01, 0.02), (4, 5, 5), (4, 5, 5))
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "output"
+            original_publish = generate_weekly.publish
+            def failed_publish(snapshot, index):
+                return original_publish(snapshot, index, lambda step: (_ for _ in ()).throw(OSError("after rename")) if step == "generation_rename" else None)
+            class FirstClock(dt.datetime):
+                @classmethod
+                def now(cls, tz=None): return cls(2026, 7, 11, tzinfo=tz)
+            with mock.patch.object(generate_weekly, "publish", side_effect=failed_publish), mock.patch.object(generate_weekly.dt, "datetime", FirstClock):
+                with self.assertRaisesRegex(OSError, "after rename"):
+                    run_main(master, "p1", history, output=output)
+            self.assertFalse((output / "current.json").exists())
+            class RetryClock(dt.datetime):
+                @classmethod
+                def now(cls, tz=None): return cls(2026, 7, 12, tzinfo=tz)
+            with mock.patch.object(generate_weekly.dt, "datetime", RetryClock):
+                result, latest, _, _ = run_main(master, "p1", history, output=output)
+            self.assertEqual(result, 0)
+            self.assertEqual(latest["meta"]["generated_at"], "2026-07-11T00:00:00Z")
+            self.assertEqual(len(list((output / "generations").iterdir())), 1)
+            self.assertEqual(len(generate_weekly.committed_history(output)), 1)
+            self.assertEqual(load_current_generation(output)[5]["records"], [])
+            self.assertEqual(list(output.glob(".staging-*")), [])
+            self.assertFalse((output / ".publish.lock").exists())
+    def test_market_data_edge_normalization_and_missingness_contract(self):
+        _, master, _, _, _ = synthetic_inputs()
+        history = history_for(master, (0.00, 0.01, 0.02), (4, 5, 5), (4, 5, 5))
+        members = [member["ticker"] for member in master["themes"][0]["members"]]
+
+        def run_case(label, mutator):
+            result, latest, _, temporary = run_main(master, "p1", history, mutate_frames=mutator)
+            try:
+                self.assertEqual(result, 0, label)
+                self.assertEqual(latest["meta"]["status"], "success", label)
+                return latest
+            finally:
+                temporary.cleanup()
+
+        normalizers = {
+            "missing trading day": lambda frames, _: frames.update({ticker: frame.drop(frame.index[-30]) for ticker, frame in frames.items()}),
+            "weekend return window": lambda frames, _: None,
+            "duplicated date index": lambda frames, _: frames.update({ticker: pd.concat([frame, frame.iloc[[-1]]]) for ticker, frame in frames.items()}),
+            "unsorted date index": lambda frames, _: frames.update({ticker: frame.iloc[::-1] for ticker, frame in frames.items()}),
+            "timezone index": lambda frames, _: frames.update({ticker: frame.set_axis(frame.index.tz_localize("America/New_York")) for ticker, frame in frames.items()}),
+            "different ticker starts": lambda frames, _: [frames.__setitem__(ticker, frames[ticker].iloc[index * 10:]) for index, ticker in enumerate(members)],
+        }
+        for label, mutator in normalizers.items():
+            with self.subTest(label=label):
+                run_case(label, mutator)
+
+        def all_members(transform):
+            return lambda frames, _: [frames.__setitem__(ticker, transform(frames[ticker].copy())) for ticker in members]
+        missing_cases = {
+            "constituent calendar skew": all_members(lambda frame: frame.iloc[:-1]),
+            "Close NaN": all_members(lambda frame: frame.assign(Close=frame["Close"].mask(frame.index == frame.index[-1]))),
+            "Volume NaN": all_members(lambda frame: frame.assign(Volume=np.nan)),
+            "60-day volume mean zero": all_members(lambda frame: frame.assign(Volume=0.0)),
+            "volume zero": all_members(lambda frame: frame.assign(Volume=np.r_[frame["Volume"].iloc[:-20], np.zeros(20)])),
+            "insufficient 50DMA": all_members(lambda frame: frame.iloc[-40:]),
+            "insufficient 13-week": all_members(lambda frame: frame.iloc[-62:]),
+            "empty DataFrame": lambda frames, _: [frames.__setitem__(ticker, pd.DataFrame(columns=["Close", "Volume"])) for ticker in members],
+        }
+        for label, mutator in missing_cases.items():
+            with self.subTest(label=label):
+                latest = run_case(label, mutator)
+                theme = latest["themes"]["fixture_theme"]
+                if label in {"constituent calendar skew", "Close NaN", "empty DataFrame"}:
+                    self.assertEqual(theme["classifications"]["research_priority_rule"], "P0", label)
+                if label == "insufficient 50DMA":
+                    self.assertIsNone(theme["metrics"]["pct_above_50dma"])
+                if label in {"Volume NaN", "60-day volume mean zero"}:
+                    self.assertIsNone(theme["metrics"]["volume_ratio_20d_60d"], label)
+                if label == "volume zero":
+                    self.assertEqual(theme["metrics"]["volume_ratio_20d_60d"], 0.0)
+                if label == "insufficient 13-week":
+                    self.assertIsNone(theme["metrics"]["equal_weight_rel_spy_13w"])
+
+    def test_benchmark_calendar_skew_stops_publish_and_preserves_current(self):
+        _, master, _, _, _ = synthetic_inputs()
+        history = history_for(master, (0.00, 0.01, 0.02), (4, 5, 5), (4, 5, 5))
+        _, _, output, temporary = run_main(master, "p1", history)
+        pointer = load_current_generation(output)[0]
+        try:
+            def skew(frames, _config):
+                frames["RSP"] = frames["RSP"].iloc[:-1]
+            with self.assertRaisesRegex(RuntimeError, "critical market inputs unavailable"):
+                run_main(master, "p1", history, output=output, mutate_frames=skew)
+            self.assertEqual(load_current_generation(output)[0], pointer)
+        finally:
+            temporary.cleanup()
     def test_raw_dataframe_p1_success_publish_membership_and_repository_validation(self):
         _, master, _, _, _ = synthetic_inputs()
         future = copy.deepcopy(master["themes"][0]["members"][0]); future.update(ticker="FUTURE", valid_from="2026-07-11")

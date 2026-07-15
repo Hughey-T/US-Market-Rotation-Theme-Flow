@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from .metrics import finite
-from .condition_audit import canonical_condition_ids
+from .condition_audit import canonical_condition_ids, positioning_predicate
 
 DD_LEVELS = {"direct_flow_confirmed", "flow_suggested", "relative_preference_suggested"}
 
@@ -186,9 +186,10 @@ def classify_theme(metrics: dict, trends: dict, quality: dict, by_role: dict) ->
     else:
         level, evidence_direction = "price_only", "up" if rel4 > 0 else "down" if rel4 < 0 else "unknown"
     rel1, volume, advance = metrics.get("equal_weight_rel_spy_1w"), metrics.get("volume_ratio_20d_60d"), metrics.get("advance_ratio_4w")
-    if finite(rel1) is None or finite(top1) is None or finite(volume) is None or finite(advance) is None:
+    positioning_match = positioning_predicate(rel1, top1, volume, advance)
+    if positioning_match is None:
         positioning = "not_assessable"
-    elif abs(rel1) >= 0.08 and top1 > 0.60 or volume >= 1.80 and advance < 0.40:
+    elif positioning_match:
         positioning = "possible_short_term_adjustment"
     else:
         positioning = "not_supported"

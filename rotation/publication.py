@@ -1,92 +1,173 @@
-"""Generation-scoped transactional publication with an atomic current pointer."""
+"""Publication contract 1.0: validated generations and one atomic current pointer."""
 from __future__ import annotations
 
-import os
 import shutil
 import tempfile
-from contextlib import contextmanager
 from pathlib import Path
 from typing import Callable
 
-from .provenance import atomic_write_json, canonical_bytes, stable_hash
-from .validation import ContractError, load_json, validate_public_latest, validate_schema
+from . import INSTRUCTION_VERSION, PUBLICATION_CONTRACT_VERSION
+from .identity import safe_generation_path, validate_safe_id
+from .provenance import atomic_write_json, canonical_bytes, file_sha256, stable_hash
+from .publication_lock import owned_lock
+from .validation import (
+    ContractError, load_json, validate_judgment_semantics, validate_public_latest,
+    validate_schema,
+)
 
 
 GENERATION_VERSION = "1.0"
 POINTER_VERSION = "1.0"
 GENERATION_FILES = ("archive.json", "history.json", "judgment-index.json", "latest.json")
 SCHEMA_ROOT = Path(__file__).resolve().parents[1] / "schemas"
+LATEST_SCHEMA = load_json(SCHEMA_ROOT / "rotation_snapshot.schema.json")
+HISTORY_SCHEMA = load_json(SCHEMA_ROOT / "history_item.schema.json")
+INDEX_SCHEMA = load_json(SCHEMA_ROOT / "judgment_index.schema.json")
+JUDGMENT_SCHEMA = load_json(SCHEMA_ROOT / "judgment_record.schema.json")
 MANIFEST_SCHEMA = load_json(SCHEMA_ROOT / "generation_manifest.schema.json")
 POINTER_SCHEMA = load_json(SCHEMA_ROOT / "publication_pointer.schema.json")
 
 
-def generation_manifest(snapshot: dict, history: dict, index: dict, previous_run_id: str | None) -> dict:
-    files = {
-        "archive.json": stable_hash(snapshot),
-        "history.json": stable_hash(history),
-        "judgment-index.json": stable_hash(index),
-        "latest.json": stable_hash(snapshot),
-    }
+def _generation_id(snapshot: dict) -> str:
+    source = snapshot.get("meta", {}).get("source_snapshot", "")
+    parts = Path(source).as_posix().split("/")
+    if len(parts) != 4 or parts[:2] != ["output", "generations"] or parts[3] != "archive.json":
+        raise ContractError("source_snapshot must be output/generations/<generation_id>/archive.json")
+    return validate_safe_id(parts[2], "generation_id")  # type: ignore[return-value]
+
+
+def _expected_history(latest: dict) -> dict:
     return {
+        "data_date": latest["meta"]["data_date"],
+        "schema_version": latest["meta"]["schema_version"],
+        "methodology_version": latest["meta"]["methodology_version"],
+        "theme_master_version": latest["meta"]["universe_definition"]["theme_master_version"],
+        "themes": {theme_id: {
+            "equal_weight_rel_spy_4w": theme["metrics"]["equal_weight_rel_spy_4w"],
+            "advance_count_4w": theme["metrics"]["advance_count_4w"],
+            "above_50dma_count": theme["metrics"]["above_50dma_count"],
+            "pct_above_50dma": theme["metrics"]["pct_above_50dma"],
+            "volume_ratio_20d_60d": theme["metrics"]["volume_ratio_20d_60d"],
+        } for theme_id, theme in latest["themes"].items()},
+    }
+
+
+def generation_manifest(snapshot: dict, history: dict, index: dict, previous_generation_id: str | None) -> dict:
+    analysis_id = validate_safe_id(snapshot["meta"]["run_id"], "analysis_id")
+    generation_id = _generation_id(snapshot)
+    validate_safe_id(previous_generation_id, "previous_generation_id", nullable=True)
+    return {
+        "publication_contract_version": PUBLICATION_CONTRACT_VERSION,
         "generation_version": GENERATION_VERSION,
-        "run_id": snapshot["meta"]["run_id"],
-        "data_date": snapshot["meta"]["data_date"],
-        "source_sha256": snapshot["meta"]["source_sha256"],
-        "previous_run_id": previous_run_id,
-        "files": files,
+        "analysis_id": analysis_id, "generation_id": generation_id, "run_id": analysis_id,
+        "data_date": snapshot["meta"]["data_date"], "generated_at": snapshot["meta"]["generated_at"],
+        "source_commit": snapshot["meta"]["source_commit"], "source_sha256": snapshot["meta"]["source_sha256"],
+        "previous_generation_id": previous_generation_id,
+        "files": {name: stable_hash(snapshot if name in {"archive.json", "latest.json"} else history if name == "history.json" else index) for name in GENERATION_FILES},
     }
 
 
 def current_pointer(manifest: dict) -> dict:
-    run_id = manifest["run_id"]
+    generation_id = validate_safe_id(manifest["generation_id"], "generation_id")
     return {
+        "publication_contract_version": PUBLICATION_CONTRACT_VERSION,
         "pointer_version": POINTER_VERSION,
-        "run_id": run_id,
-        "data_date": manifest["data_date"],
-        "generation": f"generations/{run_id}",
+        "analysis_id": manifest["analysis_id"], "generation_id": generation_id,
+        "run_id": manifest["run_id"], "data_date": manifest["data_date"],
+        "generation": f"generations/{generation_id}",
+        "previous_generation_id": manifest["previous_generation_id"],
         "manifest_sha256": stable_hash(manifest),
     }
 
 
+def _output_for(directory: Path) -> Path:
+    return directory.parents[1] if directory.parent.name == "generations" else directory.parent
+
+
 def validate_generation(directory: Path) -> tuple[dict, dict, dict, dict]:
-    manifest = load_json(directory / "manifest.json")
-    validate_schema(manifest, MANIFEST_SCHEMA, str(directory / "manifest.json"))
-    if manifest.get("generation_version") != GENERATION_VERSION:
-        raise ContractError(f"unsupported generation manifest: {directory}")
     missing = [name for name in (*GENERATION_FILES, "manifest.json") if not (directory / name).is_file()]
     if missing:
         raise ContractError(f"generation is incomplete: {missing}")
+    manifest = load_json(directory / "manifest.json")
     latest = load_json(directory / "latest.json")
     archive = load_json(directory / "archive.json")
     history = load_json(directory / "history.json")
     index = load_json(directory / "judgment-index.json")
+    validate_schema(manifest, MANIFEST_SCHEMA, str(directory / "manifest.json"))
+    validate_schema(latest, LATEST_SCHEMA, str(directory / "latest.json"))
+    validate_schema(archive, LATEST_SCHEMA, str(directory / "archive.json"))  # archive uses the latest contract
+    validate_schema(history, HISTORY_SCHEMA, str(directory / "history.json"))
+    validate_schema(index, INDEX_SCHEMA, str(directory / "judgment-index.json"))
     validate_public_latest(latest, verify_source_hash=True)
     validate_public_latest(archive, verify_source_hash=True)
     if canonical_bytes(latest) != canonical_bytes(archive):
         raise ContractError("generation latest/archive mismatch")
     meta = latest["meta"]
-    expected_source = f"output/generations/{meta['run_id']}/archive.json"
-    if meta.get("source_snapshot") != expected_source:
-        raise ContractError(f"generation source_snapshot mismatch; expected {expected_source}")
-    for field in ("run_id", "data_date", "source_sha256"):
-        if manifest.get(field) != meta.get(field):
-            raise ContractError(f"generation manifest {field} mismatch")
-    if history.get("data_date") != meta.get("data_date"):
-        raise ContractError("generation history data_date mismatch")
-    if history.get("schema_version") != meta.get("schema_version") or history.get("methodology_version") != meta.get("methodology_version"):
-        raise ContractError("generation history version mismatch")
-    publication = index.get("publication", {})
-    for field in ("run_id", "data_date", "source_sha256"):
-        if publication.get(field) != meta.get(field):
-            raise ContractError(f"generation judgment index {field} mismatch")
-    expected_hashes = {
-        "archive.json": stable_hash(archive),
-        "history.json": stable_hash(history),
-        "judgment-index.json": stable_hash(index),
-        "latest.json": stable_hash(latest),
+    generation_id = _generation_id(latest)
+    for label, value in (("analysis_id", manifest.get("analysis_id")), ("generation_id", manifest.get("generation_id")),
+                         ("run_id", manifest.get("run_id")), ("previous_generation_id", manifest.get("previous_generation_id"))):
+        validate_safe_id(value, label, nullable=label == "previous_generation_id")
+    if directory.parent.name == "generations" and directory.name != generation_id:
+        raise ContractError("generation directory identity mismatch")
+    expected = {
+        "analysis_id": meta["run_id"], "generation_id": generation_id, "run_id": meta["run_id"],
+        "data_date": meta["data_date"], "generated_at": meta["generated_at"],
+        "source_commit": meta["source_commit"], "source_sha256": meta["source_sha256"],
     }
-    if manifest.get("files") != expected_hashes:
+    for field, value in expected.items():
+        if manifest.get(field) != value:
+            raise ContractError(f"generation manifest {field} mismatch")
+    if history != _expected_history(latest):
+        raise ContractError("generation history semantic mismatch")
+    publication = index["publication"]
+    index_expected = {"analysis_id": meta["run_id"], "generation_id": generation_id, "run_id": meta["run_id"],
+                      "data_date": meta["data_date"], "source_sha256": meta["source_sha256"],
+                      "instruction_version": INSTRUCTION_VERSION}
+    if publication != index_expected:
+        raise ContractError("generation judgment index publication identity mismatch")
+    output = _output_for(directory)
+    seen = set()
+    for entry in index["records"]:
+        validate_schema(entry["content"], JUDGMENT_SCHEMA, f"judgment index {entry['judgment_id']}")
+        if entry["judgment_id"] in seen or entry["judgment_id"] != entry["content"].get("judgment_id") or entry["data_date"] != entry["content"].get("data_date"):
+            raise ContractError("judgment index record identity mismatch")
+        seen.add(entry["judgment_id"])
+        immutable = output / "judgments" / entry["file"]
+        if not immutable.is_file() or file_sha256(immutable) != entry["sha256"]:
+            raise ContractError("judgment index immutable file mismatch")
+        source = output.parent / entry["content"]["source_snapshot"]
+        validate_judgment_semantics(entry["content"], load_json(source) if source.is_file() else None)
+    if index["records"] != sorted(index["records"], key=lambda item: (item["data_date"], item["judgment_id"])):
+        raise ContractError("judgment index record order is not deterministic")
+    hashes = {name: stable_hash({"archive.json": archive, "history.json": history, "judgment-index.json": index, "latest.json": latest}[name]) for name in GENERATION_FILES}
+    if manifest["files"] != hashes:
         raise ContractError("generation file hash mismatch")
+    return manifest, latest, history, index
+
+
+def validate_pointer_candidate(output: Path, pointer: dict) -> tuple[dict, dict, dict, dict]:
+    validate_schema(pointer, POINTER_SCHEMA, "publication pointer candidate")
+    generation_id = validate_safe_id(pointer["generation_id"], "generation_id")
+    validate_safe_id(pointer["analysis_id"], "analysis_id")
+    validate_safe_id(pointer["run_id"], "run_id")
+    validate_safe_id(pointer["previous_generation_id"], "previous_generation_id", nullable=True)
+    if pointer["generation"] != f"generations/{generation_id}":
+        raise ContractError("publication pointer generation path mismatch")
+    directory = safe_generation_path(output, generation_id)
+    if not directory.is_dir():
+        raise ContractError("publication pointer generation does not exist")
+    manifest, latest, history, index = validate_generation(directory)
+    comparisons = ("analysis_id", "generation_id", "run_id", "data_date", "previous_generation_id")
+    if any(pointer[field] != manifest[field] for field in comparisons) or pointer["manifest_sha256"] != stable_hash(manifest):
+        raise ContractError("publication pointer and generation manifest mismatch")
+    previous = pointer["previous_generation_id"]
+    if previous == generation_id:
+        raise ContractError("publication pointer cannot reference itself as previous generation")
+    if previous is not None:
+        previous_directory = safe_generation_path(output, previous)
+        if not previous_directory.is_dir():
+            raise ContractError("publication pointer previous generation does not exist")
+        validate_generation(previous_directory)
     return manifest, latest, history, index
 
 
@@ -95,123 +176,103 @@ def load_current_generation(output: Path) -> tuple[dict, Path, dict, dict, dict,
     if not pointer_path.is_file():
         return None
     pointer = load_json(pointer_path)
-    validate_schema(pointer, POINTER_SCHEMA, str(pointer_path))
-    if pointer.get("pointer_version") != POINTER_VERSION:
-        raise ContractError("unsupported current pointer")
-    relative = pointer.get("generation")
-    if not isinstance(relative, str) or Path(relative).is_absolute() or ".." in Path(relative).parts:
-        raise ContractError("unsafe current generation path")
-    directory = output / relative
-    manifest, latest, history, index = validate_generation(directory)
-    if pointer.get("run_id") != manifest.get("run_id") or pointer.get("data_date") != manifest.get("data_date"):
-        raise ContractError("current pointer identity mismatch")
-    if pointer.get("manifest_sha256") != stable_hash(manifest):
-        raise ContractError("current pointer manifest hash mismatch")
-    return pointer, directory, manifest, latest, history, index
+    manifest, latest, history, index = validate_pointer_candidate(output, pointer)
+    return pointer, safe_generation_path(output, pointer["generation_id"]), manifest, latest, history, index
 
 
 def committed_history(output: Path, limit: int = 12) -> list[dict]:
     current = load_current_generation(output)
     if current is None:
         return []
-    values = []
-    seen = set()
-    manifest = current[2]
-    directory = current[1]
+    values, seen = [], set()
+    directory, manifest = current[1], current[2]
     while manifest and len(values) < limit:
-        run_id = manifest["run_id"]
-        if run_id in seen:
+        generation_id = manifest["generation_id"]
+        if generation_id in seen:
             raise ContractError("generation history chain contains a cycle")
-        seen.add(run_id)
-        _, _, history, _ = validate_generation(directory)
+        seen.add(generation_id)
+        manifest, _, history, _ = validate_generation(directory)
         values.append(history)
-        previous = manifest.get("previous_run_id")
+        previous = manifest["previous_generation_id"]
         if previous is None:
             break
-        directory = output / "generations" / previous
+        directory = safe_generation_path(output, previous)
         manifest, _, _, _ = validate_generation(directory)
-    values.reverse()
-    # One committed item per data date, even after an idempotent retry.
-    by_date = {value["data_date"]: value for value in values}
+    by_date = {value["data_date"]: value for value in reversed(values)}
     return [by_date[key] for key in sorted(by_date)][-limit:]
 
 
-@contextmanager
-def publication_lock(output: Path):
-    output.mkdir(parents=True, exist_ok=True)
-    lock = output / ".publish.lock"
-    try:
-        descriptor = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-    except FileExistsError as error:
-        raise ContractError("another publication is in progress") from error
-    os.close(descriptor)
-    try:
-        yield
-    finally:
-        lock.unlink(missing_ok=True)
-
-
-def publish_generation(
-    output: Path,
-    snapshot: dict,
-    history: dict,
-    index: dict,
-    failure_injector: Callable[[str], None] | None = None,
-) -> dict:
-    """Stage a complete generation and atomically switch the public pointer."""
-    validate_public_latest(snapshot, verify_source_hash=True)
-    inject = failure_injector or (lambda _step: None)
-    run_id = snapshot["meta"]["run_id"]
-    index = {
-        **index,
-        "publication": {
-            "run_id": run_id,
-            "data_date": snapshot["meta"]["data_date"],
-            "source_sha256": snapshot["meta"]["source_sha256"],
-        },
-    }
+def _valid_orphans(output: Path, analysis_id: str, current_generation_id: str | None) -> list[tuple[dict, Path]]:
+    candidates = []
     generations = output / "generations"
-    target = generations / run_id
-    with publication_lock(output):
+    if not generations.is_dir():
+        return candidates
+    for path in sorted(generations.iterdir(), key=lambda item: item.name):
+        if not path.is_dir() or path.name == current_generation_id:
+            continue
+        try:
+            manifest, *_ = validate_generation(path)
+        except (ContractError, OSError, ValueError):
+            continue
+        if manifest["analysis_id"] == analysis_id:
+            candidates.append((manifest, path))
+    return sorted(candidates, key=lambda item: (item[0]["generated_at"], item[0]["generation_id"]))
+
+
+def publish_generation(output: Path, snapshot: dict, history: dict, index: dict,
+                       failure_injector: Callable[[str], None] | None = None) -> dict:
+    """Stage, fully validate, rename, then prevalidate and atomically switch current."""
+    validate_schema(snapshot, LATEST_SCHEMA, "publication latest")
+    validate_public_latest(snapshot, verify_source_hash=True)
+    analysis_id = validate_safe_id(snapshot["meta"]["run_id"], "analysis_id")
+    generation_id = _generation_id(snapshot)
+    target = safe_generation_path(output, generation_id)
+    inject = failure_injector or (lambda _step: None)
+    with owned_lock(output / ".publish.lock", analysis_id):
         current = load_current_generation(output)
-        previous_run_id = current[2]["run_id"] if current else None
-        if current and previous_run_id == run_id:
-            if current[3] != snapshot or current[4] != history or current[5] != index:
-                raise ContractError(f"current generation {run_id} has different content")
+        current_generation_id = current[2]["generation_id"] if current else None
+        if current and current[2]["analysis_id"] == analysis_id:
             return current[0]
-        if current and current[2]["data_date"] == snapshot["meta"]["data_date"] and previous_run_id != run_id:
-            raise ContractError("same data_date already has a different published generation")
-        manifest = generation_manifest(snapshot, history, index, previous_run_id)
-        pointer = current_pointer(manifest)
+        orphans = _valid_orphans(output, analysis_id, current_generation_id)
+        if orphans:
+            manifest, _ = orphans[0]
+            pointer = current_pointer(manifest)
+            validate_pointer_candidate(output, pointer)
+            inject("current_pointer_switch")
+            atomic_write_json(output / "current.json", pointer)
+            return pointer
+        previous_generation_id = current_generation_id
+        index = {**index, "publication": {
+            "analysis_id": analysis_id, "generation_id": generation_id, "run_id": analysis_id,
+            "data_date": snapshot["meta"]["data_date"], "source_sha256": snapshot["meta"]["source_sha256"],
+            "instruction_version": INSTRUCTION_VERSION,
+        }}
+        manifest = generation_manifest(snapshot, history, index, previous_generation_id)
         if target.exists():
-            existing_manifest, existing_latest, existing_history, existing_index = validate_generation(target)
-            if any((
-                existing_manifest != manifest,
-                canonical_bytes(existing_latest) != canonical_bytes(snapshot),
-                existing_history != history,
-                existing_index != index,
-            )):
-                raise ContractError(f"generation {run_id} already exists with different content")
+            # A colliding valid generation is reusable; an invalid collision is never overwritten.
+            existing = validate_generation(target)
+            if existing[0] != manifest:
+                raise ContractError(f"generation {generation_id} already exists with different content")
         else:
-            generations.mkdir(parents=True, exist_ok=True)
-            staging = Path(tempfile.mkdtemp(prefix=f".staging-{run_id}-", dir=output))
+            output.mkdir(parents=True, exist_ok=True)
+            staging = Path(tempfile.mkdtemp(prefix=f".staging-{generation_id}-", dir=output))
             try:
                 for filename, value, step in (
-                    ("archive.json", snapshot, "archive_staging_write"),
-                    ("history.json", history, "history_staging_write"),
-                    ("judgment-index.json", index, "judgment_index_staging_write"),
-                    ("latest.json", snapshot, "latest_staging_write"),
+                    ("archive.json", snapshot, "archive_staging_write"), ("history.json", history, "history_staging_write"),
+                    ("judgment-index.json", index, "judgment_index_staging_write"), ("latest.json", snapshot, "latest_staging_write"),
                 ):
-                    atomic_write_json(staging / filename, value)
-                    inject(step)
-                atomic_write_json(staging / "manifest.json", manifest)
-                inject("manifest_write")
+                    atomic_write_json(staging / filename, value); inject(step)
+                atomic_write_json(staging / "manifest.json", manifest); inject("manifest_write")
                 validate_generation(staging)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.parent.resolve().relative_to((output / "generations").resolve())
+                staging.replace(target)
                 inject("generation_rename")
-                os.replace(staging, target)
             finally:
                 if staging.exists():
                     shutil.rmtree(staging)
+        pointer = current_pointer(manifest)
+        validate_pointer_candidate(output, pointer)
         inject("current_pointer_switch")
         atomic_write_json(output / "current.json", pointer)
         loaded = load_current_generation(output)

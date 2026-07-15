@@ -48,6 +48,8 @@ def main() -> int:
             "master": load_json(ROOT / "schemas" / "theme_master.schema.json"),
             "generation_manifest": load_json(ROOT / "schemas" / "generation_manifest.schema.json"),
             "publication_pointer": load_json(ROOT / "schemas" / "publication_pointer.schema.json"),
+            "history_item": load_json(ROOT / "schemas" / "history_item.schema.json"),
+            "judgment_index": load_json(ROOT / "schemas" / "judgment_index.schema.json"),
             "prediction_legacy": load_json(ROOT / "schemas" / "prediction_record.schema.json"),
             "verification_legacy": load_json(ROOT / "schemas" / "verification_record.schema.json"),
         }
@@ -95,7 +97,7 @@ def main() -> int:
         missing = [term for term in required_terms if term not in instructions]
         if missing:
             raise ContractError(f"Custom GPT instructions missing contract terms: {missing}")
-        print(f"validation passed: 5 current schemas, 7 latest fixtures, 1 judgment fixture, 1 master fixture, {public_count} public outputs, {len(warnings)} overlap warnings")
+        print(f"validation passed: 7 current schemas, 7 latest fixtures, 1 judgment fixture, 1 master fixture, {public_count} public outputs, {len(warnings)} overlap warnings")
         return 0
     except (ContractError, OSError, ValueError) as error:
         print(f"validation failed:\n{error}", file=sys.stderr)

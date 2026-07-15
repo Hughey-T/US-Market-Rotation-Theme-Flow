@@ -47,7 +47,14 @@ def get_frame(data: pd.DataFrame, ticker: str):
         return None
     if frame is None or frame.empty or "Close" not in frame or "Volume" not in frame:
         return None
-    frame = frame[["Close", "Volume"]].dropna(subset=["Close"])
+    frame = frame[["Close", "Volume"]].copy()
+    try:
+        frame.index = pd.to_datetime(frame.index, utc=True)
+    except (TypeError, ValueError):
+        return None
+    frame = frame.sort_index(kind="stable")
+    frame = frame[~frame.index.duplicated(keep="last")]
+    frame = frame.dropna(subset=["Close"])
     return frame if len(frame) >= 30 else None
 
 
@@ -71,8 +78,12 @@ def ticker_observation(frame: pd.DataFrame) -> dict:
     result["above_50dma"] = bool(last > close.iloc[-50:].mean()) if len(close) >= 50 else None
     result["above_200dma"] = bool(last > close.iloc[-200:].mean()) if len(close) >= 200 else None
     result["within_5pct_52w_high"] = bool(last >= close.iloc[-252:].max() * 0.95) if len(close) >= 252 else None
-    baseline = volume.iloc[-60:].mean() if len(volume) >= 60 else None
-    result["volume_ratio_20d_60d"] = float(volume.iloc[-20:].mean() / baseline) if baseline is not None and baseline > 0 else None
+    volume60 = volume.iloc[-60:] if len(volume) >= 60 else None
+    if volume60 is None or volume60.isna().any() or not pd.api.types.is_numeric_dtype(volume60):
+        baseline = recent = None
+    else:
+        baseline, recent = volume60.mean(), volume.iloc[-20:].mean()
+    result["volume_ratio_20d_60d"] = float(recent / baseline) if baseline is not None and recent is not None and pd.notna(recent) and baseline > 0 else None
     result["change_4w"] = float(last - close.iloc[-22]) if len(close) > 21 else None
     result["market_cap"] = None  # optional until a point-in-time source is implemented
     result["last_date"] = str(close.index[-1].date())
@@ -116,7 +127,9 @@ def download_observations(config: dict, master: dict) -> tuple[dict, str]:
             observations[ticker] = {f"return_{horizon}": None for horizon in PERIODS}
             continue
         aligned = align_to_market_date(frame, date)
-        if aligned.empty or (date - aligned.index[-1].date()).days > 7:
+        # Never compare returns from different market sessions. A lagging ticker
+        # remains missing; no weekend/calendar gap is converted to zero.
+        if aligned.empty or aligned.index[-1].date() != date:
             observations[ticker] = {f"return_{horizon}": None for horizon in PERIODS}
             continue
         observations[ticker] = ticker_observation(aligned)
@@ -186,6 +199,8 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
     if args.fixture:
         return validate_fixture(args.fixture)
+    if not (OUTPUT / "current.json").exists() and ((OUTPUT / "latest.json").exists() or (OUTPUT / "archive").exists()):
+        raise RuntimeError("legacy fixed publication detected; run scripts/migrate_publication_v1.py --explicit before weekly publication")
     config, master = load_json(CONFIG), load_json(MASTER)
     validate_theme_master_semantics(master)
     observations, data_date = download_observations(config, master)

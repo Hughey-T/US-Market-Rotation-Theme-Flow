@@ -17,6 +17,8 @@ def two_theme_source():
     source = build_synthetic()
     second = copy.deepcopy(load_json(ROOT / "tests" / "fixtures" / "latest_p5_low_priority.json")["themes"]["fixture_theme"])
     second["theme_id"] = "second_theme"
+    for index, constituent in enumerate(second["constituents"]):
+        constituent["ticker"] = f"SECOND{index}"
     source["themes"]["second_theme"] = second
     source["themes"], source["theme_shortlist"] = apply_shortlist(source["themes"])
     source["meta"]["universe_definition"]["theme_count"] = 2
@@ -64,17 +66,33 @@ def complete_projection(source):
             theme["key_metrics"][field] = source_theme["metrics"][field]
         judgments.append(theme)
     record["theme_judgments"] = judgments
+    selected = source["theme_shortlist"]["selected_theme_ids"]
+    if selected:
+        theme_id = selected[0]
+        constituent = source["themes"][theme_id]["constituents"][0]
+        record["dd_handoff"] = [{
+            "ticker": constituent["ticker"], "theme_id": theme_id, "role": constituent["role"],
+            "selection_reason": "source-aligned candidate", "dd_questions": ["verify fundamentals"],
+        }]
+    else:
+        record["dd_handoff"] = []
     return record
 
 
 class CompleteJudgmentProjectionTests(unittest.TestCase):
     def test_complete_projection_is_valid(self):
-        source = two_theme_source()
-        record = complete_projection(source)
-        validate_schema(record, JUDGMENT_SCHEMA, "complete judgment")
-        validate_judgment_semantics(record, source)
+        sources = (
+            two_theme_source(),
+            load_json(ROOT / "tests" / "fixtures" / "latest_p2_overheat_diffusion.json"),
+            load_json(ROOT / "tests" / "fixtures" / "latest_p5_low_priority.json"),
+        )
+        for source in sources:
+            with self.subTest(rule=next(iter(source["themes"].values()))["classifications"]["research_priority_rule"]):
+                record = complete_projection(source)
+                validate_schema(record, JUDGMENT_SCHEMA, "complete judgment")
+                validate_judgment_semantics(record, source)
 
-    def test_ten_projection_mutations_are_rejected(self):
+    def test_eighteen_projection_and_handoff_mutations_are_rejected(self):
         source = two_theme_source()
         base = complete_projection(source)
         mutations = {}
@@ -89,7 +107,16 @@ class CompleteJudgmentProjectionTests(unittest.TestCase):
         value = copy.deepcopy(base); value["theme_judgments"][1]["shortlist_rank"] = 1; mutations["rank duplicate"] = (value, source)
         changed_source = copy.deepcopy(source); changed_source["themes"]["fixture_theme"]["metrics"]["advance_ratio_4w"] = 0.01; changed_source["meta"]["source_sha256"] = snapshot_source_hash(changed_source)
         value = copy.deepcopy(base); value["source_sha256"] = changed_source["meta"]["source_sha256"]; mutations["hash updated but source content changed"] = (value, changed_source)
-        self.assertEqual(len(mutations), 10)
+        value = copy.deepcopy(base); value["dd_handoff"][0]["theme_id"] = "unknown_theme"; mutations["handoff unknown theme"] = (value, source)
+        value = copy.deepcopy(base); value["dd_handoff"][0]["theme_id"] = "second_theme"; mutations["handoff unselected theme"] = (value, source)
+        value = copy.deepcopy(base); value["dd_handoff"][0]["ticker"] = "UNKNOWN"; mutations["handoff unknown ticker"] = (value, source)
+        value = copy.deepcopy(base); value["dd_handoff"][0]["ticker"] = source["themes"]["second_theme"]["constituents"][0]["ticker"]; mutations["handoff cross-theme ticker"] = (value, source)
+        value = copy.deepcopy(base); value["dd_handoff"][0]["role"] = "peripheral"; mutations["handoff role changed"] = (value, source)
+        value = copy.deepcopy(base); value["dd_handoff"].append(copy.deepcopy(value["dd_handoff"][0])); mutations["handoff duplicate pair"] = (value, source)
+        value = copy.deepcopy(base); value["dd_handoff"] = [copy.deepcopy(value["dd_handoff"][0]) for _ in range(6)]; mutations["handoff over five"] = (value, source)
+        changed_source = copy.deepcopy(source); changed_source["themes"]["fixture_theme"]["constituents"].pop(0); changed_source["meta"]["source_sha256"] = snapshot_source_hash(changed_source)
+        value = copy.deepcopy(base); value["source_sha256"] = changed_source["meta"]["source_sha256"]; mutations["handoff source constituent removed"] = (value, changed_source)
+        self.assertEqual(len(mutations), 18)
         for label, (record, source_value) in mutations.items():
             with self.subTest(label=label), self.assertRaises(ContractError):
                 validate_judgment_semantics(record, source_value)

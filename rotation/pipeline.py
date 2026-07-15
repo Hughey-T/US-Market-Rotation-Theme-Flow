@@ -4,6 +4,7 @@ from __future__ import annotations
 import datetime as dt
 
 from . import DATA_SCHEMA_VERSION, METHODOLOGY_VERSION
+from .identity import analysis_identity, generation_identity
 from .classification import classify_theme
 from .metrics import aggregate_theme, role_aggregates
 from .membership import member_is_effective
@@ -96,14 +97,19 @@ def build_snapshot(
     now = generated_at.astimezone(dt.timezone.utc)
     universe_hash = stable_hash(theme_master)
     quantitative = {"regime": regime_inputs(config, observations), "themes": themes, "data_date": data_date}
-    run_id = f"{data_date}-{stable_hash(quantitative)[:12]}"
+    generated_at_text = now.isoformat().replace("+00:00", "Z")
+    run_id = analysis_identity(
+        data_date=data_date, observations=observations, theme_master=theme_master,
+        config=config, source_commit=source_commit, quantitative=quantitative,
+    )
+    generation_id = generation_identity(run_id, generated_at_text, source_commit)
     snapshot = {
         "meta": {
             "schema_version": DATA_SCHEMA_VERSION, "methodology_version": METHODOLOGY_VERSION,
-            "generated_at": now.isoformat().replace("+00:00", "Z"), "data_date": data_date,
+            "generated_at": generated_at_text, "data_date": data_date,
             "valid_until": (now + dt.timedelta(days=10)).isoformat().replace("+00:00", "Z"),
             "hard_stop_after": (now + dt.timedelta(days=14)).isoformat().replace("+00:00", "Z"),
-            "run_id": run_id, "source_commit": source_commit, "source_snapshot": f"output/generations/{run_id}/archive.json", "source_sha256": "0" * 64,
+            "run_id": run_id, "source_commit": source_commit, "source_snapshot": f"output/generations/{generation_id}/archive.json", "source_sha256": "0" * 64,
             "status": "success", "failure_reason": None,
             "universe_definition": {"theme_master_schema_version": "1.0", "theme_master_version": master_version, "universe_hash": universe_hash, "theme_count": len(themes), "unique_constituent_count": len(active_membership), "overlap_policy": "allow_with_warning"},
             "periods": {"1w": 5, "4w": 21, "13w": 63},

@@ -6,9 +6,9 @@
     "data_date": "2026-07-10",
     "valid_until": "2026-07-21T00:00:00Z",
     "hard_stop_after": "2026-07-25T00:00:00Z",
-    "run_id": "fixture-concentration-20260710",
+    "run_id": "1111111111111111111111111111111111111111111111111111111111111111",
     "source_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "source_snapshot": "output/archive/fixture-concentration-20260710.json",
+    "source_snapshot": "output/generations/1111111111111111111111111111111111111111111111111111111111111111/archive.json",
     "source_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
     "status": "success",
     "failure_reason": null,
@@ -142,7 +142,7 @@
           "direction": "up",
           "positioning_hypothesis": "not_supported",
           "direct_flow_data_available": false,
-          "matched_conditions": ["EV_REL_POS", "CONCENTRATION_TOP1_GT_60", "POSITIONING_REL1_OR_VOLUME_SPIKE"]
+          "matched_conditions": ["EV_REL_POS", "CONCENTRATION_TOP1_GT_60"]
         },
         "research_priority": "watch",
         "research_priority_rule": "P4",

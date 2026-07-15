@@ -32,7 +32,7 @@
         "data_date": {"type": "string", "format": "date"},
         "valid_until": {"type": "string", "format": "date-time"},
         "hard_stop_after": {"type": "string", "format": "date-time"},
-        "run_id": {"type": "string", "minLength": 8},
+        "run_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
         "source_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
         "source_snapshot": {"type": "string", "minLength": 1},
         "source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},

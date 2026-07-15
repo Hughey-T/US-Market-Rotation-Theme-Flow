@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from rotation.provenance import atomic_write_json, snapshot_source_hash
+from rotation.provenance import atomic_write_json, snapshot_source_hash, stable_hash
 from rotation.publication import committed_history, load_current_generation, publish_generation
 from rotation.validation import ContractError, load_json, validate_latest_semantics, validate_public_latest
 from scripts.generate_weekly import history_item
@@ -26,11 +26,12 @@ FAILURE_POINTS = (
 
 def generation(data_date: str, suffix: str):
     value = copy.deepcopy(build_synthetic())
-    run_id = f"{data_date}-{suffix}"
+    run_id = stable_hash({"data_date": data_date, "suffix": suffix, "kind": "analysis"})
+    generation_id = stable_hash({"run_id": run_id, "generated_at": value["meta"]["generated_at"]})
     value["meta"].update(
         data_date=data_date,
         run_id=run_id,
-        source_snapshot=f"output/generations/{run_id}/archive.json",
+        source_snapshot=f"output/generations/{generation_id}/archive.json",
     )
     value["meta"]["source_sha256"] = snapshot_source_hash(value)
     return value
@@ -97,15 +98,16 @@ class TransactionalPublicationTests(unittest.TestCase):
             self.assertEqual(first, second)
             self.assertEqual(len(committed_history(output)), 1)
 
-    def test_same_date_different_content_is_rejected(self):
+    def test_same_date_different_analysis_creates_an_explicit_new_generation(self):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "output"
             index = {"index_version": "1.0", "records": []}
             first = generation("2026-07-10", "first")
             second = generation("2026-07-10", "second")
             publish_generation(output, first, history_item(first), index)
-            with self.assertRaisesRegex(ContractError, "same data_date"):
-                publish_generation(output, second, history_item(second), index)
+            second_pointer = publish_generation(output, second, history_item(second), index)
+            self.assertNotEqual(second_pointer["analysis_id"], first["meta"]["run_id"])
+            self.assertEqual(load_current_generation(output)[3], second)
 
     def test_publication_lock_rejects_concurrent_writer(self):
         with tempfile.TemporaryDirectory() as directory:
