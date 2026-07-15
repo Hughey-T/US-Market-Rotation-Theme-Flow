@@ -338,12 +338,14 @@ class SpecificationCases(unittest.TestCase):
             theme["classifications"].update(research_priority="dd_priority", research_priority_rule="P1")
             theme["metrics"]["equal_weight_rel_spy_4w"] = 0.07 - index * 0.01
             themes[theme_id] = theme
+        themes["e"]["metrics"]["equal_weight_rel_spy_4w"] = themes["f"]["metrics"]["equal_weight_rel_spy_4w"]
         first, shortlist = apply_shortlist(themes)
         reversed_result, reversed_shortlist = apply_shortlist(dict(reversed(list(themes.items()))))
-        self.assertEqual(shortlist["selected_theme_ids"], ["g", "f", "e", "d", "c"])
+        self.assertEqual(shortlist["selected_theme_ids"], ["g", "e", "f", "d", "c"])
         self.assertEqual(shortlist, reversed_shortlist)
         self.assertEqual([first[item]["shortlist_rank"] for item in shortlist["selected_theme_ids"]], [1, 2, 3, 4, 5])
         self.assertEqual(reversed_result["g"]["shortlist_rank"], 1)
+        self.assertLess(first["e"]["relative_strength_rank_4w"], first["f"]["relative_strength_rank_4w"])
 
     def test_T49_shortlist_no_backfill(self):
         themes = {
