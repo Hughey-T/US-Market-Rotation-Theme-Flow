@@ -36,4 +36,3 @@ def read_legacy_snapshot(value: dict, *, explicit: bool = False) -> dict:
         "migration_report_version": "1.0", "source_schema_version": "1.0", "target_schema_version": "1.1",
         "publishable": False, "automatic_judgment_conversion": False, "theme_mappings": mappings,
     }
-

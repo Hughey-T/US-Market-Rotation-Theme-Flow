@@ -45,4 +45,3 @@ def classify_market_regime(inputs: dict) -> dict:
     matched = sorted({item for name in full for item in candidates[name]["matched_conditions"]})
     contrary = sorted({item for name in full for item in candidates[name]["contrary_evidence"]})
     return {"inputs": inputs, "candidate_flags": candidates, "classification": {"primary_regime": primary, "secondary_regimes": secondary, "confidence": confidence, "matched_conditions": matched, "contrary_evidence": contrary}}
-

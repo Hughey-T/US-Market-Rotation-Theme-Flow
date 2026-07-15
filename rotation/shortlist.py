@@ -41,4 +41,3 @@ def apply_shortlist(themes: dict[str, dict]) -> tuple[dict[str, dict], dict]:
     if len(selected) < 3:
         reasons.append("SHORTLIST_BELOW_MINIMUM_3")
     return result, {"selection_version": "1.0", "max_themes": 5, "minimum_preferred_themes": 3, "selected_theme_ids": selected, "quality_reasons": reasons}
-

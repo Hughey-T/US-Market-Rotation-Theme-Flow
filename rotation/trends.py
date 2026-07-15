@@ -83,4 +83,3 @@ def compute_theme_trends(prior_history: list[dict], theme_id: str, current: dict
         "above_50dma_breadth_trend_3w": breadth_trend(above_counts[-3:]),
         "volume_ratio_change_1w": None if len(volumes) < 2 or finite(volumes[-1]) is None or finite(volumes[-2]) is None else volumes[-1] - volumes[-2],
     }
-

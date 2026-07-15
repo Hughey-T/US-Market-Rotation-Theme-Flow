@@ -41,4 +41,3 @@ def atomic_write_json(path: Path, value) -> None:
     finally:
         if os.path.exists(name):
             os.unlink(name)
-

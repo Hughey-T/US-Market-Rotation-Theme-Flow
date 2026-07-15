@@ -6,9 +6,9 @@
     "data_date": "2026-07-10",
     "valid_until": "2026-07-21T00:00:00Z",
     "hard_stop_after": "2026-07-25T00:00:00Z",
-    "run_id": "fixture-normal-20260710",
+    "run_id": "fixture-p1-diffusion-20260710",
     "source_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "source_snapshot": "output/archive/fixture-normal-20260710.json",
+    "source_snapshot": "output/archive/fixture-p1-diffusion-20260710.json",
     "source_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     "status": "success",
     "failure_reason": null,
@@ -70,7 +70,7 @@
   "themes": {
     "fixture_theme": {
       "theme_id": "fixture_theme",
-      "label": "架空拡散theme",
+      "label": "架空P1拡散theme",
       "quality": {
         "classification_eligible": true,
         "phase_initial_diffusion_eligible": true,

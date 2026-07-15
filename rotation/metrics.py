@@ -104,4 +104,3 @@ def role_aggregates(constituents: list[dict], spy_4w: float | None) -> tuple[dic
             "advance_ratio_4w": sum(row["return_4w"] > 0 for row in rows) / len(rows),
         }
     return output, counts
-

@@ -111,4 +111,3 @@ def build_snapshot(
     }
     snapshot["meta"]["source_sha256"] = snapshot_source_hash(snapshot)
     return snapshot
-

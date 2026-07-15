@@ -1,0 +1,187 @@
+{
+  "meta": {
+    "schema_version": "1.1",
+    "methodology_version": "1.1.0",
+    "generated_at": "2026-07-11T00:00:00Z",
+    "data_date": "2026-07-10",
+    "valid_until": "2026-07-21T00:00:00Z",
+    "hard_stop_after": "2026-07-25T00:00:00Z",
+    "run_id": "fixture-p5-low-priority-20260710",
+    "source_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "source_snapshot": "output/archive/fixture-p5-low-priority-20260710.json",
+    "source_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "status": "success",
+    "failure_reason": null,
+    "universe_definition": {
+      "theme_master_schema_version": "1.0",
+      "theme_master_version": "fixture-1",
+      "universe_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "theme_count": 1,
+      "unique_constituent_count": 6,
+      "overlap_policy": "allow_with_warning"
+    },
+    "periods": {"1w": 5, "4w": 21, "13w": 63},
+    "global_quality": {
+      "requested_ticker_count": 20,
+      "usable_ticker_count": 20,
+      "coverage_ratio": 1.0,
+      "critical_missing": [],
+      "missing_tickers": [],
+      "warnings": ["FIXTURE: 架空test data"]
+    }
+  },
+  "not_implemented": ["direct_etf_flow", "earnings_revision", "positioning"],
+  "market_regime": {
+    "inputs": {
+      "spy_r_4w": 0.05,
+      "qqq_rel_spy_4w": 0.01,
+      "rsp_minus_spy_4w": 0.01,
+      "iwm_minus_spy_4w": 0.02,
+      "sector_advance_ratio_4w": 0.7273,
+      "defensive_basket_rel_spy_4w": -0.01,
+      "cyclical_basket_rel_spy_4w": 0.02,
+      "dbc_rel_spy_4w": -0.01,
+      "gld_rel_spy_4w": -0.01,
+      "xle_rel_spy_4w": 0.0,
+      "hyg_minus_lqd_4w": 0.01,
+      "vix_change_4w": -2.0,
+      "uup_r_4w": -0.01
+    },
+    "candidate_flags": {
+      "broad_risk_on": {
+        "eligible": true,
+        "full_match": true,
+        "matched_conditions": ["R_BROAD_SPY_POS", "R_BROAD_RSP_NONNEG", "R_BROAD_IWM_NONNEG", "R_BROAD_SECTORS_7_OF_11"],
+        "unmatched_conditions": [],
+        "contrary_evidence": []
+      }
+    },
+    "classification": {
+      "primary_regime": "broad_risk_on",
+      "secondary_regimes": [],
+      "confidence": "high",
+      "matched_conditions": ["R_BROAD_SPY_POS", "R_BROAD_RSP_NONNEG", "R_BROAD_IWM_NONNEG", "R_BROAD_SECTORS_7_OF_11"],
+      "contrary_evidence": []
+    }
+  },
+  "style_factor": {},
+  "sectors": {"etfs": {}, "rank_by_rel_spy_4w": []},
+  "industries": {"etfs": {}, "rank_by_rel_spy_4w": []},
+  "themes": {
+    "fixture_theme": {
+      "theme_id": "fixture_theme",
+      "label": "架空P5全面弱化theme",
+      "quality": {
+        "classification_eligible": true,
+        "phase_initial_diffusion_eligible": true,
+        "phase_overheat_eligible": true,
+        "direction_eligible": true,
+        "evidence_eligible": true,
+        "constituent_count": 6,
+        "valid_constituent_count": 6,
+        "coverage_ratio": 1.0,
+        "history_weeks": 4,
+        "role_valid_counts": {"core": 2, "beneficiary": 2, "peripheral": 2},
+        "metric_valid_counts": {"return_4w": 6, "return_13w": 6, "above_50dma": 6, "within_5pct_52w_high": 6, "market_cap": 6},
+        "missing_required_fields": [],
+        "quality_reasons": []
+      },
+      "metrics": {
+        "equal_weight_return_1w": -0.01,
+        "equal_weight_return_4w": 0.0,
+        "equal_weight_return_13w": -0.02,
+        "equal_weight_rel_spy_1w": -0.02,
+        "equal_weight_rel_spy_4w": -0.05,
+        "equal_weight_rel_spy_13w": -0.08,
+        "market_cap_weight_rel_spy_4w": -0.05,
+        "weighting_divergence_4w": 0.0,
+        "advance_count_4w": 0,
+        "advance_ratio_4w": 0.0,
+        "pct_above_50dma": 0.0,
+        "pct_within_5pct_52w_high": 0.0,
+        "volume_ratio_20d_60d": 1.1,
+        "top1_contribution_ratio": null,
+        "top3_contribution_ratio": null,
+        "single_name_concentrated": null,
+        "market_cap_led": false
+      },
+      "trends": {
+        "rel_spy_4w_change_1w": -0.02,
+        "rel_spy_4w_slope_3w": -0.015,
+        "rel_spy_4w_slope_4w": -0.013,
+        "rel_spy_4w_trend_3w": "worsening",
+        "rel_spy_4w_trend_4w": "worsening",
+        "advance_count_change_1w": -1,
+        "advance_count_change_3w": -3,
+        "above_50dma_count_change_1w": -1,
+        "above_50dma_count_change_3w": -3,
+        "advance_breadth_trend_3w": "worsening",
+        "above_50dma_breadth_trend_3w": "worsening",
+        "volume_ratio_change_1w": 0.0
+      },
+      "condition_flags": {
+        "phase_initial": false,
+        "phase_diffusion": false,
+        "phase_price_overheat": false,
+        "direction_improving": false,
+        "direction_worsening": true,
+        "direction_outflow_signal": true,
+        "broad_concentration_pass": null,
+        "overheat_breadth_weak": false,
+        "matched_conditions": ["DIR_REL_WORSENING", "DIR_BREADTH_WORSENING", "DIR_OUTFLOW_REL_NEG", "P5_REL_ALL_NONPOSITIVE"],
+        "unmatched_conditions": ["PH_INITIAL_REL_POS", "PH_DIFF_REL_POS", "PH_OVERHEAT_REL13_15"],
+        "contrary_evidence": []
+      },
+      "classifications": {
+        "phase": "unclassifiable",
+        "direction": "outflow_signal",
+        "evidence": {
+          "level": "relative_preference_suggested",
+          "direction": "outflow",
+          "positioning_hypothesis": "not_supported",
+          "direct_flow_data_available": false,
+          "matched_conditions": ["EV_REL_ALL_NONPOSITIVE", "EV_BREADTH_WEAK", "EV_DIRECTION_OUTFLOW"]
+        },
+        "research_priority": "low_priority",
+        "research_priority_rule": "P5",
+        "timing_status": "deteriorating",
+        "timing_rule": "T2"
+      },
+      "relative_strength_rank_4w": 1,
+      "selected_for_deep_dive": false,
+      "shortlist_rank": null,
+      "shortlist_reason_codes": ["SL_EXCLUDED_LOW_PRIORITY", "SL_EVIDENCE_OUTFLOW", "SL_REL_ALL_NONPOSITIVE"],
+      "by_role": {
+        "core": {"valid_count": 2, "equal_weight_rel_spy_4w": -0.05, "advance_ratio_4w": 0.0},
+        "beneficiary": {"valid_count": 2, "equal_weight_rel_spy_4w": -0.05, "advance_ratio_4w": 0.0},
+        "peripheral": {"valid_count": 2, "equal_weight_rel_spy_4w": -0.05, "advance_ratio_4w": 0.0}
+      },
+      "constituents": [
+        {"ticker": "AAA", "role": "core", "valid": true, "return_4w": 0.0, "rel_spy_4w": -0.05, "market_cap": 10000000000, "positive_contribution_ratio": null, "overlap_theme_count": 1},
+        {"ticker": "BBB", "role": "core", "valid": true, "return_4w": 0.0, "rel_spy_4w": -0.05, "market_cap": 9000000000, "positive_contribution_ratio": null, "overlap_theme_count": 1},
+        {"ticker": "CCC", "role": "beneficiary", "valid": true, "return_4w": 0.0, "rel_spy_4w": -0.05, "market_cap": 8000000000, "positive_contribution_ratio": null, "overlap_theme_count": 1},
+        {"ticker": "DDD", "role": "beneficiary", "valid": true, "return_4w": 0.0, "rel_spy_4w": -0.05, "market_cap": 7000000000, "positive_contribution_ratio": null, "overlap_theme_count": 1},
+        {"ticker": "EEE", "role": "peripheral", "valid": true, "return_4w": 0.0, "rel_spy_4w": -0.05, "market_cap": 6000000000, "positive_contribution_ratio": null, "overlap_theme_count": 1},
+        {"ticker": "FFF", "role": "peripheral", "valid": true, "return_4w": 0.0, "rel_spy_4w": -0.05, "market_cap": 5000000000, "positive_contribution_ratio": null, "overlap_theme_count": 1}
+      ]
+    }
+  },
+  "theme_shortlist": {
+    "selection_version": "1.0",
+    "max_themes": 5,
+    "minimum_preferred_themes": 3,
+    "selected_theme_ids": [],
+    "quality_reasons": ["SHORTLIST_NO_ELIGIBLE_THEME", "SHORTLIST_BELOW_MINIMUM_3"]
+  },
+  "history_weekly": [
+    {"data_date": "2026-06-19", "schema_version": "1.1", "methodology_version": "1.1.0", "theme_master_version": "fixture-1", "themes": {"fixture_theme": {"equal_weight_rel_spy_4w": -0.01, "advance_count_4w": 3, "pct_above_50dma": 0.5, "volume_ratio_20d_60d": 1.0}}},
+    {"data_date": "2026-06-26", "schema_version": "1.1", "methodology_version": "1.1.0", "theme_master_version": "fixture-1", "themes": {"fixture_theme": {"equal_weight_rel_spy_4w": -0.02, "advance_count_4w": 2, "pct_above_50dma": 0.3333, "volume_ratio_20d_60d": 1.05}}},
+    {"data_date": "2026-07-03", "schema_version": "1.1", "methodology_version": "1.1.0", "theme_master_version": "fixture-1", "themes": {"fixture_theme": {"equal_weight_rel_spy_4w": -0.03, "advance_count_4w": 1, "pct_above_50dma": 0.1667, "volume_ratio_20d_60d": 1.1}}}
+  ],
+  "previous_judgments": {
+    "source": "output/judgments/index.json",
+    "available": false,
+    "latest_data_date": null,
+    "records": []
+  }
+}

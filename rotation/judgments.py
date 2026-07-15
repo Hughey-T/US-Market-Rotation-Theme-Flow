@@ -77,4 +77,3 @@ def project_previous_judgments(index: dict, current: dict, history: list[dict], 
             })
     latest_date = records[-1]["data_date"] if records else None
     return {"source": "output/judgments/index.json", "available": bool(records), "latest_data_date": latest_date, "records": projections}
-

@@ -1,5 +1,4 @@
-# 週次データ生成（毎週土曜 08:00 日本時間 = 金曜 23:00 UTC、NY市場の金曜引け後）
-# 手動実行も可能（Actionsタブ → weekly-data → Run workflow）
+# Scheduled live acquisition is intentionally separate from the PR merge gate.
 name: weekly-data
 
 on:
@@ -17,33 +16,35 @@ concurrency:
 jobs:
   generate:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
-
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
-
       - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Unit tests and preflight validation
+        run: python -m pip install -r requirements.txt
+      - name: Offline preflight
         run: |
           python -m unittest discover -s tests -v
           python scripts/validate_repository.py
-
-      - name: Generate weekly data
+      - name: Generate, validate, and atomically publish
+        id: generate
         run: python scripts/generate_weekly.py
-
-      - name: Validate generated outputs
+      - name: Validate published repository
         run: python scripts/validate_repository.py
-
-      - name: Commit outputs
+      - name: Commit validated outputs
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add output/latest.json output/archive/ output/history/
+          git diff --check
+          git add output/latest.json output/archive/ output/history/ output/judgments/index.json
           git commit -m "weekly data $(date -u +%F)" || echo "no changes to commit"
           git push
+      - name: Failure summary
+        if: failure()
+        run: |
+          echo "Generation or validation failed. The generator publishes latest.json last, so the previous successful artifact was not replaced." >> "$GITHUB_STEP_SUMMARY"

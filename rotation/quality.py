@@ -55,4 +55,3 @@ def assess_quality(members: list[dict], history_weeks: int, market_cap_coverage:
         "missing_required_fields": missing,
         "quality_reasons": reasons,
     }
-
