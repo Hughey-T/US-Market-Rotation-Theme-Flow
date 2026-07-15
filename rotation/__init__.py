@@ -1,0 +1,8 @@
+"""Deterministic US Market Rotation & Theme Flow 1.1 engine."""
+
+DATA_SCHEMA_VERSION = "1.1"
+METHODOLOGY_VERSION = "1.1.0"
+INSTRUCTION_VERSION = "1.1.0"
+JUDGMENT_SCHEMA_VERSION = "1.0"
+THEME_MASTER_SCHEMA_VERSION = "1.0"
+

@@ -1,125 +1,568 @@
 {
-  "version": "v2-provisional",
-  "last_reviewed": "2026-07-15",
-  "review_cycle": "四半期（1・4・7・10月の第1週に構成銘柄を見直す）",
-  "notes": [
-    "構成銘柄はETF保有銘柄の自動同期ではなく、参照ETFと事業内容から作った暫定allowlist。運用前にレビューする。",
-    "同じ銘柄が複数テーマに属することを許容する（例: PLTR, VST, CEG）。",
-    "役割分類はv1では3分類に簡略化。将来、Narrative Proxy / Speculative の区別が必要になったら拡張する。",
-    "1テーマあたり6〜12銘柄を目安とする。少なすぎると広がり（breadth）の指標が意味を持たない。"
-  ],
-  "roles": {
-    "core": "中核：売上・利益の大部分がテーマに直結、またはテーマ実現に不可欠な供給者",
-    "beneficiary": "恩恵：テーマから大きな利益を得るが、事業は多角化している",
-    "peripheral": "周辺：一部のみ関連、または実態より物語（ナラティブ）で買われやすい・投機的"
-  },
-  "themes": {
-    "ai_semis": {
+  "theme_master_schema_version": "1.0",
+  "theme_master_version": "2026-Q3-r1",
+  "effective_date": "2026-07-15",
+  "review_cycle": "quarterly",
+  "overlap_policy": "allow_with_warning",
+  "themes": [
+    {
+      "theme_id": "ai_semis",
       "label": "AI半導体",
-      "reference_etfs": ["SMH", "SOXX"],
-      "members": {
-        "NVDA": "core",
-        "AMD": "core",
-        "AVGO": "core",
-        "MRVL": "core",
-        "TSM": "core",
-        "MU": "beneficiary",
-        "ARM": "beneficiary",
-        "QCOM": "peripheral"
-      }
+      "definition": "AI半導体に直接または周辺的に関連する企業群。roleは企業品質・投資魅力度を表さない。",
+      "reference_etfs": [
+        "SMH",
+        "SOXX"
+      ],
+      "members": [
+        {
+          "ticker": "AMD",
+          "role": "core",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned AMD the core role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "ARM",
+          "role": "beneficiary",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned ARM the beneficiary role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "AVGO",
+          "role": "core",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned AVGO the core role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "MRVL",
+          "role": "core",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned MRVL the core role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "MU",
+          "role": "beneficiary",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned MU the beneficiary role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "NVDA",
+          "role": "core",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned NVDA the core role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "QCOM",
+          "role": "peripheral",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned QCOM the peripheral role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "TSM",
+          "role": "core",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned TSM the core role; role denotes theme centrality only."
+        }
+      ]
     },
-    "semi_equipment": {
-      "label": "半導体製造装置",
-      "reference_etfs": ["SMH", "SOXX"],
-      "members": {
-        "ASML": "core",
-        "AMAT": "core",
-        "LRCX": "core",
-        "KLAC": "core",
-        "TER": "beneficiary",
-        "ONTO": "beneficiary",
-        "ACLS": "peripheral"
-      }
-    },
-    "dc_power_infra": {
-      "label": "データセンター電力・インフラ",
-      "reference_etfs": ["GRID", "PAVE"],
-      "members": {
-        "GEV": "core",
-        "ETN": "core",
-        "VRT": "core",
-        "VST": "beneficiary",
-        "CEG": "beneficiary",
-        "PWR": "beneficiary",
-        "NRG": "peripheral",
-        "MOD": "peripheral"
-      }
-    },
-    "networking_optical": {
-      "label": "ネットワーク・光通信",
-      "reference_etfs": ["IGN"],
-      "members": {
-        "ANET": "core",
-        "CIEN": "core",
-        "COHR": "core",
-        "LITE": "core",
-        "CRDO": "beneficiary",
-        "ALAB": "beneficiary",
-        "AAOI": "peripheral"
-      }
-    },
-    "ai_software_data": {
+    {
+      "theme_id": "ai_software_data",
       "label": "AIソフトウェア・データ基盤",
-      "reference_etfs": ["IGV", "AIQ"],
-      "members": {
-        "PLTR": "core",
-        "SNOW": "core",
-        "DDOG": "beneficiary",
-        "NOW": "beneficiary",
-        "MSFT": "beneficiary",
-        "MDB": "peripheral",
-        "AI": "peripheral"
-      }
+      "definition": "AIソフトウェア・データ基盤に直接または周辺的に関連する企業群。roleは企業品質・投資魅力度を表さない。",
+      "reference_etfs": [
+        "IGV",
+        "AIQ"
+      ],
+      "members": [
+        {
+          "ticker": "AI",
+          "role": "peripheral",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned AI the peripheral role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "DDOG",
+          "role": "beneficiary",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned DDOG the beneficiary role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "MDB",
+          "role": "peripheral",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned MDB the peripheral role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "MSFT",
+          "role": "beneficiary",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned MSFT the beneficiary role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "NOW",
+          "role": "beneficiary",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned NOW the beneficiary role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "PLTR",
+          "role": "core",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned PLTR the core role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "SNOW",
+          "role": "core",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned SNOW the core role; role denotes theme centrality only."
+        }
+      ]
     },
-    "cybersecurity": {
+    {
+      "theme_id": "cybersecurity",
       "label": "サイバーセキュリティ",
-      "reference_etfs": ["CIBR", "HACK"],
-      "members": {
-        "CRWD": "core",
-        "PANW": "core",
-        "ZS": "core",
-        "FTNT": "core",
-        "NET": "beneficiary",
-        "OKTA": "beneficiary",
-        "S": "peripheral"
-      }
+      "definition": "サイバーセキュリティに直接または周辺的に関連する企業群。roleは企業品質・投資魅力度を表さない。",
+      "reference_etfs": [
+        "CIBR",
+        "HACK"
+      ],
+      "members": [
+        {
+          "ticker": "CRWD",
+          "role": "core",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned CRWD the core role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "FTNT",
+          "role": "core",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned FTNT the core role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "NET",
+          "role": "beneficiary",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned NET the beneficiary role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "OKTA",
+          "role": "beneficiary",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned OKTA the beneficiary role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "PANW",
+          "role": "core",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned PANW the core role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "S",
+          "role": "peripheral",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned S the peripheral role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "ZS",
+          "role": "core",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned ZS the core role; role denotes theme centrality only."
+        }
+      ]
     },
-    "defense": {
+    {
+      "theme_id": "dc_power_infra",
+      "label": "データセンター電力・インフラ",
+      "definition": "データセンター電力・インフラに直接または周辺的に関連する企業群。roleは企業品質・投資魅力度を表さない。",
+      "reference_etfs": [
+        "GRID",
+        "PAVE"
+      ],
+      "members": [
+        {
+          "ticker": "CEG",
+          "role": "beneficiary",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned CEG the beneficiary role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "ETN",
+          "role": "core",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned ETN the core role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "GEV",
+          "role": "core",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned GEV the core role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "MOD",
+          "role": "peripheral",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned MOD the peripheral role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "NRG",
+          "role": "peripheral",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned NRG the peripheral role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "PWR",
+          "role": "beneficiary",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned PWR the beneficiary role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "VRT",
+          "role": "core",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned VRT the core role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "VST",
+          "role": "beneficiary",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned VST the beneficiary role; role denotes theme centrality only."
+        }
+      ]
+    },
+    {
+      "theme_id": "defense",
       "label": "防衛",
-      "reference_etfs": ["ITA", "XAR"],
-      "members": {
-        "LMT": "core",
-        "RTX": "core",
-        "NOC": "core",
-        "GD": "core",
-        "LHX": "core",
-        "AVAV": "beneficiary",
-        "PLTR": "beneficiary",
-        "KTOS": "peripheral"
-      }
+      "definition": "防衛に直接または周辺的に関連する企業群。roleは企業品質・投資魅力度を表さない。",
+      "reference_etfs": [
+        "ITA",
+        "XAR"
+      ],
+      "members": [
+        {
+          "ticker": "AVAV",
+          "role": "beneficiary",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned AVAV the beneficiary role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "GD",
+          "role": "core",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned GD the core role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "KTOS",
+          "role": "peripheral",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned KTOS the peripheral role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "LHX",
+          "role": "core",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned LHX the core role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "LMT",
+          "role": "core",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned LMT the core role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "NOC",
+          "role": "core",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned NOC the core role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "PLTR",
+          "role": "beneficiary",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned PLTR the beneficiary role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "RTX",
+          "role": "core",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned RTX the core role; role denotes theme centrality only."
+        }
+      ]
     },
-    "nuclear_uranium": {
+    {
+      "theme_id": "networking_optical",
+      "label": "ネットワーク・光通信",
+      "definition": "ネットワーク・光通信に直接または周辺的に関連する企業群。roleは企業品質・投資魅力度を表さない。",
+      "reference_etfs": [
+        "IGN"
+      ],
+      "members": [
+        {
+          "ticker": "AAOI",
+          "role": "peripheral",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned AAOI the peripheral role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "ALAB",
+          "role": "beneficiary",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned ALAB the beneficiary role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "ANET",
+          "role": "core",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned ANET the core role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "CIEN",
+          "role": "core",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned CIEN the core role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "COHR",
+          "role": "core",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned COHR the core role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "CRDO",
+          "role": "beneficiary",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned CRDO the beneficiary role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "LITE",
+          "role": "core",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned LITE the core role; role denotes theme centrality only."
+        }
+      ]
+    },
+    {
+      "theme_id": "nuclear_uranium",
       "label": "原子力・ウラン",
-      "reference_etfs": ["URA", "NLR"],
-      "members": {
-        "CCJ": "core",
-        "BWXT": "core",
-        "LEU": "core",
-        "VST": "beneficiary",
-        "CEG": "beneficiary",
-        "OKLO": "peripheral",
-        "SMR": "peripheral"
-      }
+      "definition": "原子力・ウランに直接または周辺的に関連する企業群。roleは企業品質・投資魅力度を表さない。",
+      "reference_etfs": [
+        "URA",
+        "NLR"
+      ],
+      "members": [
+        {
+          "ticker": "BWXT",
+          "role": "core",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned BWXT the core role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "CCJ",
+          "role": "core",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned CCJ the core role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "CEG",
+          "role": "beneficiary",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned CEG the beneficiary role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "LEU",
+          "role": "core",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned LEU the core role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "OKLO",
+          "role": "peripheral",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned OKLO the peripheral role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "SMR",
+          "role": "peripheral",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned SMR the peripheral role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "VST",
+          "role": "beneficiary",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned VST the beneficiary role; role denotes theme centrality only."
+        }
+      ]
+    },
+    {
+      "theme_id": "semi_equipment",
+      "label": "半導体製造装置",
+      "definition": "半導体製造装置に直接または周辺的に関連する企業群。roleは企業品質・投資魅力度を表さない。",
+      "reference_etfs": [
+        "SMH",
+        "SOXX"
+      ],
+      "members": [
+        {
+          "ticker": "ACLS",
+          "role": "peripheral",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned ACLS the peripheral role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "AMAT",
+          "role": "core",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned AMAT the core role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "ASML",
+          "role": "core",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned ASML the core role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "KLAC",
+          "role": "core",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned KLAC the core role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "LRCX",
+          "role": "core",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned LRCX the core role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "ONTO",
+          "role": "beneficiary",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned ONTO the beneficiary role; role denotes theme centrality only."
+        },
+        {
+          "ticker": "TER",
+          "role": "beneficiary",
+          "active": true,
+          "valid_from": "2026-07-15",
+          "valid_to": null,
+          "rationale": "Legacy provisional master assigned TER the beneficiary role; role denotes theme centrality only."
+        }
+      ]
     }
-  }
+  ]
 }

@@ -1,0 +1,125 @@
+{
+  "version": "v2-provisional",
+  "last_reviewed": "2026-07-15",
+  "review_cycle": "四半期（1・4・7・10月の第1週に構成銘柄を見直す）",
+  "notes": [
+    "構成銘柄はETF保有銘柄の自動同期ではなく、参照ETFと事業内容から作った暫定allowlist。運用前にレビューする。",
+    "同じ銘柄が複数テーマに属することを許容する（例: PLTR, VST, CEG）。",
+    "役割分類はv1では3分類に簡略化。将来、Narrative Proxy / Speculative の区別が必要になったら拡張する。",
+    "1テーマあたり6〜12銘柄を目安とする。少なすぎると広がり（breadth）の指標が意味を持たない。"
+  ],
+  "roles": {
+    "core": "中核：売上・利益の大部分がテーマに直結、またはテーマ実現に不可欠な供給者",
+    "beneficiary": "恩恵：テーマから大きな利益を得るが、事業は多角化している",
+    "peripheral": "周辺：一部のみ関連、または実態より物語（ナラティブ）で買われやすい・投機的"
+  },
+  "themes": {
+    "ai_semis": {
+      "label": "AI半導体",
+      "reference_etfs": ["SMH", "SOXX"],
+      "members": {
+        "NVDA": "core",
+        "AMD": "core",
+        "AVGO": "core",
+        "MRVL": "core",
+        "TSM": "core",
+        "MU": "beneficiary",
+        "ARM": "beneficiary",
+        "QCOM": "peripheral"
+      }
+    },
+    "semi_equipment": {
+      "label": "半導体製造装置",
+      "reference_etfs": ["SMH", "SOXX"],
+      "members": {
+        "ASML": "core",
+        "AMAT": "core",
+        "LRCX": "core",
+        "KLAC": "core",
+        "TER": "beneficiary",
+        "ONTO": "beneficiary",
+        "ACLS": "peripheral"
+      }
+    },
+    "dc_power_infra": {
+      "label": "データセンター電力・インフラ",
+      "reference_etfs": ["GRID", "PAVE"],
+      "members": {
+        "GEV": "core",
+        "ETN": "core",
+        "VRT": "core",
+        "VST": "beneficiary",
+        "CEG": "beneficiary",
+        "PWR": "beneficiary",
+        "NRG": "peripheral",
+        "MOD": "peripheral"
+      }
+    },
+    "networking_optical": {
+      "label": "ネットワーク・光通信",
+      "reference_etfs": ["IGN"],
+      "members": {
+        "ANET": "core",
+        "CIEN": "core",
+        "COHR": "core",
+        "LITE": "core",
+        "CRDO": "beneficiary",
+        "ALAB": "beneficiary",
+        "AAOI": "peripheral"
+      }
+    },
+    "ai_software_data": {
+      "label": "AIソフトウェア・データ基盤",
+      "reference_etfs": ["IGV", "AIQ"],
+      "members": {
+        "PLTR": "core",
+        "SNOW": "core",
+        "DDOG": "beneficiary",
+        "NOW": "beneficiary",
+        "MSFT": "beneficiary",
+        "MDB": "peripheral",
+        "AI": "peripheral"
+      }
+    },
+    "cybersecurity": {
+      "label": "サイバーセキュリティ",
+      "reference_etfs": ["CIBR", "HACK"],
+      "members": {
+        "CRWD": "core",
+        "PANW": "core",
+        "ZS": "core",
+        "FTNT": "core",
+        "NET": "beneficiary",
+        "OKTA": "beneficiary",
+        "S": "peripheral"
+      }
+    },
+    "defense": {
+      "label": "防衛",
+      "reference_etfs": ["ITA", "XAR"],
+      "members": {
+        "LMT": "core",
+        "RTX": "core",
+        "NOC": "core",
+        "GD": "core",
+        "LHX": "core",
+        "AVAV": "beneficiary",
+        "PLTR": "beneficiary",
+        "KTOS": "peripheral"
+      }
+    },
+    "nuclear_uranium": {
+      "label": "原子力・ウラン",
+      "reference_etfs": ["URA", "NLR"],
+      "members": {
+        "CCJ": "core",
+        "BWXT": "core",
+        "LEU": "core",
+        "VST": "beneficiary",
+        "CEG": "beneficiary",
+        "OKLO": "peripheral",
+        "SMR": "peripheral"
+      }
+    }
+  }
+}

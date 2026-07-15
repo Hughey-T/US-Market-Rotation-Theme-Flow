@@ -1,105 +1,72 @@
 #!/usr/bin/env python3
-"""Dependency-free validation for configs and generated records."""
+"""Validate repository contracts without network access or current-time gates."""
 from __future__ import annotations
 
-import datetime as dt
-import json
 import sys
 from pathlib import Path
 
+from jsonschema import Draft202012Validator
+
 ROOT = Path(__file__).resolve().parents[1]
-ALLOWED_PHASES = {"初動", "拡散", "過熱", "流出", "判定不能"}
-ALLOWED_LEVELS = {"直接証拠", "間接証拠", "価格のみ", "証拠不足"}
-ALLOWED_DIRECTIONS = {"流入示唆", "流出示唆", "上昇", "下落", "不明"}
-ALLOWED_ACTIONS = {"DDへ", "条件付き監視", "待機", "流出中", "判定不能"}
-ALLOWED_ROLES = {"core", "beneficiary", "peripheral"}
+sys.path.insert(0, str(ROOT))
 
-
-def load(path: Path):
-    with path.open(encoding="utf-8") as f:
-        return json.load(f)
-
-
-def require(condition: bool, message: str, errors: list[str]) -> None:
-    if not condition:
-        errors.append(message)
-
-
-def valid_date(value) -> bool:
-    try:
-        dt.date.fromisoformat(value)
-        return True
-    except (TypeError, ValueError):
-        return False
-
-
-def validate_prediction(path: Path, value: dict, errors: list[str]) -> None:
-    prefix = str(path.relative_to(ROOT))
-    require(value.get("prediction_schema_version") == "1.0", f"{prefix}: prediction_schema_version must be 1.0", errors)
-    require(valid_date(value.get("data_date")), f"{prefix}: invalid data_date", errors)
-    require(isinstance(value.get("run_id"), str) and len(value["run_id"]) >= 10, f"{prefix}: invalid run_id", errors)
-    require(isinstance(value.get("predictions"), list), f"{prefix}: predictions must be an array", errors)
-    for i, prediction in enumerate(value.get("predictions", [])):
-        item = f"{prefix}: predictions[{i}]"
-        require(prediction.get("phase") in ALLOWED_PHASES, f"{item}: invalid phase", errors)
-        evidence = prediction.get("flow_evidence", {})
-        require(evidence.get("level") in ALLOWED_LEVELS, f"{item}: invalid evidence level", errors)
-        require(evidence.get("direction") in ALLOWED_DIRECTIONS, f"{item}: invalid evidence direction", errors)
-        require(prediction.get("action") in ALLOWED_ACTIONS, f"{item}: invalid action", errors)
-        require(isinstance(prediction.get("withdrawal_conditions"), list) and prediction["withdrawal_conditions"],
-                f"{item}: withdrawal_conditions required", errors)
-        require(len(prediction.get("dd_candidates", [])) <= 5, f"{item}: at most 5 dd_candidates", errors)
-        for candidate in prediction.get("dd_candidates", []):
-            require(candidate.get("role") in ALLOWED_ROLES, f"{item}: invalid candidate role", errors)
-
-
-def validate_verification(path: Path, value: dict, errors: list[str]) -> None:
-    prefix = str(path.relative_to(ROOT))
-    require(value.get("verification_schema_version") == "1.0", f"{prefix}: verification_schema_version must be 1.0", errors)
-    require(valid_date(value.get("prediction_data_date")), f"{prefix}: invalid prediction_data_date", errors)
-    require(valid_date(value.get("verification_date")), f"{prefix}: invalid verification_date", errors)
-    require(value.get("horizon_weeks") in {4, 13, 26, 52}, f"{prefix}: invalid horizon_weeks", errors)
-    require(isinstance(value.get("outcomes"), list), f"{prefix}: outcomes must be an array", errors)
-
+from rotation.judgments import build_index, verify_index
+from rotation.validation import (
+    ContractError,
+    load_json,
+    validate_latest_semantics,
+    validate_schema,
+    validate_theme_master_semantics,
+)
 
 def main() -> int:
-    errors = []
-    universe = load(ROOT / "config" / "universe.json")
-    themes = load(ROOT / "data" / "themes.json")
-    require("SPY" in universe.get("regime_assets", {}), "config: SPY missing from regime_assets", errors)
-    for theme_id, theme in themes.get("themes", {}).items():
-        require(len(theme.get("members", {})) >= 6, f"theme {theme_id}: fewer than 6 members", errors)
-        require(set(theme.get("members", {}).values()) <= ALLOWED_ROLES, f"theme {theme_id}: invalid role", errors)
-
-    latest_path = ROOT / "output" / "latest.json"
-    if latest_path.exists():
-        latest = load(latest_path)
-        meta = latest.get("meta", {})
-        require(meta.get("schema_version") == "1.0", "output/latest.json: schema_version must be 1.0", errors)
-        require(meta.get("status") == "success", "output/latest.json: status must be success", errors)
-        require(valid_date(meta.get("data_date")), "output/latest.json: invalid data_date", errors)
-        require(len(latest.get("history_weekly", [])) <= 12, "output/latest.json: history exceeds 12", errors)
-        require(len(latest.get("previous_predictions", [])) <= 3, "output/latest.json: predictions exceed 3", errors)
-        for theme_id, theme in latest.get("themes", {}).items():
-            require(theme.get("phase_assessment", {}).get("phase") in ALLOWED_PHASES,
-                    f"output/latest.json: {theme_id} invalid phase", errors)
-
-    for path in sorted((ROOT / "output" / "predictions").glob("*.json")):
-        validate_prediction(path, load(path), errors)
-    for path in sorted((ROOT / "output" / "verifications").glob("*.json")):
-        validate_verification(path, load(path), errors)
-    prediction_example = ROOT / "docs" / "prediction_example.json"
-    verification_example = ROOT / "docs" / "verification_example.json"
-    validate_prediction(prediction_example, load(prediction_example), errors)
-    validate_verification(verification_example, load(verification_example), errors)
-
-    if errors:
-        print("validation failed:")
-        print("\n".join(f"- {error}" for error in errors))
+    try:
+        schemas = {
+            "latest": load_json(ROOT / "schemas" / "rotation_snapshot.schema.json"),
+            "judgment": load_json(ROOT / "schemas" / "judgment_record.schema.json"),
+            "master": load_json(ROOT / "schemas" / "theme_master.schema.json"),
+            "prediction_legacy": load_json(ROOT / "schemas" / "prediction_record.schema.json"),
+            "verification_legacy": load_json(ROOT / "schemas" / "verification_record.schema.json"),
+        }
+        for schema in schemas.values():
+            Draft202012Validator.check_schema(schema)
+        master = load_json(ROOT / "data" / "themes.json")
+        validate_schema(master, schemas["master"], "data/themes.json")
+        warnings = validate_theme_master_semantics(master)
+        fixture_dir = ROOT / "tests" / "fixtures"
+        for path in sorted(fixture_dir.glob("latest_*.json")):
+            value = load_json(path)
+            validate_schema(value, schemas["latest"], str(path.relative_to(ROOT)))
+            validate_latest_semantics(value)
+        validate_schema(load_json(fixture_dir / "judgment_record.json"), schemas["judgment"], "fixture judgment")
+        fixture_master = load_json(fixture_dir / "theme_master.json")
+        validate_schema(fixture_master, schemas["master"], "fixture master")
+        validate_theme_master_semantics(fixture_master)
+        validate_schema(load_json(ROOT / "docs" / "prediction_example.json"), schemas["prediction_legacy"], "legacy prediction example")
+        validate_schema(load_json(ROOT / "docs" / "verification_example.json"), schemas["verification_legacy"], "legacy verification example")
+        latest_path = ROOT / "output" / "latest.json"
+        if latest_path.exists():
+            latest = load_json(latest_path)
+            validate_schema(latest, schemas["latest"], "output/latest.json")
+            validate_latest_semantics(latest, verify_source_hash=True)
+        judgment_dir = ROOT / "output" / "judgments"
+        index_path = judgment_dir / "index.json"
+        rebuilt = build_index(judgment_dir, schemas["judgment"])
+        if index_path.exists():
+            verify_index(judgment_dir, load_json(index_path), schemas["judgment"])
+        instructions = (ROOT / "docs" / "custom_gpt_instructions_v1.1.md").read_text(encoding="utf-8")
+        if len(instructions) > 8000:
+            raise ContractError(f"Custom GPT instructions exceed 8,000 characters: {len(instructions)}")
+        required_terms = ["schema_version=1.1", "methodology_version=1.1.0", "timing_status", "テーマ市場状態", "selected_for_deep_dive", "単一総合score"]
+        missing = [term for term in required_terms if term not in instructions]
+        if missing:
+            raise ContractError(f"Custom GPT instructions missing contract terms: {missing}")
+        print(f"validation passed: 3 current schemas, 7 latest fixtures, 1 judgment fixture, 1 master fixture, {len(warnings)} overlap warnings")
+        return 0
+    except (ContractError, OSError, ValueError) as error:
+        print(f"validation failed:\n{error}", file=sys.stderr)
         return 1
-    print("validation passed")
-    return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())
