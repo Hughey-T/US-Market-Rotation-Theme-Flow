@@ -58,7 +58,7 @@ python -m venv .venv
 
 Test ownership and stable specification IDs are documented in
 [`tests/TEST_CLASSIFICATION.md`](tests/TEST_CLASSIFICATION.md). The required PR
-checks are the six non-overlapping categories in that document, including
+checks are the eight non-overlapping categories in that document, including
 `production-orchestration-e2e` and transactional publication; all use offline
 synthetic data and fixed source identities.
 
