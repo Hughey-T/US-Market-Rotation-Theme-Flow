@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "verification_record.schema.json",
+  "title": "Market Rotation Verification Record 1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["verification_schema_version", "prediction_run_id", "prediction_data_date", "verification_date", "horizon_weeks", "outcomes"],
+  "properties": {
+    "verification_schema_version": {"const": "1.0"},
+    "prediction_run_id": {"type": "string", "minLength": 10},
+    "prediction_data_date": {"type": "string", "format": "date"},
+    "verification_date": {"type": "string", "format": "date"},
+    "horizon_weeks": {"type": "integer", "enum": [4, 13, 26, 52]},
+    "outcomes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["theme_id", "theme_return", "spy_return", "relative_return", "phase_transition", "withdrawal_triggered"],
+        "properties": {
+          "theme_id": {"type": "string"},
+          "theme_return": {"type": ["number", "null"]},
+          "spy_return": {"type": ["number", "null"]},
+          "relative_return": {"type": ["number", "null"]},
+          "phase_transition": {"type": "string"},
+          "withdrawal_triggered": {"type": "boolean"}
+        }
+      }
+    }
+  }
+}

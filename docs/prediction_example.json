@@ -1,0 +1,24 @@
+{
+  "prediction_schema_version": "1.0",
+  "data_date": "2026-07-10",
+  "run_id": "2026-07-10-example123456",
+  "regime": "大型グロース集中",
+  "predictions": [
+    {
+      "theme_id": "dc_power_infra",
+      "phase": "拡散",
+      "flow_evidence": {"level": "間接証拠", "direction": "流入示唆"},
+      "action": "DDへ",
+      "thesis": "相対強度とテーマ内の広がりが同時に改善している",
+      "key_metrics": {"rel_spy_4w": 0.042, "advance_ratio_4w": 0.75},
+      "withdrawal_conditions": [
+        {"field": "themes.dc_power_infra.metrics.rel_spy_4w", "operator": "<", "threshold": 0.0, "persistence_weeks": 2},
+        {"field": "themes.dc_power_infra.metrics.pct_above_50dma", "operator": "<", "threshold": 0.4, "persistence_weeks": 1}
+      ],
+      "dd_candidates": [
+        {"ticker": "VRT", "role": "core", "reason": "テーマ内リーダー。利益感応度は個別DDで未検証"}
+      ]
+    }
+  ],
+  "next_check": ["dc_power_infraの4週相対強度と広がりが同時に維持されるか"]
+}

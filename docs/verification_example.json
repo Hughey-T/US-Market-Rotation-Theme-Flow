@@ -1,0 +1,17 @@
+{
+  "verification_schema_version": "1.0",
+  "prediction_run_id": "2026-07-10-example123456",
+  "prediction_data_date": "2026-07-10",
+  "verification_date": "2026-10-09",
+  "horizon_weeks": 13,
+  "outcomes": [
+    {
+      "theme_id": "dc_power_infra",
+      "theme_return": null,
+      "spy_return": null,
+      "relative_return": null,
+      "phase_transition": "未検証",
+      "withdrawal_triggered": false
+    }
+  ]
+}

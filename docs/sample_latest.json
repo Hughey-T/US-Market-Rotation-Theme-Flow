@@ -1,0 +1,122 @@
+{
+  "meta": {
+    "schema_version": "1.0",
+    "prediction_schema_version": "1.0",
+    "status": "success",
+    "analysis_ready": true,
+    "data_date": "2026-07-10",
+    "generated_at_utc": "2026-07-11T00:00:00+00:00",
+    "run_id": "2026-07-10-sample000001",
+    "archive_file": "output/archive/2026-07-10__sample000001.json",
+    "rule_version": "phase-1.0",
+    "config_sha256": "sample",
+    "themes_sha256": "sample",
+    "coverage": {
+      "requested_tickers": 10,
+      "usable_tickers": 10,
+      "ratio": 1.0,
+      "critical_missing": [],
+      "themes_ready": 1,
+      "themes_total": 1
+    },
+    "missing": [],
+    "warnings": [],
+    "periods": {"1w": "5営業日", "4w": "21営業日", "13w": "63営業日"},
+    "sample_note": "構造確認用。数値に意味はない。"
+  },
+  "not_implemented": {
+    "earnings_revisions": "第2期",
+    "direct_etf_flows": "第3期",
+    "positioning": "第3期"
+  },
+  "market_regime_inputs": {
+    "assets": {},
+    "breadth": {
+      "rsp_minus_spy_4w": 0.01,
+      "iwm_minus_spy_4w": -0.01,
+      "sector_advance_ratio_4w": 0.55,
+      "vix_level": 16.0,
+      "vix_4w_ago": 18.0
+    }
+  },
+  "style_factor": {},
+  "sectors": {"etfs": {}, "rank_by_rel_spy_4w": []},
+  "industries": {},
+  "theme_universe_coverage": {
+    "configured_theme_count": 1,
+    "mapped_reference_etfs": [],
+    "unmapped_positive_industry_signals": []
+  },
+  "themes": {
+    "sample_theme": {
+      "label": "サンプル",
+      "reference_etfs": [],
+      "coverage": {"n_defined": 8, "n_with_data": 8, "ratio": 1.0, "analysis_ready": true},
+      "metrics": {
+        "n_members_with_data": 8,
+        "eq_r_1w": 0.02,
+        "eq_r_4w": 0.08,
+        "eq_r_13w": 0.12,
+        "median_r_4w": 0.07,
+        "advance_ratio_4w": 0.75,
+        "pct_above_20dma": 0.75,
+        "pct_above_50dma": 0.75,
+        "pct_above_200dma": 0.625,
+        "pct_within_5pct_52w_high": 0.375,
+        "new_52w_high_ratio_4w": 0.25,
+        "volume_ratio_20d_60d": 1.15,
+        "dispersion_4w_top_minus_median": 0.05,
+        "rel_spy_1w": 0.01,
+        "rel_spy_4w": 0.04,
+        "rel_spy_13w": 0.06
+      },
+      "trend_vs_previous": {
+        "available": true,
+        "label": "改善",
+        "rel_spy_4w_delta": 0.01,
+        "advance_ratio_4w_delta": 0.125,
+        "pct_above_50dma_delta": 0.125,
+        "volume_ratio_20d_60d_delta": 0.05
+      },
+      "phase_assessment": {
+        "phase": "拡散",
+        "rule_version": "phase-1.0",
+        "rule_results": {
+          "positive_rel_1w": true,
+          "positive_rel_4w": true,
+          "broad_participation": true,
+          "narrow_participation": false,
+          "same_horizon_trend_improving": true,
+          "same_horizon_trend_weakening": false,
+          "overheat_13w": false,
+          "overheat_near_high": false,
+          "overheat_volume": false,
+          "peripheral_participation": true
+        }
+      },
+      "flow_evidence": {"level": "間接証拠", "direction": "流入示唆", "direct_flow_data": false},
+      "move_hypothesis": "広範上昇",
+      "by_role": {},
+      "leaders_4w": [],
+      "laggards_4w": []
+    }
+  },
+  "history_weekly": [
+    {
+      "data_date": "2026-07-03",
+      "market": {"spy_r_4w": 0.03},
+      "themes": {
+        "sample_theme": {
+          "rel_spy_1w": 0.005,
+          "rel_spy_4w": 0.03,
+          "rel_spy_13w": 0.05,
+          "advance_ratio_4w": 0.625,
+          "pct_above_50dma": 0.625,
+          "volume_ratio_20d_60d": 1.1,
+          "phase": "判定不能"
+        }
+      }
+    }
+  ],
+  "previous_predictions": []
+}
