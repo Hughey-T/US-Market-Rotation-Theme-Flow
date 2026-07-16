@@ -4,7 +4,7 @@
 
 | file | purpose |
 |---|---|
-| `latest_normal.json` | 正常・広範risk-on・theme拡散＋改善 |
+| `latest_normal.json` | 正常・broad risk-onとcyclical recoveryの複数候補によるmixed・theme拡散＋改善 |
 | `latest_missing.json` | 必須field欠損、coverage/history不足 |
 | `latest_overheat_outflow.json` | 価格過熱と流出示唆の同時成立 |
 | `latest_single_name_concentration.json` | 一銘柄集中、market-cap主導、peripheral偏重 |

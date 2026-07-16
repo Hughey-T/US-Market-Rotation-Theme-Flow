@@ -3,6 +3,7 @@ import datetime as dt
 import json
 import os
 import shutil
+import subprocess
 import tempfile
 import unittest
 from contextlib import ExitStack
@@ -13,10 +14,14 @@ import numpy as np
 import pandas as pd
 
 from rotation.judgments import evaluate_withdrawal
-from rotation.publication import load_current_generation
-from rotation.validation import load_json
+from rotation.provenance import canonical_bytes, snapshot_source_hash
+from rotation.publication import load_current_generation, publish_generation
+from rotation.regime import classify_market_regime
+from rotation.validation import ContractError, load_json, validate_latest_semantics, validate_public_latest, validate_schema
 from scripts import generate_weekly
 from scripts import validate_repository as repository_validator
+from scripts.commit_weekly_outputs import commit_weekly_outputs
+from scripts.export_current_latest import export_current
 from scripts.validate_repository import validate_public_outputs
 from tests.test_pipeline_contract import synthetic_inputs
 
@@ -264,7 +269,13 @@ class ProductionOrchestrationE2E(unittest.TestCase):
             self.assertTrue(all(row["ticker"] not in {"FUTURE", "EXPIRED"} for row in theme["constituents"]))
             self.assertTrue(theme["metrics"]["pct_above_50dma"] >= 0.60)
             self.assertTrue(theme["metrics"]["volume_ratio_20d_60d"] >= 1.10)
+            self.assertEqual(latest["market_regime"], classify_market_regime(latest["market_regime"]["inputs"]))
+            validate_schema(latest, LATEST_SCHEMA, "production-generated latest")
+            validate_latest_semantics(latest, verify_source_hash=True)
             self.assertEqual(validate_public_outputs(output.parent, LATEST_SCHEMA), 1)
+            consumer = output / "consumer" / "latest.json"
+            export_current(output, consumer)
+            self.assertEqual(load_json(consumer)["market_regime"], latest["market_regime"])
             root = output.parent
             shutil.copytree(ROOT / "schemas", root / "schemas")
             shutil.copytree(ROOT / "docs", root / "docs")
@@ -273,6 +284,75 @@ class ProductionOrchestrationE2E(unittest.TestCase):
             (root / "data" / "themes.json").write_text(json.dumps(master), encoding="utf-8")
             with mock.patch.object(repository_validator, "ROOT", root):
                 self.assertEqual(repository_validator.main(), 0)
+            with tempfile.TemporaryDirectory() as remote_directory, tempfile.TemporaryDirectory() as clone_directory:
+                remote = Path(remote_directory) / "publication.git"
+                subprocess.run(["git", "init", "--bare", str(remote)], check=True, capture_output=True)
+                subprocess.run(["git", "init", "-b", "main"], cwd=root, check=True, capture_output=True)
+                subprocess.run(
+                    ["git", "add", "config.json", "themes.json", "schemas", "docs", "tests", "data"],
+                    cwd=root, check=True, capture_output=True,
+                )
+                subprocess.run(
+                    ["git", "-c", "user.name=test", "-c", "user.email=test@example.com", "commit", "-m", "baseline"],
+                    cwd=root, check=True, capture_output=True,
+                )
+                main_sha = subprocess.run(
+                    ["git", "rev-parse", "HEAD"], cwd=root, check=True, capture_output=True, text=True,
+                ).stdout.strip()
+                subprocess.run(["git", "remote", "add", "origin", str(remote)], cwd=root, check=True, capture_output=True)
+                subprocess.run(["git", "push", "origin", "main:main"], cwd=root, check=True, capture_output=True)
+                subprocess.run(["git", "switch", "-c", "publication"], cwd=root, check=True, capture_output=True)
+                self.assertTrue(commit_weekly_outputs(root, push=True, bootstrap=True))
+                self.assertEqual(
+                    subprocess.run(
+                        ["git", "--git-dir", str(remote), "rev-parse", "refs/heads/main"],
+                        check=True, capture_output=True, text=True,
+                    ).stdout.strip(),
+                    main_sha,
+                )
+                remote_clone = Path(clone_directory) / "publication"
+                subprocess.run(
+                    ["git", "clone", "--branch", "publication", str(remote), str(remote_clone)],
+                    check=True, capture_output=True,
+                )
+                remote_current = load_current_generation(remote_clone / "output")
+                self.assertIsNotNone(remote_current)
+                validate_schema(remote_current[3], LATEST_SCHEMA, "remote publication latest")
+                validate_public_latest(remote_current[3], verify_source_hash=True)
+                self.assertEqual(
+                    canonical_bytes(load_json(remote_clone / "output" / "consumer" / "latest.json")),
+                    canonical_bytes(remote_current[3]),
+                )
+        finally:
+            temporary.cleanup()
+
+    def test_schema_valid_regime_tamper_cannot_publish_or_replace_consumer(self):
+        _, master, _, _, _ = synthetic_inputs()
+        history = history_for(master, (0.00, 0.01, 0.02), (4, 5, 5), (3, 4, 5))
+        _, latest, output, temporary = run_main(master, "p1", history)
+        try:
+            consumer = output / "consumer" / "latest.json"
+            export_current(output, consumer)
+            pointer_before = (output / "current.json").read_bytes()
+            consumer_before = consumer.read_bytes()
+            generations_before = sorted(path.name for path in (output / "generations").iterdir())
+
+            tampered = copy.deepcopy(latest)
+            stored_confidence = tampered["market_regime"]["classification"]["confidence"]
+            tampered["market_regime"]["classification"]["confidence"] = "high" if stored_confidence != "high" else "low"
+            tampered["meta"]["source_sha256"] = snapshot_source_hash(tampered)
+            validate_schema(tampered, LATEST_SCHEMA, "schema-valid regime tamper")
+            with self.assertRaisesRegex(ContractError, "market_regime.classification.confidence"):
+                publish_generation(
+                    output,
+                    tampered,
+                    generate_weekly.history_item(tampered),
+                    {"index_version": "1.0", "records": []},
+                )
+
+            self.assertEqual((output / "current.json").read_bytes(), pointer_before)
+            self.assertEqual(consumer.read_bytes(), consumer_before)
+            self.assertEqual(sorted(path.name for path in (output / "generations").iterdir()), generations_before)
         finally:
             temporary.cleanup()
 

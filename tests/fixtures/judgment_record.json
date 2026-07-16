@@ -9,17 +9,23 @@
   "generated_at": "2026-07-11T01:00:00Z",
   "source_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "source_snapshot": "output/generations/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/archive.json",
-  "source_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "source_sha256": "4df6b21af87109e60f729917b4152c8c0a30dac7dc5d519b87805f3923351d48",
   "previous_judgment_date": null,
   "regime": {
-    "primary_regime": "broad_risk_on",
-    "secondary_regimes": [],
-    "confidence": "high",
+    "primary_regime": "mixed",
+    "secondary_regimes": [
+      "broad_risk_on",
+      "cyclical_recovery_expectation"
+    ],
+    "confidence": "low",
     "matched_conditions": [
-      "R_BROAD_SPY_POS",
-      "R_BROAD_RSP_NONNEG",
       "R_BROAD_IWM_NONNEG",
-      "R_BROAD_SECTORS_7_OF_11"
+      "R_BROAD_RSP_NONNEG",
+      "R_BROAD_SECTORS_7_OF_11",
+      "R_BROAD_SPY_POS",
+      "R_CYCLE_BASKET2",
+      "R_CYCLE_CREDIT_NONNEG",
+      "R_CYCLE_IWM2"
     ],
     "contrary_evidence": []
   },
@@ -46,7 +52,12 @@
       "timing_rule": "T4",
       "selected_for_deep_dive": true,
       "shortlist_rank": 1,
-      "shortlist_reason_codes": ["SL_PRIORITY_DD_PRIORITY", "SL_EVIDENCE_INFLOW", "SL_PHASE_DIFFUSION", "SL_CONCENTRATION_PASS"],
+      "shortlist_reason_codes": [
+        "SL_PRIORITY_DD_PRIORITY",
+        "SL_EVIDENCE_INFLOW",
+        "SL_PHASE_DIFFUSION",
+        "SL_CONCENTRATION_PASS"
+      ],
       "data_quality": {
         "classification_eligible": true,
         "coverage_ratio": 1.0,
@@ -63,7 +74,9 @@
         "DIR_REL_IMPROVING",
         "DIR_BREADTH_IMPROVING"
       ],
-      "unmatched_conditions": ["PH_OVERHEAT_REL13_15"],
+      "unmatched_conditions": [
+        "PH_OVERHEAT_REL13_15"
+      ],
       "key_metrics": {
         "equal_weight_rel_spy_1w": 0.02,
         "equal_weight_rel_spy_4w": 0.07,

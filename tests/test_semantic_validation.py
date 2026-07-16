@@ -9,6 +9,7 @@ from unittest import mock
 from rotation.classification import classify_theme
 from rotation.metrics import aggregate_theme
 from rotation.provenance import snapshot_source_hash
+from rotation.regime import classify_market_regime
 from rotation.shortlist import apply_shortlist
 from rotation.thresholds import equal_weight_led, market_cap_led, weighting_divergence
 from rotation.validation import (
@@ -23,9 +24,126 @@ from scripts import generate_weekly
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = ROOT / "tests" / "fixtures"
+LATEST_SCHEMA = load_json(ROOT / "schemas" / "rotation_snapshot.schema.json")
 
 
 class SemanticValidatorTests(unittest.TestCase):
+    def test_all_fixture_and_sample_regimes_are_canonical(self):
+        paths = sorted(FIXTURES.glob("latest_*.json")) + [ROOT / "docs" / "sample_latest.json"]
+        for path in paths:
+            with self.subTest(path=path.name):
+                latest = load_json(path)
+                self.assertEqual(
+                    latest["market_regime"],
+                    classify_market_regime(latest["market_regime"]["inputs"]),
+                )
+                validate_schema(latest, LATEST_SCHEMA, path.name)
+                validate_latest_semantics(latest, verify_source_hash=True)
+
+    def test_every_saved_regime_field_is_semantically_enforced(self):
+        def mutate(path, operation):
+            latest = load_json(FIXTURES / "latest_normal.json")
+            operation(latest["market_regime"])
+            latest["meta"]["source_sha256"] = snapshot_source_hash(latest)
+            with self.subTest(path=path):
+                with self.assertRaisesRegex(ContractError, "market_regime"):
+                    validate_latest_semantics(latest, verify_source_hash=True)
+
+        def replace_secondary(regime):
+            regime["classification"]["secondary_regimes"][1] = "defensive_shift"
+
+        def delete_classification_contrary(regime):
+            inputs = dict(regime["inputs"], vix_change_4w=3)
+            regime.clear()
+            regime.update(classify_market_regime(inputs))
+            regime["classification"]["contrary_evidence"].pop()
+
+        def delete_candidate_contrary(regime):
+            inputs = dict(regime["inputs"], rsp_minus_spy_4w_trend_3w="improving")
+            regime.clear()
+            regime.update(classify_market_regime(inputs))
+            regime["candidate_flags"]["large_growth_concentration"]["contrary_evidence"].pop()
+
+        cases = {
+            "classification.primary_regime": lambda regime: regime["classification"].update(primary_regime="directionless"),
+            "classification.secondary_regimes.delete": lambda regime: regime["classification"]["secondary_regimes"].pop(),
+            "classification.secondary_regimes.add": lambda regime: regime["classification"]["secondary_regimes"].append("defensive_shift"),
+            "classification.secondary_regimes.change": replace_secondary,
+            "classification.confidence": lambda regime: regime["classification"].update(confidence="high"),
+            "classification.matched_conditions.delete": lambda regime: regime["classification"]["matched_conditions"].pop(),
+            "classification.matched_conditions.add": lambda regime: regime["classification"]["matched_conditions"].append("R_FAKE"),
+            "classification.contrary_evidence.add": lambda regime: regime["classification"]["contrary_evidence"].append("R_FAKE"),
+            "classification.contrary_evidence.delete": delete_classification_contrary,
+            "candidate_flags.delete": lambda regime: regime["candidate_flags"].pop("defensive_shift"),
+            "candidate_flags.add": lambda regime: regime["candidate_flags"].update(fake_candidate=copy.deepcopy(regime["candidate_flags"]["defensive_shift"])),
+            "candidate_flags.boolean": lambda regime: regime["candidate_flags"]["broad_risk_on"].update(eligible=False),
+            "candidate_flags.matched_conditions": lambda regime: regime["candidate_flags"]["broad_risk_on"]["matched_conditions"].pop(),
+            "candidate_flags.contrary_evidence": lambda regime: regime["candidate_flags"]["large_growth_concentration"]["contrary_evidence"].append("R_FAKE"),
+            "candidate_flags.contrary_evidence.delete": delete_candidate_contrary,
+            "inputs.trend": lambda regime: regime["inputs"].update(rsp_minus_spy_4w_trend_3w="improving"),
+        }
+        for path, operation in cases.items():
+            mutate(path, operation)
+
+    def test_regime_schema_closes_candidate_secondary_and_trend_shapes(self):
+        cases = []
+
+        unknown_secondary = load_json(FIXTURES / "latest_normal.json")
+        unknown_secondary["market_regime"]["classification"]["secondary_regimes"] = ["unknown"]
+        cases.append(("unknown secondary", unknown_secondary))
+
+        duplicate_secondary = load_json(FIXTURES / "latest_normal.json")
+        duplicate_secondary["market_regime"]["classification"]["secondary_regimes"] = ["broad_risk_on", "broad_risk_on"]
+        cases.append(("duplicate secondary", duplicate_secondary))
+
+        unknown_candidate = load_json(FIXTURES / "latest_normal.json")
+        unknown_candidate["market_regime"]["candidate_flags"]["unknown"] = copy.deepcopy(unknown_candidate["market_regime"]["candidate_flags"]["broad_risk_on"])
+        cases.append(("unknown candidate", unknown_candidate))
+
+        missing_candidate = load_json(FIXTURES / "latest_normal.json")
+        missing_candidate["market_regime"]["candidate_flags"].pop("broad_risk_on")
+        cases.append(("missing candidate", missing_candidate))
+
+        wrong_candidate = load_json(FIXTURES / "latest_normal.json")
+        wrong_candidate["market_regime"]["candidate_flags"]["broad_risk_on"] = True
+        cases.append(("wrong candidate value", wrong_candidate))
+
+        for field in ("rsp_minus_spy_4w_trend_3w", "iwm_minus_spy_4w_trend_3w", "dbc_rel_spy_4w_trend_3w"):
+            missing_trend = load_json(FIXTURES / "latest_normal.json")
+            missing_trend["market_regime"]["inputs"].pop(field)
+            cases.append((f"missing {field}", missing_trend))
+
+        invalid_trend = load_json(FIXTURES / "latest_normal.json")
+        invalid_trend["market_regime"]["inputs"]["rsp_minus_spy_4w_trend_3w"] = "sideways"
+        cases.append(("invalid trend", invalid_trend))
+
+        for label, latest in cases:
+            with self.subTest(label=label):
+                with self.assertRaisesRegex(ContractError, "JSON Schema"):
+                    validate_schema(latest, LATEST_SCHEMA, label)
+
+    def test_regime_object_key_order_is_semantically_irrelevant(self):
+        latest = load_json(FIXTURES / "latest_normal.json")
+        expected_hash = latest["meta"]["source_sha256"]
+        regime = latest["market_regime"]
+        regime["inputs"] = dict(reversed(list(regime["inputs"].items())))
+        regime["candidate_flags"] = dict(reversed(list(regime["candidate_flags"].items())))
+        latest["market_regime"] = dict(reversed(list(regime.items())))
+        self.assertEqual(snapshot_source_hash(latest), expected_hash)
+        validate_schema(latest, LATEST_SCHEMA, "reordered regime objects")
+        validate_latest_semantics(latest, verify_source_hash=True)
+
+    def test_regime_primary_cannot_be_repeated_as_secondary(self):
+        latest = load_json(FIXTURES / "latest_normal.json")
+        latest["market_regime"]["classification"].update(
+            primary_regime="broad_risk_on",
+            secondary_regimes=["broad_risk_on", "cyclical_recovery_expectation"],
+        )
+        latest["meta"]["source_sha256"] = snapshot_source_hash(latest)
+        validate_schema(latest, LATEST_SCHEMA, "primary repeated as secondary")
+        with self.assertRaisesRegex(ContractError, "market_regime.classification"):
+            validate_latest_semantics(latest, verify_source_hash=True)
+
     def test_T53_success_rejects_critical_missing(self):
         latest = load_json(FIXTURES / "latest_normal.json")
         latest["meta"]["global_quality"]["critical_missing"] = ["SPY"]

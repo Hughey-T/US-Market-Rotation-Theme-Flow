@@ -5,16 +5,16 @@ Each Python test method belongs to exactly one CI category.
 | CI category | Files | Methods |
 |---|---|---:|
 | Schema and canonical fixtures | `test_condition_audit.py`, `test_immutable_judgments.py` | 9 |
-| Unit and rule contracts | `test_spec_cases.py`, `test_rule_reachability.py`, `test_semantic_validation.py` | 78 |
+| Unit and rule contracts | `test_spec_cases.py`, `test_rule_reachability.py`, `test_semantic_validation.py` | 83 |
 | Pipeline integration | `test_pipeline_contract.py`, `test_generation_e2e.py` | 23 |
-| Production orchestration E2E | `test_production_orchestration_e2e.py` | 10 |
+| Production orchestration E2E | `test_production_orchestration_e2e.py` | 11 |
 | Repository operations and transactional publish | `test_publication_contract.py`, `test_membership_contract.py` | 13 |
 | Judgment projection semantics | `test_judgment_projection.py` | 3 |
 | Publication recovery E2E | `test_publication_hardening.py` | 12 |
 | Workflow contracts | `test_lock_and_workflow_contract.py` | 10 |
-| **Total** | 13 files | **158** |
+| **Total** | 13 files | **164** |
 
-T01–T70 remain the 70 numbered design contracts. The other 88 methods are
+T01–T70 remain the 70 numbered design contracts. The other 94 methods are
 independent reachability, semantic, repository, membership, mutation, and raw
 orchestration contracts. No test file is invoked by more than one CI category.
 

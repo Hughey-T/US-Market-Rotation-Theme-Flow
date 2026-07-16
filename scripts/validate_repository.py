@@ -71,10 +71,16 @@ def main() -> int:
         for path in sorted(fixture_dir.glob("latest_*.json")):
             value = load_json(path)
             validate_schema(value, schemas["latest"], str(path.relative_to(ROOT)))
-            validate_latest_semantics(value)
+            validate_latest_semantics(value, verify_source_hash=True)
+        sample_latest = load_json(ROOT / "docs" / "sample_latest.json")
+        validate_schema(sample_latest, schemas["latest"], "docs/sample_latest.json")
+        validate_latest_semantics(sample_latest, verify_source_hash=True)
         fixture_judgment = load_json(fixture_dir / "judgment_record.json")
         validate_schema(fixture_judgment, schemas["judgment"], "fixture judgment")
         validate_judgment_semantics(fixture_judgment, load_json(fixture_dir / "latest_normal.json"))
+        sample_judgment = load_json(ROOT / "docs" / "judgment_example.json")
+        validate_schema(sample_judgment, schemas["judgment"], "docs/judgment_example.json")
+        validate_judgment_semantics(sample_judgment, sample_latest)
         fixture_master = load_json(fixture_dir / "theme_master.json")
         validate_schema(fixture_master, schemas["master"], "fixture master")
         validate_theme_master_semantics(fixture_master)
@@ -106,7 +112,7 @@ def main() -> int:
         missing = [term for term in required_terms if term not in instructions]
         if missing:
             raise ContractError(f"Custom GPT instructions missing contract terms: {missing}")
-        print(f"validation passed: 7 current schemas, 7 latest fixtures, 1 judgment fixture, 1 master fixture, {public_count} public outputs, {len(warnings)} overlap warnings")
+        print(f"validation passed: 7 current schemas, 7 latest fixtures, 1 sample latest, 1 judgment fixture, 1 sample judgment, 1 master fixture, {public_count} public outputs, {len(warnings)} overlap warnings")
         return 0
     except (ContractError, OSError, ValueError) as error:
         print(f"validation failed:\n{error}", file=sys.stderr)

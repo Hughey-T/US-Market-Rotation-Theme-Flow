@@ -120,7 +120,7 @@
         "inputs": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["spy_r_4w", "qqq_rel_spy_4w", "rsp_minus_spy_4w", "iwm_minus_spy_4w", "sector_advance_ratio_4w", "defensive_basket_rel_spy_4w", "cyclical_basket_rel_spy_4w", "dbc_rel_spy_4w", "gld_rel_spy_4w", "xle_rel_spy_4w", "hyg_minus_lqd_4w", "vix_change_4w", "uup_r_4w"],
+          "required": ["spy_r_4w", "qqq_rel_spy_4w", "rsp_minus_spy_4w", "iwm_minus_spy_4w", "sector_advance_ratio_4w", "defensive_basket_rel_spy_4w", "cyclical_basket_rel_spy_4w", "dbc_rel_spy_4w", "gld_rel_spy_4w", "xle_rel_spy_4w", "hyg_minus_lqd_4w", "vix_change_4w", "uup_r_4w", "rsp_minus_spy_4w_trend_3w", "iwm_minus_spy_4w_trend_3w", "dbc_rel_spy_4w_trend_3w"],
           "properties": {
             "spy_r_4w": {"$ref": "#/$defs/nullableNumber"},
             "qqq_rel_spy_4w": {"$ref": "#/$defs/nullableNumber"},
@@ -140,14 +140,26 @@
             "dbc_rel_spy_4w_trend_3w": {"$ref": "#/$defs/trendState"}
           }
         },
-        "candidate_flags": {"type": "object", "additionalProperties": {"$ref": "#/$defs/regimeCandidate"}},
+        "candidate_flags": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["broad_risk_on", "large_growth_concentration", "defensive_shift", "real_asset_leadership", "cyclical_recovery_expectation", "liquidity_contraction"],
+          "properties": {
+            "broad_risk_on": {"$ref": "#/$defs/regimeCandidate"},
+            "large_growth_concentration": {"$ref": "#/$defs/regimeCandidate"},
+            "defensive_shift": {"$ref": "#/$defs/regimeCandidate"},
+            "real_asset_leadership": {"$ref": "#/$defs/regimeCandidate"},
+            "cyclical_recovery_expectation": {"$ref": "#/$defs/regimeCandidate"},
+            "liquidity_contraction": {"$ref": "#/$defs/regimeCandidate"}
+          }
+        },
         "classification": {
           "type": "object",
           "additionalProperties": false,
           "required": ["primary_regime", "secondary_regimes", "confidence", "matched_conditions", "contrary_evidence"],
           "properties": {
             "primary_regime": {"enum": ["broad_risk_on", "large_growth_concentration", "defensive_shift", "real_asset_leadership", "cyclical_recovery_expectation", "liquidity_contraction", "mixed", "directionless", "unclassifiable"]},
-            "secondary_regimes": {"type": "array", "items": {"type": "string"}, "maxItems": 6, "uniqueItems": true},
+            "secondary_regimes": {"type": "array", "items": {"enum": ["broad_risk_on", "large_growth_concentration", "defensive_shift", "real_asset_leadership", "cyclical_recovery_expectation", "liquidity_contraction"]}, "maxItems": 6, "uniqueItems": true},
             "confidence": {"enum": ["high", "medium", "low", "unclassifiable"]},
             "matched_conditions": {"$ref": "#/$defs/conditionList"},
             "contrary_evidence": {"$ref": "#/$defs/conditionList"}

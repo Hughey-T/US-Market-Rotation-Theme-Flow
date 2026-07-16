@@ -74,6 +74,8 @@ defensive basket=`XLP, XLV, XLU` equal-weight、cyclical basket=`XLY, XLI, XLF, 
 - full matchが1つ: それを`primary_regime`。mandatory 4個以上かつcontrary 0なら`high`、それ以外`medium`。
 - full matchが複数: `primary_regime=mixed`、full match群を`secondary_regimes`、`confidence=low`。単一因果へ押し込まない。
 - full matchなし: `primary_regime=directionless`。mandatoryの75%以上を満たす候補を最大2件`secondary_regimes`へ、`confidence=low`。
+
+`market_regime` はcode-side classifierの完全な出力であり、保存値を独立した判断入力として扱わない。`inputs`には3つの3週trendも必須である。`candidate_flags`は6候補（`broad_risk_on`、`large_growth_concentration`、`defensive_shift`、`real_asset_leadership`、`cyclical_recovery_expectation`、`liquidity_contraction`）をすべて含み、未知候補は許可しない。`secondary_regimes`は候補IDの辞書順、condition ID配列はclassifierが生成する正規順とする。JSON objectのkey順は意味を持たないが、配列順を含む保存済み`market_regime`全体は、保存済み`inputs`から再計算したclassifier出力と完全一致しなければならない。
 - 必須inputの25%以上がnull: `primary_regime=unclassifiable`, `confidence=unclassifiable`。
 
 経済因果を断定せず、上記表示名称を使う。

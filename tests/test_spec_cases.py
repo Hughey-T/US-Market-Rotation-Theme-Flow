@@ -271,11 +271,14 @@ class SpecificationCases(unittest.TestCase):
 
     def test_T37_mixed_regime(self):
         values = normal_regime_inputs()
-        values.update(iwm_minus_spy_4w=0.03, cyclical_basket_rel_spy_4w=0.03, hyg_minus_lqd_4w=0.01)
-        result = classify_market_regime(values)["classification"]
-        self.assertEqual(result["primary_regime"], "mixed")
-        self.assertIn("broad_risk_on", result["secondary_regimes"])
-        self.assertIn("cyclical_recovery_expectation", result["secondary_regimes"])
+        classified = classify_market_regime(values)
+        self.assertEqual(classified, fixture("latest_normal.json")["market_regime"])
+        self.assertEqual(classified["classification"]["primary_regime"], "mixed")
+        self.assertEqual(
+            classified["classification"]["secondary_regimes"],
+            ["broad_risk_on", "cyclical_recovery_expectation"],
+        )
+        self.assertEqual(classify_market_regime(dict(reversed(list(values.items())))), classified)
 
     def test_T38_regime_25_percent_missing(self):
         values = normal_regime_inputs()

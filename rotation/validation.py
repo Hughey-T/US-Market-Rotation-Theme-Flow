@@ -11,6 +11,7 @@ from jsonschema import Draft202012Validator, FormatChecker
 from . import INSTRUCTION_VERSION
 from .classification import classify_theme, evaluate_priority, evaluate_timing, overheat_breadth_weak, priority_matches
 from .provenance import snapshot_source_hash
+from .regime import classify_market_regime
 from .shortlist import apply_shortlist
 from .thresholds import equal_weight_led, market_cap_led
 
@@ -122,6 +123,29 @@ def _walk_finite(value, path="<root>"):
             _walk_finite(child, f"{path}[{index}]")
 
 
+def _compact_value(value, limit: int = 120) -> str:
+    rendered = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return rendered if len(rendered) <= limit else rendered[: limit - 3] + "..."
+
+
+def _semantic_differences(observed, expected, path: str) -> list[str]:
+    """Return deterministic field-level differences; object key order is immaterial."""
+    if isinstance(observed, dict) and isinstance(expected, dict):
+        differences = []
+        for key in sorted(observed.keys() | expected.keys()):
+            child_path = f"{path}.{key}"
+            if key not in observed:
+                differences.append(f"{child_path} is missing; expected {_compact_value(expected[key])}")
+            elif key not in expected:
+                differences.append(f"{child_path} is unexpected")
+            else:
+                differences.extend(_semantic_differences(observed[key], expected[key], child_path))
+        return differences
+    if observed != expected:
+        return [f"{path} mismatch; stored {_compact_value(observed)}, expected {_compact_value(expected)}"]
+    return []
+
+
 def validate_theme_master_semantics(master: dict) -> list[str]:
     errors, warnings, seen_ids = [], [], set()
     membership: dict[str, list[str]] = {}
@@ -176,6 +200,12 @@ def validate_latest_semantics(latest: dict, verify_source_hash: bool = False) ->
         errors.append("failed artifact requires a non-empty failure_reason")
     if "previous_predictions" in latest:
         errors.append("legacy previous_predictions is not accepted as previous_judgments")
+    market_regime = latest.get("market_regime")
+    if isinstance(market_regime, dict) and isinstance(market_regime.get("inputs"), dict):
+        expected_regime = classify_market_regime(market_regime["inputs"])
+        errors.extend(_semantic_differences(market_regime, expected_regime, "market_regime"))
+    else:
+        errors.append("market_regime.inputs is required for canonical regime validation")
     themes = latest.get("themes", {})
     for theme_id, theme in themes.items():
         if theme.get("theme_id") != theme_id:

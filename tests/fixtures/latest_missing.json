@@ -9,7 +9,7 @@
     "run_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
     "source_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     "source_snapshot": "output/generations/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/archive.json",
-    "source_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "source_sha256": "80ad2c73bd5498a62b4cd1b22134ac5bcdde530bda5381cace5417feff3462d0",
     "status": "success",
     "failure_reason": null,
     "universe_definition": {
@@ -20,17 +20,28 @@
       "unique_constituent_count": 6,
       "overlap_policy": "allow_with_warning"
     },
-    "periods": {"1w": 5, "4w": 21, "13w": 63},
+    "periods": {
+      "1w": 5,
+      "4w": 21,
+      "13w": 63
+    },
     "global_quality": {
       "requested_ticker_count": 20,
       "usable_ticker_count": 20,
       "coverage_ratio": 1.0,
       "critical_missing": [],
       "missing_tickers": [],
-      "warnings": ["FIXTURE: 架空test data", "2 theme constituents unavailable"]
+      "warnings": [
+        "FIXTURE: 架空test data",
+        "2 theme constituents unavailable"
+      ]
     }
   },
-  "not_implemented": ["direct_etf_flow", "earnings_revision", "positioning"],
+  "not_implemented": [
+    "direct_etf_flow",
+    "earnings_revision",
+    "positioning"
+  ],
   "market_regime": {
     "inputs": {
       "spy_r_4w": 0.05,
@@ -45,28 +56,116 @@
       "xle_rel_spy_4w": 0.0,
       "hyg_minus_lqd_4w": 0.01,
       "vix_change_4w": -2.0,
-      "uup_r_4w": -0.01
+      "uup_r_4w": -0.01,
+      "rsp_minus_spy_4w_trend_3w": "flat",
+      "iwm_minus_spy_4w_trend_3w": "flat",
+      "dbc_rel_spy_4w_trend_3w": "flat"
     },
     "candidate_flags": {
       "broad_risk_on": {
         "eligible": true,
         "full_match": true,
-        "matched_conditions": ["R_BROAD_SPY_POS", "R_BROAD_RSP_NONNEG", "R_BROAD_IWM_NONNEG", "R_BROAD_SECTORS_7_OF_11"],
+        "matched_conditions": [
+          "R_BROAD_SPY_POS",
+          "R_BROAD_RSP_NONNEG",
+          "R_BROAD_IWM_NONNEG",
+          "R_BROAD_SECTORS_7_OF_11"
+        ],
         "unmatched_conditions": [],
         "contrary_evidence": []
+      },
+      "large_growth_concentration": {
+        "eligible": true,
+        "full_match": false,
+        "matched_conditions": [
+          "R_LG_SPY_POS",
+          "R_LG_QQQ_POS"
+        ],
+        "unmatched_conditions": [
+          "R_LG_RSP_NEG2",
+          "R_LG_IWM_NEG",
+          "R_LG_SECTORS_5"
+        ],
+        "contrary_evidence": []
+      },
+      "defensive_shift": {
+        "eligible": true,
+        "full_match": false,
+        "matched_conditions": [],
+        "unmatched_conditions": [
+          "R_DEF_REL2",
+          "R_DEF_CYCLICAL_NONPOS",
+          "R_DEF_VIX_POS"
+        ],
+        "contrary_evidence": [
+          "R_DEF_IWM_CONTRARY"
+        ]
+      },
+      "real_asset_leadership": {
+        "eligible": true,
+        "full_match": false,
+        "matched_conditions": [
+          "R_REAL_GLD_OR_XLE_NONNEG"
+        ],
+        "unmatched_conditions": [
+          "R_REAL_DBC2"
+        ],
+        "contrary_evidence": []
+      },
+      "cyclical_recovery_expectation": {
+        "eligible": true,
+        "full_match": true,
+        "matched_conditions": [
+          "R_CYCLE_IWM2",
+          "R_CYCLE_BASKET2",
+          "R_CYCLE_CREDIT_NONNEG"
+        ],
+        "unmatched_conditions": [],
+        "contrary_evidence": []
+      },
+      "liquidity_contraction": {
+        "eligible": true,
+        "full_match": false,
+        "matched_conditions": [],
+        "unmatched_conditions": [
+          "R_LIQ_SPY_NEG",
+          "R_LIQ_CREDIT_NEG1",
+          "R_LIQ_VIX3",
+          "R_LIQ_UUP_POS"
+        ],
+        "contrary_evidence": [
+          "R_LIQ_SECTORS_CONTRARY"
+        ]
       }
     },
     "classification": {
-      "primary_regime": "broad_risk_on",
-      "secondary_regimes": [],
-      "confidence": "high",
-      "matched_conditions": ["R_BROAD_SPY_POS", "R_BROAD_RSP_NONNEG", "R_BROAD_IWM_NONNEG", "R_BROAD_SECTORS_7_OF_11"],
+      "primary_regime": "mixed",
+      "secondary_regimes": [
+        "broad_risk_on",
+        "cyclical_recovery_expectation"
+      ],
+      "confidence": "low",
+      "matched_conditions": [
+        "R_BROAD_IWM_NONNEG",
+        "R_BROAD_RSP_NONNEG",
+        "R_BROAD_SECTORS_7_OF_11",
+        "R_BROAD_SPY_POS",
+        "R_CYCLE_BASKET2",
+        "R_CYCLE_CREDIT_NONNEG",
+        "R_CYCLE_IWM2"
+      ],
       "contrary_evidence": []
     }
   },
   "style_factor": {},
-  "sectors": {"etfs": {}, "rank_by_rel_spy_4w": []},
-  "industries": {"etfs": {}, "rank_by_rel_spy_4w": []},
+  "sectors": {
+    "etfs": {},
+    "rank_by_rel_spy_4w": []
+  },
+  "industries": {
+    "etfs": {},
+    "rank_by_rel_spy_4w": []
+  },
   "themes": {
     "fixture_theme": {
       "theme_id": "fixture_theme",
@@ -81,10 +180,27 @@
         "valid_constituent_count": 4,
         "coverage_ratio": 0.6667,
         "history_weeks": 1,
-        "role_valid_counts": {"core": 2, "beneficiary": 2, "peripheral": 0},
-        "metric_valid_counts": {"return_4w": 4, "return_13w": 3, "above_50dma": 4, "within_5pct_52w_high": 3, "market_cap": 3},
-        "missing_required_fields": ["themes.fixture_theme.metrics.equal_weight_rel_spy_4w"],
-        "quality_reasons": ["Q_VALID_CONSTITUENTS_BELOW_5", "Q_COVERAGE_BELOW_075", "Q_HISTORY_BELOW_3", "Q_REQUIRED_FIELD_NULL"]
+        "role_valid_counts": {
+          "core": 2,
+          "beneficiary": 2,
+          "peripheral": 0
+        },
+        "metric_valid_counts": {
+          "return_4w": 4,
+          "return_13w": 3,
+          "above_50dma": 4,
+          "within_5pct_52w_high": 3,
+          "market_cap": 3
+        },
+        "missing_required_fields": [
+          "themes.fixture_theme.metrics.equal_weight_rel_spy_4w"
+        ],
+        "quality_reasons": [
+          "Q_VALID_CONSTITUENTS_BELOW_5",
+          "Q_COVERAGE_BELOW_075",
+          "Q_HISTORY_BELOW_3",
+          "Q_REQUIRED_FIELD_NULL"
+        ]
       },
       "metrics": {
         "equal_weight_return_1w": 0.04,
@@ -132,7 +248,10 @@
         "overheat_breadth_weak": null,
         "matched_conditions": [],
         "unmatched_conditions": [],
-        "contrary_evidence": ["Q_REQUIRED_FIELD_NULL", "Q_HISTORY_BELOW_3"]
+        "contrary_evidence": [
+          "Q_REQUIRED_FIELD_NULL",
+          "Q_HISTORY_BELOW_3"
+        ]
       },
       "classifications": {
         "phase": "unclassifiable",
@@ -152,19 +271,79 @@
       "relative_strength_rank_4w": null,
       "selected_for_deep_dive": false,
       "shortlist_rank": null,
-      "shortlist_reason_codes": ["SL_EXCLUDED_CLASSIFICATION_INELIGIBLE"],
+      "shortlist_reason_codes": [
+        "SL_EXCLUDED_CLASSIFICATION_INELIGIBLE"
+      ],
       "by_role": {
-        "core": {"valid_count": 2, "equal_weight_rel_spy_4w": 0.08, "advance_ratio_4w": 1.0},
+        "core": {
+          "valid_count": 2,
+          "equal_weight_rel_spy_4w": 0.08,
+          "advance_ratio_4w": 1.0
+        },
         "beneficiary": null,
         "peripheral": null
       },
       "constituents": [
-        {"ticker": "AAA", "role": "core", "valid": true, "return_4w": 0.18, "rel_spy_4w": 0.13, "market_cap": 10000000000, "positive_contribution_ratio": null, "overlap_theme_count": 1},
-        {"ticker": "BBB", "role": "core", "valid": true, "return_4w": 0.15, "rel_spy_4w": 0.10, "market_cap": 9000000000, "positive_contribution_ratio": null, "overlap_theme_count": 1},
-        {"ticker": "CCC", "role": "beneficiary", "valid": true, "return_4w": 0.13, "rel_spy_4w": 0.08, "market_cap": 8000000000, "positive_contribution_ratio": null, "overlap_theme_count": 1},
-        {"ticker": "DDD", "role": "beneficiary", "valid": true, "return_4w": 0.11, "rel_spy_4w": 0.06, "market_cap": 7000000000, "positive_contribution_ratio": null, "overlap_theme_count": 1},
-        {"ticker": "EEE", "role": "peripheral", "valid": false, "return_4w": null, "rel_spy_4w": null, "market_cap": null, "positive_contribution_ratio": null, "overlap_theme_count": 1},
-        {"ticker": "FFF", "role": "peripheral", "valid": false, "return_4w": null, "rel_spy_4w": null, "market_cap": null, "positive_contribution_ratio": null, "overlap_theme_count": 1}
+        {
+          "ticker": "AAA",
+          "role": "core",
+          "valid": true,
+          "return_4w": 0.18,
+          "rel_spy_4w": 0.13,
+          "market_cap": 10000000000,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "BBB",
+          "role": "core",
+          "valid": true,
+          "return_4w": 0.15,
+          "rel_spy_4w": 0.1,
+          "market_cap": 9000000000,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "CCC",
+          "role": "beneficiary",
+          "valid": true,
+          "return_4w": 0.13,
+          "rel_spy_4w": 0.08,
+          "market_cap": 8000000000,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "DDD",
+          "role": "beneficiary",
+          "valid": true,
+          "return_4w": 0.11,
+          "rel_spy_4w": 0.06,
+          "market_cap": 7000000000,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "EEE",
+          "role": "peripheral",
+          "valid": false,
+          "return_4w": null,
+          "rel_spy_4w": null,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "FFF",
+          "role": "peripheral",
+          "valid": false,
+          "return_4w": null,
+          "rel_spy_4w": null,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        }
       ]
     }
   },
@@ -173,7 +352,10 @@
     "max_themes": 5,
     "minimum_preferred_themes": 3,
     "selected_theme_ids": [],
-    "quality_reasons": ["SHORTLIST_NO_ELIGIBLE_THEME", "SHORTLIST_BELOW_MINIMUM_3"]
+    "quality_reasons": [
+      "SHORTLIST_NO_ELIGIBLE_THEME",
+      "SHORTLIST_BELOW_MINIMUM_3"
+    ]
   },
   "history_weekly": [],
   "previous_judgments": {
