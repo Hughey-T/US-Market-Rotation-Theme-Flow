@@ -130,6 +130,8 @@ def canonical_condition_ids(
             evidence_ids.append("EV_VOLUME_110")
         if _number(advance) and advance >= 0.60:
             evidence_ids.append("EV_ADVANCE_60")
+        elif evidence.get("level") == "relative_preference_suggested" and _number(advance) and advance >= 0.25:
+            evidence_ids.append("EV_ADVANCE_25")
         if _number(top1) and top1 <= 0.50:
             evidence_ids.append("EV_TOP1_50")
     elif evidence.get("direction") == "outflow":

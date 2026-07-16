@@ -90,6 +90,8 @@ class CompleteJudgmentProjectionTests(unittest.TestCase):
         }
         source = load_json(ROOT / "tests" / "fixtures" / "latest_normal.json")
         self.assertEqual(evaluate_withdrawal(condition, source, [])["status"], "unknown")
+        equality = {**condition, "operator": "==", "value": 1}
+        self.assertEqual(evaluate_withdrawal(equality, source, [])["status"], "unknown")
 
     def test_complete_projection_is_valid(self):
         sources = (

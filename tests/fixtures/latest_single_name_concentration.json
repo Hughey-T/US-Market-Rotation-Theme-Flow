@@ -142,7 +142,7 @@
           "direction": "inflow",
           "positioning_hypothesis": "not_supported",
           "direct_flow_data_available": false,
-          "matched_conditions": ["EV_REL_POS", "EV_DIRECTION_IMPROVING", "EV_VOLUME_110"]
+          "matched_conditions": ["EV_REL_POS", "EV_DIRECTION_IMPROVING", "EV_VOLUME_110", "EV_ADVANCE_25"]
         },
         "research_priority": "watch",
         "research_priority_rule": "P4",

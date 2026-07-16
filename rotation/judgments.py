@@ -45,6 +45,14 @@ def get_path(value, path: str):
 def _compare(observed, operator, expected):
     if observed is None:
         return None
+    compatible = (
+        isinstance(observed, bool) and isinstance(expected, bool)
+        or not isinstance(observed, bool) and not isinstance(expected, bool)
+        and isinstance(observed, (int, float)) and isinstance(expected, (int, float))
+        or isinstance(observed, str) and isinstance(expected, str)
+    )
+    if not compatible:
+        return None
     if operator == "==":
         return observed == expected
     if operator == "!=":

@@ -37,6 +37,8 @@ class PriorityReachability(unittest.TestCase):
     def test_reachability_P3(self):
         theme = production_theme(advance_ratio_4w=0.40)
         self.assertEqual((theme["classifications"]["phase"], theme["classifications"]["evidence"]["level"], theme["classifications"]["evidence"]["direction"]), ("initial", "relative_preference_suggested", "inflow"))
+        self.assertIn("EV_ADVANCE_25", theme["classifications"]["evidence"]["matched_conditions"])
+        self.assertNotIn("EV_ADVANCE_60", theme["classifications"]["evidence"]["matched_conditions"])
         self.assert_priority(theme, "dd_candidate", "P3")
 
     def test_reachability_P4(self):

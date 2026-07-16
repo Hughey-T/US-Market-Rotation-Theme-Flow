@@ -194,6 +194,20 @@ class SemanticValidatorTests(unittest.TestCase):
         with self.assertRaisesRegex(ContractError, "value type does not match"):
             validate_judgment_semantics(wrong_type, source)
 
+        null_numeric_source = copy.deepcopy(source)
+        null_numeric_source["themes"]["fixture_theme"]["metrics"]["market_cap_weight_rel_spy_4w"] = None
+        null_numeric_source["meta"]["source_sha256"] = snapshot_source_hash(null_numeric_source)
+        null_wrong_type = load_json(FIXTURES / "judgment_record.json")
+        null_wrong_type["source_sha256"] = null_numeric_source["meta"]["source_sha256"]
+        null_wrong_type["theme_judgments"][0]["key_metrics"]["market_cap_weight_rel_spy_4w"] = None
+        null_wrong_type["theme_judgments"][0]["withdrawal_conditions"][0].update(
+            field_path="themes.fixture_theme.metrics.market_cap_weight_rel_spy_4w",
+            operator="==",
+            value="not-a-number",
+        )
+        with self.assertRaisesRegex(ContractError, "source field schema"):
+            validate_judgment_semantics(null_wrong_type, null_numeric_source)
+
         ordered_string = load_json(FIXTURES / "judgment_record.json")
         ordered_string["theme_judgments"][0]["withdrawal_conditions"][0]["value"] = "zero"
         with self.assertRaisesRegex(ContractError, "JSON Schema"):

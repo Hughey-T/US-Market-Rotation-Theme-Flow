@@ -170,6 +170,8 @@ ordinal一軸にpositioning原因を混ぜない。`evidence.level`, `evidence.d
 | 価格下落のみ確認 | rel4<0だがbreadth/trend確認なし | `price_only / down` |
 | 証拠不足 | quality不足または方向を確認できない | `insufficient / unknown` |
 
+inflowのrelative preferenceで使用した`advance>=0.25`はcanonical evidence condition ID `EV_ADVANCE_25`として保存し、flow条件の`EV_ADVANCE_60`と区別する。
+
 `positioning_hypothesis=possible_short_term_adjustment`は、abs(rel1)>=0.08かつtop1>0.60、またはvolume>=1.80かつadvance<0.40の場合だけ。positioning data未実装なので「可能性」でありlevelではない。それ以外は`not_supported`、必要field欠損は`not_assessable`。
 
 ## 9. research priority決定表（code-side）

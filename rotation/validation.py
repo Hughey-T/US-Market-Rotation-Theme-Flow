@@ -44,6 +44,62 @@ def load_json(path: Path):
         return json.load(handle, parse_constant=lambda value: (_ for _ in ()).throw(ValueError(f"non-finite JSON constant: {value}")))
 
 
+def _resolve_local_ref(root: dict, node: dict) -> dict:
+    seen = set()
+    while isinstance(node, dict) and "$ref" in node:
+        reference = node["$ref"]
+        if not isinstance(reference, str) or not reference.startswith("#/") or reference in seen:
+            return {}
+        seen.add(reference)
+        resolved = root
+        for part in reference[2:].split("/"):
+            key = part.replace("~1", "/").replace("~0", "~")
+            if not isinstance(resolved, dict) or key not in resolved:
+                return {}
+            resolved = resolved[key]
+        node = resolved
+    return node if isinstance(node, dict) else {}
+
+
+def _schema_types_for_path(root: dict, path: str) -> set[str]:
+    node = root
+    for part in path.split("."):
+        node = _resolve_local_ref(root, node)
+        properties = node.get("properties", {})
+        if isinstance(properties, dict) and part in properties:
+            node = properties[part]
+        elif isinstance(node.get("additionalProperties"), dict):
+            node = node["additionalProperties"]
+        else:
+            return set()
+    node = _resolve_local_ref(root, node)
+    declared = node.get("type", [])
+    if isinstance(declared, str):
+        return {declared}
+    if isinstance(declared, list):
+        return {value for value in declared if isinstance(value, str)}
+    values = [node["const"]] if "const" in node else node.get("enum", [])
+    inferred = set()
+    for value in values if isinstance(values, list) else []:
+        if isinstance(value, bool):
+            inferred.add("boolean")
+        elif isinstance(value, (int, float)):
+            inferred.add("number")
+        elif isinstance(value, str):
+            inferred.add("string")
+        elif value is None:
+            inferred.add("null")
+    return inferred
+
+
+def _scalar_matches_schema(value, schema_types: set[str]) -> bool:
+    if isinstance(value, bool):
+        return "boolean" in schema_types
+    if isinstance(value, (int, float)):
+        return not isinstance(value, bool) and bool({"number", "integer"} & schema_types)
+    return isinstance(value, str) and "string" in schema_types
+
+
 def schema_errors(instance, schema: dict) -> list[str]:
     validator = Draft202012Validator(schema, format_checker=FormatChecker())
     return [f"{'/'.join(str(part) for part in error.absolute_path) or '<root>'}: {error.message}" for error in sorted(validator.iter_errors(instance), key=lambda error: list(error.absolute_path))]
@@ -215,6 +271,7 @@ def validate_judgment_semantics(record: dict, source_latest: dict | None) -> Non
     if source_latest is None:
         raise ContractError("judgment source latest is unavailable")
     errors = []
+    latest_schema = load_json(Path(__file__).resolve().parents[1] / "schemas" / "rotation_snapshot.schema.json")
     source_meta = source_latest.get("meta", {})
     try:
         validate_public_latest(source_latest, verify_source_hash=False)
@@ -278,10 +335,13 @@ def validate_judgment_semantics(record: dict, source_latest: dict | None) -> Non
                 errors.append(f"{theme_id}/{condition_id}: withdrawal field_path is absent from source latest")
                 continue
             operator, expected = condition.get("operator"), condition.get("value")
+            schema_types = _schema_types_for_path(latest_schema, field_path) - {"null"}
+            if not schema_types or not _scalar_matches_schema(expected, schema_types):
+                errors.append(f"{theme_id}/{condition_id}: withdrawal value type does not match the source field schema")
             if operator in {"<", "<=", ">", ">="}:
                 if isinstance(expected, bool) or not isinstance(expected, (int, float)):
                     errors.append(f"{theme_id}/{condition_id}: ordered withdrawal comparison requires a numeric value")
-                if observed is not None and (isinstance(observed, bool) or not isinstance(observed, (int, float))):
+                if not ({"number", "integer"} & schema_types) or (observed is not None and (isinstance(observed, bool) or not isinstance(observed, (int, float)))):
                     errors.append(f"{theme_id}/{condition_id}: ordered withdrawal comparison targets a non-numeric field")
             elif observed is not None and not _compatible_scalar(observed, expected):
                 errors.append(f"{theme_id}/{condition_id}: withdrawal value type does not match the source field")

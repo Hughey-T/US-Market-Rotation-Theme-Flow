@@ -237,6 +237,41 @@ class ProductionOrchestrationE2E(unittest.TestCase):
         finally:
             temporary.cleanup()
 
+    def test_raw_dataframe_reaches_p3_with_initial_breadth(self):
+        _, master, _, _, _ = synthetic_inputs()
+        members = [member["ticker"] for member in master["themes"][0]["members"]]
+        history = history_for(master, (-0.03, -0.02, -0.01), (1, 1, 2), (1, 1, 2))
+
+        def half_flat(frames, _config):
+            for ticker in members[3:]:
+                frame = frames[ticker].copy()
+                frame["Close"] = 100.0
+                frame["Volume"] = 100.0
+                frames[ticker] = frame
+
+        result, latest, _, temporary = run_main(master, "p1", history, mutate_frames=half_flat)
+        try:
+            self.assertEqual(result, 0)
+            theme = latest["themes"]["fixture_theme"]
+            classifications = theme["classifications"]
+            self.assertEqual(theme["metrics"]["advance_ratio_4w"], 0.50)
+            self.assertEqual(
+                (classifications["phase"], classifications["direction"]),
+                ("initial", "improving"),
+            )
+            self.assertEqual(
+                (classifications["evidence"]["level"], classifications["evidence"]["direction"]),
+                ("relative_preference_suggested", "inflow"),
+            )
+            self.assertEqual(
+                (classifications["research_priority_rule"], classifications["timing_rule"]),
+                ("P3", "T3"),
+            )
+            self.assertIn("EV_ADVANCE_25", classifications["evidence"]["matched_conditions"])
+            self.assertNotIn("EV_ADVANCE_60", classifications["evidence"]["matched_conditions"])
+        finally:
+            temporary.cleanup()
+
     def test_raw_dataframe_reaches_p2_p5_and_overheat_outflow(self):
         cases = (
             ("p2", (0.00, 0.01, 0.02), (4, 5, 5), (4, 5, 5), "P2", "price_overheat", "flat"),
