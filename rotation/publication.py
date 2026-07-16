@@ -1,6 +1,7 @@
 """Publication contract 1.0: validated generations and one atomic current pointer."""
 from __future__ import annotations
 
+import copy
 import shutil
 import tempfile
 from dataclasses import dataclass
@@ -193,6 +194,39 @@ def validate_generation(directory: Path) -> tuple[dict, dict, dict, dict]:
     return manifest, latest, history, index
 
 
+def _validate_generation_chronology(child: dict, previous: dict) -> None:
+    if child["data_date"] < previous["data_date"]:
+        raise ContractError(
+            "generation chronology violation: "
+            f"generation_id={child['generation_id']} "
+            f"previous_generation_id={previous['generation_id']} "
+            f"child_data_date={child['data_date']} "
+            f"previous_data_date={previous['data_date']}"
+        )
+
+
+def _validate_ancestor_chain(output: Path, manifest: dict) -> None:
+    seen = {manifest["generation_id"]}
+    child = manifest
+    while child["previous_generation_id"] is not None:
+        previous_id = child["previous_generation_id"]
+        if previous_id in seen:
+            raise ContractError(
+                "generation history cycle: "
+                f"generation_id={child['generation_id']} previous_generation_id={previous_id}"
+            )
+        previous_directory = safe_generation_path(output, previous_id)
+        if not previous_directory.is_dir():
+            raise ContractError(
+                "publication pointer previous generation does not exist: "
+                f"generation_id={child['generation_id']} previous_generation_id={previous_id}"
+            )
+        previous = validate_generation(previous_directory)[0]
+        _validate_generation_chronology(child, previous)
+        seen.add(previous_id)
+        child = previous
+
+
 def validate_pointer_candidate(output: Path, pointer: dict) -> tuple[dict, dict, dict, dict]:
     validate_schema(pointer, POINTER_SCHEMA, "publication pointer candidate")
     generation_id = validate_safe_id(pointer["generation_id"], "generation_id")
@@ -211,11 +245,7 @@ def validate_pointer_candidate(output: Path, pointer: dict) -> tuple[dict, dict,
     previous = pointer["previous_generation_id"]
     if previous == generation_id:
         raise ContractError("publication pointer cannot reference itself as previous generation")
-    if previous is not None:
-        previous_directory = safe_generation_path(output, previous)
-        if not previous_directory.is_dir():
-            raise ContractError("publication pointer previous generation does not exist")
-        validate_generation(previous_directory)
+    _validate_ancestor_chain(output, manifest)
     return manifest, latest, history, index
 
 
@@ -326,6 +356,7 @@ def _validate_root_judgments(output: Path, index: dict, files: set[str]) -> None
 
 def _validate_generation_chain(
     output: Path, current: tuple, *, allow_recoverable_orphans: bool = False,
+    recoverable_records: list[dict] | None = None,
 ) -> tuple[set[str], set[str]]:
     files: set[str] = set()
     generation_ids: set[str] = set()
@@ -344,9 +375,14 @@ def _validate_generation_chain(
             break
         directory = safe_generation_path(output, previous)
         try:
-            manifest, *_ = validate_generation(directory)
+            previous_manifest, *_ = validate_generation(directory)
         except (ContractError, OSError, ValueError) as error:
             raise _inventory_error(output, directory, "invalid publication generation") from error
+        try:
+            _validate_generation_chronology(manifest, previous_manifest)
+        except ContractError as error:
+            raise _inventory_error(output, directory, str(error)) from error
+        manifest = previous_manifest
 
     generations = output / "generations"
     if generations.is_symlink() or not generations.is_dir():
@@ -361,7 +397,9 @@ def _validate_generation_chain(
                 raise _inventory_error(output, entry, "invalid interrupted generation") from error
             if (
                 orphan_manifest["previous_generation_id"] != current[2]["generation_id"]
-                or orphan_index["records"] != current[5]["records"]
+                or orphan_index["records"] != (
+                    current[5]["records"] if recoverable_records is None else recoverable_records
+                )
             ):
                 raise _inventory_error(output, entry, "unrecoverable interrupted generation")
             for name in GENERATION_ENTRY_SET:
@@ -395,15 +433,18 @@ def _validate_consumer(output: Path, latest: dict, files: set[str], *, required:
         raise _inventory_error(output, expected, "consumer export mismatch")
 
 
-def validate_current_publication_inventory(
+def _validate_current_publication_inventory(
     output: Path, *, require_consumer: bool, allow_recoverable_orphans: bool = False,
+    recoverable_records: list[dict] | None = None, root_judgment_index: dict | None = None,
+    allow_transaction_lock: bool = False, allow_missing_empty_judgments: bool = False,
 ) -> set[str]:
     """Validate the complete current publication tree and return its exact tracked inventory."""
     if output.is_symlink() or not output.is_dir():
         raise _inventory_error(output, output)
     lock = output / ".publish.lock"
     if lock.exists() or lock.is_symlink():
-        raise _inventory_error(output, lock, "interrupted publication transaction")
+        if not allow_transaction_lock or lock.is_symlink() or not lock.is_file():
+            raise _inventory_error(output, lock, "interrupted publication transaction")
     for entry in sorted(output.iterdir(), key=lambda item: item.name):
         if entry.name.startswith(".staging-"):
             raise _inventory_error(output, entry, "interrupted publication transaction")
@@ -420,9 +461,17 @@ def validate_current_publication_inventory(
         raise _inventory_error(output, current_path, "missing publication entry")
     chain_files, _ = _validate_generation_chain(
         output, current, allow_recoverable_orphans=allow_recoverable_orphans,
+        recoverable_records=recoverable_records,
     )
     files.update(chain_files)
-    _validate_root_judgments(output, current[5], files)
+    effective_index = current[5] if root_judgment_index is None else root_judgment_index
+    judgment_directory = output / "judgments"
+    if not (
+        allow_missing_empty_judgments
+        and not judgment_directory.exists() and not judgment_directory.is_symlink()
+        and not effective_index["records"]
+    ):
+        _validate_root_judgments(output, effective_index, files)
     _validate_consumer(output, current[3], files, required=require_consumer)
 
     latest = output / "latest.json"
@@ -445,20 +494,53 @@ def validate_current_publication_inventory(
         "current.json", "generations", "judgments", "consumer", "latest.json",
         "archive", "history", "predictions", "verifications",
     }
+    if allow_transaction_lock:
+        allowed.add(".publish.lock")
     for entry in sorted(output.iterdir(), key=lambda item: item.name):
         if entry.name not in allowed:
             raise _inventory_error(output, entry)
     return files
 
 
-def _validate_orphan_inventory(output: Path) -> set[str]:
+def validate_current_publication_inventory(
+    output: Path, *, require_consumer: bool, allow_recoverable_orphans: bool = False,
+) -> set[str]:
+    return _validate_current_publication_inventory(
+        output, require_consumer=require_consumer,
+        allow_recoverable_orphans=allow_recoverable_orphans,
+    )
+
+
+def _validate_orphan_inventory(
+    output: Path, *, allow_transaction_lock: bool = False,
+    allow_missing_empty_judgments: bool = False, allow_legacy_artifacts: bool = False,
+) -> set[str]:
     files: set[str] = set()
     allowed = set(PLACEHOLDER_DIRECTORIES) | {"generations"}
+    if allow_transaction_lock:
+        allowed.add(".publish.lock")
+    if allow_legacy_artifacts:
+        allowed.add("latest.json")
     for entry in sorted(output.iterdir(), key=lambda item: item.name):
         if entry.name not in allowed:
             raise _inventory_error(output, entry)
-    for name in ("archive", "history", "predictions", "verifications"):
-        _validate_placeholder_directory(output, name, files)
+    lock = output / ".publish.lock"
+    if allow_transaction_lock and (lock.is_symlink() or not lock.is_file()):
+        raise _inventory_error(output, lock, "interrupted publication transaction")
+    if allow_legacy_artifacts:
+        latest = output / "latest.json"
+        _add_regular_file(output, latest, files)
+        value = load_json(latest)
+        validate_schema(value, LATEST_SCHEMA, output_relative_path(output, latest))
+        validate_public_latest(value, verify_source_hash=False)
+        for name, schema, is_latest in (
+            ("archive", LATEST_SCHEMA, True), ("history", HISTORY_SCHEMA, False),
+            ("predictions", PREDICTION_SCHEMA, False), ("verifications", VERIFICATION_SCHEMA, False),
+        ):
+            _validate_flat_contract_directory(output, name, schema, files, latest=is_latest)
+    else:
+        for name in ("archive", "history", "predictions", "verifications"):
+            _validate_placeholder_directory(output, name, files)
     generations = output / "generations"
     if generations.is_symlink() or not generations.is_dir():
         raise _inventory_error(output, generations)
@@ -477,7 +559,13 @@ def _validate_orphan_inventory(output: Path) -> set[str]:
     root_records = indexes[0]["records"]
     if any(index["records"] != root_records for index in indexes[1:]):
         raise _inventory_error(output, generations, "inconsistent interrupted generation inventory")
-    _validate_root_judgments(output, indexes[0], files)
+    judgment_directory = output / "judgments"
+    if not (
+        allow_missing_empty_judgments
+        and not judgment_directory.exists() and not judgment_directory.is_symlink()
+        and not indexes[0]["records"]
+    ):
+        _validate_root_judgments(output, indexes[0], files)
     return files
 
 
@@ -590,14 +678,70 @@ def committed_history(output: Path, limit: int = 12) -> list[dict]:
     return [by_date[key] for key in sorted(by_date)][-limit:]
 
 
-def _valid_orphans(output: Path, analysis_id: str, current_generation_id: str | None) -> list[tuple[dict, Path]]:
+_EXECUTION_META_FIELDS = frozenset({
+    "generated_at", "valid_until", "hard_stop_after", "source_snapshot", "source_sha256",
+})
+
+
+def _logical_snapshot(snapshot: dict) -> dict:
+    value = copy.deepcopy(snapshot)
+    meta = value.get("meta", {})
+    for field in _EXECUTION_META_FIELDS:
+        meta.pop(field, None)
+    return value
+
+
+def _root_index(index: dict) -> dict:
+    return {key: value for key, value in index.items() if key != "publication"}
+
+
+def _publication_identity(snapshot: dict, history: dict, index: dict, previous_generation_id: str | None) -> dict:
+    meta = snapshot["meta"]
+    return {
+        "analysis_id": meta["run_id"],
+        "data_date": meta["data_date"],
+        "source_commit": meta["source_commit"],
+        "logical_snapshot": stable_hash(_logical_snapshot(snapshot)),
+        "history": stable_hash(history),
+        "judgment_index": stable_hash(_root_index(index)),
+        "previous_generation_id": previous_generation_id,
+    }
+
+
+def _assert_publication_identity(
+    manifest: dict, snapshot: dict, history: dict, index: dict,
+    retry_snapshot: dict, retry_history: dict, retry_index: dict,
+    previous_generation_id: str | None, current_data_date: str | None,
+) -> None:
+    actual = _publication_identity(snapshot, history, index, manifest["previous_generation_id"])
+    expected = _publication_identity(
+        retry_snapshot, retry_history, retry_index, previous_generation_id,
+    )
+    mismatched = sorted(field for field in expected if actual.get(field) != expected[field])
+    if mismatched:
+        raise ContractError(
+            "publication identity mismatch: "
+            f"generation_id={manifest['generation_id']} "
+            f"previous_generation_id={manifest['previous_generation_id']} "
+            f"orphan_data_date={manifest['data_date']} "
+            f"current_data_date={current_data_date} "
+            f"retry_snapshot_data_date={retry_snapshot['meta']['data_date']} "
+            f"mismatched_identity_fields={','.join(mismatched)}"
+        )
+
+
+def _valid_orphans(
+    output: Path, snapshot: dict, history: dict, index: dict,
+    current: tuple | None,
+) -> list[tuple[dict, Path]]:
     candidates = []
     generations = output / "generations"
     if not generations.is_dir():
         return candidates
     chain_ids: set[str] = set()
-    current = load_current_generation(output)
     manifest = current[2] if current else None
+    current_generation_id = manifest["generation_id"] if manifest else None
+    current_data_date = manifest["data_date"] if manifest else None
     while manifest is not None:
         generation_id = manifest["generation_id"]
         if generation_id in chain_ids:
@@ -609,14 +753,66 @@ def _valid_orphans(output: Path, analysis_id: str, current_generation_id: str | 
         if path.name in chain_ids:
             continue
         try:
-            manifest, *_ = validate_generation(path)
+            manifest, orphan_snapshot, orphan_history, orphan_index = validate_generation(path)
         except (ContractError, OSError, ValueError) as error:
             raise ContractError(f"invalid orphan generation: {path.name}") from error
-        if manifest["analysis_id"] == analysis_id and manifest["previous_generation_id"] == current_generation_id:
-            candidates.append((manifest, path))
-        else:
+        if manifest["previous_generation_id"] != current_generation_id:
             raise ContractError(f"unrelated orphan generation requires explicit recovery: {path.name}")
+        if current is not None:
+            _validate_generation_chronology(manifest, current[2])
+        try:
+            _assert_publication_identity(
+                manifest, orphan_snapshot, orphan_history, orphan_index,
+                snapshot, history, index, current_generation_id, current_data_date,
+            )
+        except ContractError as error:
+            raise ContractError(
+                f"unrelated orphan generation requires explicit recovery: {path.name}; {error}"
+            ) from error
+        candidates.append((manifest, path))
     return sorted(candidates, key=lambda item: (item[0]["generated_at"], item[0]["generation_id"]))
+
+
+def _revalidate_pointer_switch(
+    output: Path, expected_current: tuple | None, pointer: dict,
+    snapshot: dict, history: dict, index: dict,
+) -> None:
+    current = load_current_generation(output)
+    expected_pointer = expected_current[0] if expected_current else None
+    current_pointer_value = current[0] if current else None
+    if canonical_bytes(current_pointer_value) != canonical_bytes(expected_pointer):
+        raise ContractError(
+            "current changed before pointer switch: "
+            f"expected_generation_id={expected_pointer.get('generation_id') if expected_pointer else None} "
+            f"actual_generation_id={current_pointer_value.get('generation_id') if current_pointer_value else None}"
+        )
+    candidate = validate_pointer_candidate(output, pointer)
+    current_generation_id = current[2]["generation_id"] if current else None
+    current_data_date = current[2]["data_date"] if current else None
+    _assert_publication_identity(
+        candidate[0], candidate[1], candidate[2], candidate[3],
+        snapshot, history, index, current_generation_id, current_data_date,
+    )
+    if current is None:
+        _validate_orphan_inventory(
+            output, allow_transaction_lock=True, allow_missing_empty_judgments=True,
+            allow_legacy_artifacts=(output / "latest.json").is_file(),
+        )
+    else:
+        _validate_current_publication_inventory(
+            output, require_consumer=False, allow_recoverable_orphans=True,
+            recoverable_records=candidate[3]["records"],
+            root_judgment_index=candidate[3], allow_transaction_lock=True,
+            allow_missing_empty_judgments=True,
+        )
+    # Re-read the candidate after the full inventory walk so a mid-validation
+    # mutation cannot become current.
+    reloaded = validate_pointer_candidate(output, pointer)
+    if canonical_bytes(reloaded[0]) != canonical_bytes(candidate[0]):
+        raise ContractError(
+            "candidate changed before pointer switch: "
+            f"generation_id={candidate[0]['generation_id']}"
+        )
 
 
 def publish_generation(output: Path, snapshot: dict, history: dict, index: dict,
@@ -632,15 +828,20 @@ def publish_generation(output: Path, snapshot: dict, history: dict, index: dict,
         current = load_current_generation(output)
         current_generation_id = current[2]["generation_id"] if current else None
         if current and current[2]["analysis_id"] == analysis_id:
+            _assert_publication_identity(
+                current[2], current[3], current[4], current[5], snapshot, history, index,
+                current[2]["previous_generation_id"], current[2]["data_date"],
+            )
             return current[0]
         if current and snapshot["meta"]["data_date"] < current[2]["data_date"]:
             raise ContractError("publication data_date cannot move backwards; use explicit rollback")
-        orphans = _valid_orphans(output, analysis_id, current_generation_id)
+        orphans = _valid_orphans(output, snapshot, history, index, current)
         if orphans:
             manifest, _ = orphans[0]
             pointer = current_pointer(manifest)
             validate_pointer_candidate(output, pointer)
             inject("current_pointer_switch")
+            _revalidate_pointer_switch(output, current, pointer, snapshot, history, index)
             atomic_write_json(output / "current.json", pointer)
             return pointer
         previous_generation_id = current_generation_id
@@ -676,6 +877,7 @@ def publish_generation(output: Path, snapshot: dict, history: dict, index: dict,
         pointer = current_pointer(manifest)
         validate_pointer_candidate(output, pointer)
         inject("current_pointer_switch")
+        _revalidate_pointer_switch(output, current, pointer, snapshot, history, index)
         atomic_write_json(output / "current.json", pointer)
         loaded = load_current_generation(output)
         if loaded is None or loaded[2] != manifest:
