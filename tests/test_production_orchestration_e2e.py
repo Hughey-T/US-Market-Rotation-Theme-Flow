@@ -133,7 +133,7 @@ class ProductionOrchestrationE2E(unittest.TestCase):
             remote = temporary / "publication.git"
             verified = temporary / "verified"
             subprocess.run(["git", "clone", "--no-local", str(ROOT), str(work)], check=True, capture_output=True)
-            subprocess.run(["git", "branch", "-M", "main"], cwd=work, check=True, capture_output=True)
+            subprocess.run(["git", "switch", "-C", "main"], cwd=work, check=True, capture_output=True)
             subprocess.run(["git", "remote", "remove", "origin"], cwd=work, check=True, capture_output=True)
             subprocess.run(["git", "init", "--bare", str(remote)], check=True, capture_output=True)
             subprocess.run(["git", "remote", "add", "origin", str(remote)], cwd=work, check=True, capture_output=True)
