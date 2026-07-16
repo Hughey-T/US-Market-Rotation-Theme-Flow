@@ -10,7 +10,7 @@ from typing import Callable, Literal
 
 from . import INSTRUCTION_VERSION, PUBLICATION_CONTRACT_VERSION
 from .identity import safe_generation_path, validate_safe_id
-from .judgments import validate_index_records
+from .judgments import StableJsonChangedError, StableJsonSnapshot, validate_index_records
 from .provenance import atomic_write_json, canonical_bytes, stable_hash
 from .publication_lock import owned_lock
 from .validation import (
@@ -143,7 +143,12 @@ def validate_generation(directory: Path) -> tuple[dict, dict, dict, dict]:
     latest = load_json(directory / "latest.json")
     archive = load_json(directory / "archive.json")
     history = load_json(directory / "history.json")
-    index = load_json(directory / "judgment-index.json")
+    index_snapshot = StableJsonSnapshot.read(
+        directory / "judgment-index.json",
+        relative_path=output_relative_path(output, directory / "judgment-index.json"),
+        label="generation judgment index",
+    )
+    index = index_snapshot.value
     validate_schema(manifest, MANIFEST_SCHEMA, str(directory / "manifest.json"))
     validate_schema(latest, LATEST_SCHEMA, str(directory / "latest.json"))
     validate_schema(archive, LATEST_SCHEMA, str(directory / "archive.json"))  # archive uses the latest contract
@@ -183,6 +188,7 @@ def validate_generation(directory: Path) -> tuple[dict, dict, dict, dict]:
     hashes = {name: stable_hash({"archive.json": archive, "history.json": history, "judgment-index.json": index, "latest.json": latest}[name]) for name in GENERATION_FILES}
     if manifest["files"] != hashes:
         raise ContractError("generation file hash mismatch")
+    index_snapshot.ensure_unchanged()
     return manifest, latest, history, index
 
 
@@ -334,16 +340,22 @@ def _validate_root_judgments(output: Path, index: dict, files: set[str]) -> None
         raise _inventory_error(output, entries[name])
     for name in sorted(expected - set(entries)):
         raise _inventory_error(output, directory / name, "missing publication entry")
+    index_snapshot: StableJsonSnapshot | None = None
     for name in sorted(expected):
         entry = entries[name]
         _add_regular_file(output, entry, files)
         if name == "index.json":
-            try:
-                value = load_json(entry)
-            except (OSError, UnicodeError, ValueError) as error:
-                raise _inventory_error(output, entry, "invalid publication entry") from error
+            index_snapshot = StableJsonSnapshot.read(
+                entry,
+                relative_path=output_relative_path(output, entry),
+                label="root judgment index",
+            )
+            value = index_snapshot.value
             if value != root_index:
                 raise _inventory_error(output, entry, "invalid publication entry")
+    if index_snapshot is None:  # pragma: no cover - guarded by the exact inventory checks above
+        raise _inventory_error(output, directory / "index.json", "missing publication entry")
+    index_snapshot.ensure_unchanged()
 
 
 def _validate_generation_chain(
@@ -368,6 +380,8 @@ def _validate_generation_chain(
         directory = safe_generation_path(output, previous)
         try:
             previous_manifest, *_ = validate_generation(directory)
+        except StableJsonChangedError:
+            raise
         except (ContractError, OSError, ValueError) as error:
             raise _inventory_error(output, directory, "invalid publication generation") from error
         try:
@@ -385,6 +399,8 @@ def _validate_generation_chain(
                 raise _inventory_error(output, entry)
             try:
                 orphan_manifest, _, _, orphan_index = validate_generation(entry)
+            except StableJsonChangedError:
+                raise
             except (ContractError, OSError, ValueError) as error:
                 raise _inventory_error(output, entry, "invalid interrupted generation") from error
             if (
@@ -447,6 +463,8 @@ def _validate_current_publication_inventory(
         current = load_current_generation(output)
     except PublicationInventoryError:
         raise
+    except StableJsonChangedError:
+        raise
     except (ContractError, OSError, UnicodeError, ValueError) as error:
         raise _inventory_error(output, current_path, "invalid current publication") from error
     if current is None:
@@ -497,10 +515,13 @@ def _validate_current_publication_inventory(
 def validate_current_publication_inventory(
     output: Path, *, require_consumer: bool, allow_recoverable_orphans: bool = False,
 ) -> set[str]:
-    return _validate_current_publication_inventory(
-        output, require_consumer=require_consumer,
-        allow_recoverable_orphans=allow_recoverable_orphans,
-    )
+    try:
+        return _validate_current_publication_inventory(
+            output, require_consumer=require_consumer,
+            allow_recoverable_orphans=allow_recoverable_orphans,
+        )
+    except StableJsonChangedError as error:
+        raise PublicationInventoryError(str(error), error.relative_path) from error
 
 
 def _validate_orphan_inventory(
@@ -543,6 +564,8 @@ def _validate_orphan_inventory(
     for entry in entries:
         try:
             _, _, _, index = validate_generation(entry)
+        except StableJsonChangedError:
+            raise
         except (ContractError, OSError, ValueError) as error:
             raise _inventory_error(output, entry, "invalid interrupted generation") from error
         indexes.append(index)
@@ -746,6 +769,8 @@ def _valid_orphans(
             continue
         try:
             manifest, orphan_snapshot, orphan_history, orphan_index = validate_generation(path)
+        except StableJsonChangedError:
+            raise
         except (ContractError, OSError, ValueError) as error:
             raise ContractError(f"invalid orphan generation: {path.name}") from error
         if manifest["previous_generation_id"] != current_generation_id:

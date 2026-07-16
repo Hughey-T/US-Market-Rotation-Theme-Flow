@@ -8,10 +8,11 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from rotation.publication_lock import acquire, inspect, owned_lock, recover, release
-from rotation.validation import ContractError, load_json
+from rotation.judgments import StableJsonSnapshot
 from rotation.provenance import atomic_write_json, file_sha256, stable_hash
 from rotation.publication import load_current_generation, publish_generation
+from rotation.publication_lock import acquire, inspect, owned_lock, recover, release
+from rotation.validation import ContractError, load_json
 from scripts.commit_weekly_outputs import PUBLICATION_BRANCH, _validate_staged_allowlist, commit_weekly_outputs
 from scripts.export_current_latest import export_current
 from scripts.generate_weekly import history_item
@@ -232,6 +233,69 @@ class WorkflowContractTests(unittest.TestCase):
                 finally:
                     remote_temporary.cleanup()
                     temporary.cleanup()
+
+    def test_bootstrap_and_nonbootstrap_commit_reject_index_toctou(self):
+        for bootstrap in (True, False):
+            for location in ("generation", "root"):
+                with self.subTest(bootstrap=bootstrap, location=location):
+                    temporary, repo = self.make_repo()
+                    remote_temporary = tempfile.TemporaryDirectory()
+                    try:
+                        remote = Path(remote_temporary.name)
+                        self.git(remote, "init", "--bare")
+                        self.git(repo, "remote", "add", "origin", str(remote))
+                        self.git(repo, "push", "origin", "main:main")
+                        expected = self.git(repo, "rev-parse", "HEAD").stdout.strip()
+                        if not bootstrap:
+                            self.git(repo, "push", "origin", "main:publication")
+                        self.git(repo, "switch", "-c", PUBLICATION_BRANCH)
+                        self.add_judgment_publication(repo)
+                        current = load_current_generation(repo / "output")
+                        target = (
+                            current[1] / "judgment-index.json"
+                            if location == "generation"
+                            else repo / "output/judgments/index.json"
+                        )
+                        local_before = self.git(repo, "rev-parse", "HEAD").stdout.strip()
+                        pointer_before = (repo / "output/current.json").read_bytes()
+                        real_ensure_unchanged = StableJsonSnapshot.ensure_unchanged
+                        changed = False
+
+                        def change_then_compare(snapshot):
+                            nonlocal changed
+                            if snapshot.path == target and not changed:
+                                value = load_json(target)
+                                value["records"][0]["content"]["theme_judgments"][0]["one_line"] = "TOCTOU"
+                                atomic_write_json(target, value)
+                                changed = True
+                            return real_ensure_unchanged(snapshot)
+
+                        with mock.patch.object(
+                            StableJsonSnapshot, "ensure_unchanged", autospec=True,
+                            side_effect=change_then_compare,
+                        ):
+                            with self.assertRaisesRegex(
+                                ContractError, "judgment index changed during validation",
+                            ):
+                                commit_weekly_outputs(
+                                    repo, push=True, bootstrap=bootstrap,
+                                    expected_remote=None if bootstrap else expected,
+                                )
+                        self.assertTrue(changed)
+                        self.assertEqual(
+                            self.git(repo, "rev-parse", "HEAD").stdout.strip(), local_before,
+                        )
+                        self.assertEqual((repo / "output/current.json").read_bytes(), pointer_before)
+                        remote_ref = self.git(
+                            remote, "rev-parse", "--verify", "refs/heads/publication", check=False,
+                        )
+                        if bootstrap:
+                            self.assertNotEqual(remote_ref.returncode, 0)
+                        else:
+                            self.assertEqual(remote_ref.stdout.strip(), expected)
+                    finally:
+                        remote_temporary.cleanup()
+                        temporary.cleanup()
 
     def test_publication_stops_when_remote_advanced_after_checkout(self):
         temporary, repo = self.make_repo()

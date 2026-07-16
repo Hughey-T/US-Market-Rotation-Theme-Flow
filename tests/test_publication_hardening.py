@@ -9,6 +9,7 @@ from unittest import mock
 
 from rotation import INSTRUCTION_VERSION
 from rotation.identity import generation_identity
+from rotation.judgments import StableJsonSnapshot
 from rotation.provenance import atomic_write_json, file_sha256, snapshot_source_hash, stable_hash
 from rotation.publication import (
     current_pointer, generation_manifest, load_current_generation, publish_generation,
@@ -584,6 +585,31 @@ class JudgmentContentConsistencyTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "invalid current publication"):
             generate_weekly.enforce_publication_start_state(output)
 
+    def assert_index_change_during_validation_is_rejected(
+        self, output: Path, target: Path, label: str, mutate, operation,
+    ):
+        real_ensure_unchanged = StableJsonSnapshot.ensure_unchanged
+        changed = False
+
+        def change_then_compare(snapshot):
+            nonlocal changed
+            if snapshot.path == target and not changed:
+                mutate(target)
+                changed = True
+            return real_ensure_unchanged(snapshot)
+
+        with mock.patch.object(
+            StableJsonSnapshot, "ensure_unchanged", autospec=True,
+            side_effect=change_then_compare,
+        ):
+            with self.assertRaisesRegex(
+                ContractError,
+                rf"{label} changed during validation: output/.+index\.json",
+            ) as raised:
+                operation()
+        self.assertTrue(changed)
+        self.assertNotIn(str(output.parent), str(raised.exception))
+
     def test_generation_index_content_only_tamper_is_rejected_with_regenerated_hashes(self):
         output, _ = self.make_publication()
         self.rewrite_generation_index(
@@ -658,6 +684,140 @@ class JudgmentContentConsistencyTests(unittest.TestCase):
         with mock.patch.object(Path, "read_bytes", autospec=True, side_effect=changing_read):
             with self.assertRaisesRegex(ContractError, "changed during validation"):
                 load_current_generation(output)
+
+    def test_generation_index_semantic_change_during_validation_is_rejected(self):
+        output, _ = self.make_publication()
+        current = load_current_generation(output)
+        index_path = current[1] / "judgment-index.json"
+        pointer_before = (output / "current.json").read_bytes()
+
+        def mutate(path):
+            index = load_json(path)
+            index["records"][0]["content"]["theme_judgments"][0]["one_line"] = "TOCTOU"
+            atomic_write_json(path, index)
+
+        self.assert_index_change_during_validation_is_rejected(
+            output, index_path, "generation judgment index", mutate,
+            lambda: load_current_generation(output),
+        )
+        self.assertEqual((output / "current.json").read_bytes(), pointer_before)
+        self.assertFalse(any(path.name.startswith(".staging-") for path in output.iterdir()))
+
+    def test_generation_index_representation_change_during_validation_is_rejected(self):
+        output, _ = self.make_publication()
+        current = load_current_generation(output)
+        index_path = current[1] / "judgment-index.json"
+        expected = load_json(index_path)
+
+        def mutate(path):
+            path.write_text(
+                json.dumps(expected, ensure_ascii=False, sort_keys=True, separators=(",", ":")),
+                encoding="utf-8",
+            )
+
+        self.assert_index_change_during_validation_is_rejected(
+            output, index_path, "generation judgment index", mutate,
+            lambda: load_current_generation(output),
+        )
+        self.assertEqual(load_json(index_path), expected)
+
+    def test_root_index_semantic_change_during_validation_is_rejected(self):
+        output, _ = self.make_publication()
+        index_path = output / "judgments/index.json"
+
+        def mutate(path):
+            index = load_json(path)
+            index["records"][0]["content"]["theme_judgments"][0]["one_line"] = "TOCTOU"
+            atomic_write_json(path, index)
+
+        self.assert_index_change_during_validation_is_rejected(
+            output, index_path, "root judgment index", mutate,
+            lambda: validate_current_publication_inventory(output, require_consumer=False),
+        )
+
+    def test_root_index_representation_change_during_validation_is_rejected(self):
+        output, _ = self.make_publication()
+        index_path = output / "judgments/index.json"
+        expected = load_json(index_path)
+
+        def mutate(path):
+            path.write_text(
+                json.dumps(expected, ensure_ascii=False, separators=(",", ":")) + "\r\n",
+                encoding="utf-8",
+            )
+
+        self.assert_index_change_during_validation_is_rejected(
+            output, index_path, "root judgment index", mutate,
+            lambda: validate_current_publication_inventory(output, require_consumer=False),
+        )
+        self.assertEqual(load_json(index_path), expected)
+
+    def test_unchanged_generation_and_root_indexes_are_accepted(self):
+        output, _ = self.make_publication()
+        self.assertIsNotNone(load_current_generation(output))
+        inventory = validate_current_publication_inventory(output, require_consumer=False)
+        self.assertIn("output/judgments/index.json", inventory)
+
+    def test_preexisting_index_representation_differences_are_accepted(self):
+        output, _ = self.make_publication()
+        current = load_current_generation(output)
+        generation_index_path = current[1] / "judgment-index.json"
+        root_index_path = output / "judgments/index.json"
+        generation_index = load_json(generation_index_path)
+        root_index = load_json(root_index_path)
+        generation_index_path.write_text(
+            json.dumps(generation_index, ensure_ascii=False, sort_keys=True, separators=(",", ":")),
+            encoding="utf-8",
+        )
+        root_index_path.write_text(
+            json.dumps(root_index, ensure_ascii=False, indent=4) + "\r\n",
+            encoding="utf-8",
+        )
+        self.assertIsNotNone(load_current_generation(output))
+        validate_current_publication_inventory(output, require_consumer=False)
+
+    def test_pointer_switch_revalidation_rejects_index_change(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        output = Path(temporary.name) / "output"
+        atomic_write_json(output / "judgments/index.json", {"index_version": "1.0", "records": []})
+        current = generation("2026-07-10", "index-switch-current")
+        publish_generation(output, current, history_item(current), {"index_version": "1.0", "records": []})
+        candidate = generation("2026-07-17", "index-switch-candidate")
+        candidate_index = (
+            output / candidate["meta"]["source_snapshot"].removeprefix("output/")
+        ).parent / "judgment-index.json"
+        pointer_before = (output / "current.json").read_bytes()
+        active = False
+        changed = False
+        real_ensure_unchanged = StableJsonSnapshot.ensure_unchanged
+
+        def inject(step):
+            nonlocal active
+            if step == "current_pointer_switch":
+                active = True
+
+        def change_then_compare(snapshot):
+            nonlocal changed
+            if active and snapshot.path == candidate_index and not changed:
+                snapshot.path.write_bytes(snapshot.path.read_bytes() + b" ")
+                changed = True
+            return real_ensure_unchanged(snapshot)
+
+        with mock.patch.object(
+            StableJsonSnapshot, "ensure_unchanged", autospec=True,
+            side_effect=change_then_compare,
+        ):
+            with self.assertRaisesRegex(
+                ContractError, "generation judgment index changed during validation",
+            ):
+                publish_generation(
+                    output, candidate, history_item(candidate),
+                    {"index_version": "1.0", "records": []}, inject,
+                )
+        self.assertTrue(changed)
+        self.assertEqual((output / "current.json").read_bytes(), pointer_before)
+        self.assertFalse(any(path.name.startswith(".staging-") for path in output.iterdir()))
 
     def test_duplicate_record_reference_is_rejected(self):
         output, _ = self.make_publication()

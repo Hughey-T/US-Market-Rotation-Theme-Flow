@@ -3,10 +3,57 @@ from __future__ import annotations
 
 import hashlib
 import json
+from dataclasses import dataclass
 from pathlib import Path
 
 from .provenance import canonical_bytes
 from .validation import ContractError, validate_judgment_semantics, validate_schema
+
+
+class StableJsonChangedError(ContractError):
+    """A stable JSON path changed between its initial and final raw reads."""
+
+    def __init__(self, label: str, relative_path: str):
+        super().__init__(f"{label} changed during validation: {relative_path}")
+        self.relative_path = relative_path
+
+
+@dataclass(frozen=True)
+class StableJsonSnapshot:
+    """One parsed JSON snapshot with a final raw-byte stability check."""
+
+    path: Path
+    relative_path: str
+    label: str
+    raw: bytes
+    value: dict
+
+    @classmethod
+    def read(cls, path: Path, *, relative_path: str, label: str) -> "StableJsonSnapshot":
+        try:
+            raw = path.read_bytes()
+        except OSError as error:
+            raise ContractError(f"cannot read {label}: {relative_path}") from error
+        try:
+            value = json.loads(
+                raw.decode("utf-8"),
+                parse_constant=lambda item: (_ for _ in ()).throw(
+                    ValueError(f"non-finite JSON constant: {item}")
+                ),
+            )
+        except (UnicodeError, json.JSONDecodeError, ValueError) as error:
+            raise ContractError(f"invalid {label} JSON: {relative_path}") from error
+        if not isinstance(value, dict):
+            raise ContractError(f"invalid {label} JSON object: {relative_path}")
+        return cls(path=path, relative_path=relative_path, label=label, raw=raw, value=value)
+
+    def ensure_unchanged(self) -> None:
+        try:
+            final_raw = self.path.read_bytes()
+        except OSError as error:
+            raise StableJsonChangedError(self.label, self.relative_path) from error
+        if final_raw != self.raw:
+            raise StableJsonChangedError(self.label, self.relative_path)
 
 
 def _validated_record(path: Path, schema: dict, source_loader) -> tuple[dict, bytes]:

@@ -10,7 +10,7 @@ from jsonschema import Draft202012Validator
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from rotation.judgments import build_index, verify_index
+from rotation.judgments import StableJsonSnapshot, build_index, verify_index
 from rotation.provenance import canonical_bytes
 from rotation.publication import load_current_generation, validate_repository_output_inventory
 from rotation.validation import (
@@ -100,7 +100,15 @@ def main() -> int:
             return source
         rebuilt = build_index(judgment_dir, schemas["judgment"], source_loader)
         if index_path.exists():
-            verify_index(judgment_dir, load_json(index_path), schemas["judgment"], source_loader)
+            index_snapshot = StableJsonSnapshot.read(
+                index_path,
+                relative_path="output/judgments/index.json",
+                label="root judgment index",
+            )
+            verify_index(
+                judgment_dir, index_snapshot.value, schemas["judgment"], source_loader,
+            )
+            index_snapshot.ensure_unchanged()
         current_generation = load_current_generation(ROOT / "output")
         if current_generation is not None:
             generation_index = {key: value for key, value in current_generation[5].items() if key != "publication"}
