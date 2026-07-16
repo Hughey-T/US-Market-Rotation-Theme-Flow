@@ -129,12 +129,18 @@ class ProductionOrchestrationE2E(unittest.TestCase):
         history = history_for(master, (0.00, 0.01, 0.02), (4, 5, 5), (3, 4, 5))
         with tempfile.TemporaryDirectory() as directory:
             temporary = Path(directory)
+            checkout = temporary / "checkout"
             work = temporary / "work"
             remote = temporary / "publication.git"
             verified = temporary / "verified"
-            subprocess.run(["git", "clone", "--no-local", str(ROOT), str(work)], check=True, capture_output=True)
-            subprocess.run(["git", "switch", "-C", "main"], cwd=work, check=True, capture_output=True)
-            subprocess.run(["git", "remote", "remove", "origin"], cwd=work, check=True, capture_output=True)
+            subprocess.run(["git", "clone", "--no-local", str(ROOT), str(checkout)], check=True, capture_output=True)
+            shutil.copytree(checkout, work, ignore=shutil.ignore_patterns(".git"))
+            subprocess.run(["git", "init", "-b", "main"], cwd=work, check=True, capture_output=True)
+            subprocess.run(["git", "add", "."], cwd=work, check=True, capture_output=True)
+            subprocess.run(
+                ["git", "-c", "user.name=test", "-c", "user.email=test@example.com", "commit", "-m", "baseline"],
+                cwd=work, check=True, capture_output=True,
+            )
             subprocess.run(["git", "init", "--bare", str(remote)], check=True, capture_output=True)
             subprocess.run(["git", "remote", "add", "origin", str(remote)], cwd=work, check=True, capture_output=True)
             subprocess.run(["git", "push", "origin", "main:main"], cwd=work, check=True, capture_output=True)
