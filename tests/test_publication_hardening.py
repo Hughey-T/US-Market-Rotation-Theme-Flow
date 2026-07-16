@@ -7,9 +7,13 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+from rotation import INSTRUCTION_VERSION
 from rotation.identity import generation_identity
-from rotation.provenance import atomic_write_json, file_sha256, snapshot_source_hash
-from rotation.publication import load_current_generation, publish_generation, validate_current_publication_inventory
+from rotation.provenance import atomic_write_json, file_sha256, snapshot_source_hash, stable_hash
+from rotation.publication import (
+    current_pointer, generation_manifest, load_current_generation, publish_generation,
+    validate_current_publication_inventory,
+)
 from rotation.validation import ContractError, load_json
 from scripts import generate_weekly
 from scripts.generate_weekly import history_item
@@ -33,6 +37,26 @@ def output_signature(output: Path):
         content = path.read_bytes() if kind == "file" else None
         values.append((path.relative_to(output).as_posix(), kind, content))
     return values
+
+
+def write_generation(output: Path, snapshot: dict, index: dict, previous_generation_id: str | None) -> dict:
+    generation_id = snapshot["meta"]["source_snapshot"].split("/")[2]
+    generation_index = {**index, "publication": {
+        "analysis_id": snapshot["meta"]["run_id"], "generation_id": generation_id,
+        "run_id": snapshot["meta"]["run_id"], "data_date": snapshot["meta"]["data_date"],
+        "source_sha256": snapshot["meta"]["source_sha256"],
+        "instruction_version": INSTRUCTION_VERSION,
+    }}
+    history = history_item(snapshot)
+    manifest = generation_manifest(snapshot, history, generation_index, previous_generation_id)
+    directory = output / "generations" / generation_id
+    for name, value in (
+        ("archive.json", snapshot), ("history.json", history),
+        ("judgment-index.json", generation_index), ("latest.json", snapshot),
+        ("manifest.json", manifest),
+    ):
+        atomic_write_json(directory / name, value)
+    return current_pointer(manifest)
 
 
 class PublicationBootstrapStateTests(unittest.TestCase):
@@ -430,6 +454,60 @@ class PublicationHardeningTests(unittest.TestCase):
         with self.assertRaises(ContractError):
             load_current_generation(self.output)
 
+    def test_older_same_analysis_orphan_cannot_replace_newer_current(self):
+        newest = generation("2026-07-24", "chronology-current")
+        newest_pointer = publish_generation(self.output, newest, history_item(newest), self.index)
+        orphan = generation("2026-07-17", "shared-orphan-analysis")
+        write_generation(self.output, orphan, self.index, newest_pointer["generation_id"])
+        retry = generation("2026-07-31", "retry-clock")
+        retry["meta"]["run_id"] = orphan["meta"]["run_id"]
+        retry["meta"]["source_sha256"] = snapshot_source_hash(retry)
+        before = (self.output / "current.json").read_bytes()
+        with self.assertRaisesRegex(ContractError, "generation chronology violation"):
+            publish_generation(self.output, retry, history_item(retry), self.index)
+        self.assertEqual((self.output / "current.json").read_bytes(), before)
+
+    def test_same_analysis_orphan_with_different_retry_date_is_rejected(self):
+        orphan = generation("2026-07-17", "identity-date-orphan")
+        write_generation(self.output, orphan, self.index, self.old_pointer["generation_id"])
+        retry = copy.deepcopy(orphan)
+        retry["meta"]["data_date"] = "2026-07-31"
+        retry["meta"]["source_sha256"] = snapshot_source_hash(retry)
+        with self.assertRaisesRegex(
+            ContractError, "publication identity mismatch.*data_date|retry_snapshot_data_date=2026-07-31",
+        ):
+            publish_generation(self.output, retry, history_item(retry), self.index)
+        self.assert_old_current()
+
+    def test_internal_chain_date_reversal_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "output"
+            atomic_write_json(output / "judgments/index.json", self.index)
+            first = generation("2026-07-24", "chain-a")
+            first_pointer = write_generation(output, first, self.index, None)
+            second = generation("2026-07-17", "chain-b")
+            second_pointer = write_generation(output, second, self.index, first_pointer["generation_id"])
+            third = generation("2026-07-31", "chain-c")
+            third_pointer = write_generation(output, third, self.index, second_pointer["generation_id"])
+            atomic_write_json(output / "current.json", third_pointer)
+            with self.assertRaisesRegex(ContractError, "generation chronology violation"):
+                load_current_generation(output)
+
+    def test_pointer_switch_revalidates_candidate_after_preflight(self):
+        candidate = generation("2026-07-17", "switch-toctou")
+        target = (
+            self.output / candidate["meta"]["source_snapshot"].removeprefix("output/")
+        ).parent
+        before = (self.output / "current.json").read_bytes()
+
+        def mutate(step):
+            if step == "current_pointer_switch":
+                atomic_write_json(target / "history.json", {"data_date": "2026-07-17"})
+
+        with self.assertRaises(ContractError):
+            publish_generation(self.output, candidate, history_item(candidate), self.index, mutate)
+        self.assertEqual((self.output / "current.json").read_bytes(), before)
+
     def test_exact_inventory_allows_a_valid_immutable_judgment_addition(self):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
@@ -455,6 +533,139 @@ class PublicationHardeningTests(unittest.TestCase):
         publish_generation(output, latest, history_item(latest), index)
         inventory = validate_current_publication_inventory(output, require_consumer=False)
         self.assertIn("output/judgments/judgment.json", inventory)
+
+
+class JudgmentContentConsistencyTests(unittest.TestCase):
+    def make_publication(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        output = Path(temporary.name) / "output"
+        judgments = output / "judgments"
+        judgments.mkdir(parents=True)
+        empty = {"index_version": "1.0", "records": []}
+        atomic_write_json(judgments / "index.json", empty)
+        source = load_json(ROOT / "tests/fixtures/latest_normal.json")
+        publish_generation(output, source, history_item(source), empty)
+        record = load_json(ROOT / "tests/fixtures/judgment_record.json")
+        record_path = judgments / "judgment.json"
+        atomic_write_json(record_path, record)
+        index = {"index_version": "1.0", "records": [{
+            "file": record_path.name, "sha256": file_sha256(record_path),
+            "judgment_id": record["judgment_id"], "data_date": record["data_date"],
+            "content": record,
+        }]}
+        atomic_write_json(judgments / "index.json", index)
+        latest = generation("2026-07-17", "judgment-consistency")
+        publish_generation(output, latest, history_item(latest), index)
+        return output, record_path
+
+    def rewrite_generation_index(self, output: Path, mutate, *, update_root: bool = False):
+        pointer = load_json(output / "current.json")
+        generation_directory = output / pointer["generation"]
+        index_path = generation_directory / "judgment-index.json"
+        index = load_json(index_path)
+        mutate(index)
+        atomic_write_json(index_path, index)
+        manifest_path = generation_directory / "manifest.json"
+        manifest = load_json(manifest_path)
+        manifest["files"]["judgment-index.json"] = stable_hash(index)
+        atomic_write_json(manifest_path, manifest)
+        pointer["manifest_sha256"] = stable_hash(manifest)
+        atomic_write_json(output / "current.json", pointer)
+        if update_root:
+            atomic_write_json(
+                output / "judgments/index.json",
+                {key: value for key, value in index.items() if key != "publication"},
+            )
+
+    def assert_preflight_rejects(self, output: Path):
+        state = generate_weekly.classify_publication_start_state(output)
+        self.assertEqual(state.kind, "invalid_current")
+        with self.assertRaisesRegex(RuntimeError, "invalid current publication"):
+            generate_weekly.enforce_publication_start_state(output)
+
+    def test_generation_index_content_only_tamper_is_rejected_with_regenerated_hashes(self):
+        output, _ = self.make_publication()
+        self.rewrite_generation_index(
+            output,
+            lambda index: index["records"][0]["content"]["theme_judgments"][0].__setitem__(
+                "one_line", "tampered index-only summary",
+            ),
+        )
+        self.assert_preflight_rejects(output)
+
+    def test_root_index_content_only_tamper_is_rejected(self):
+        output, _ = self.make_publication()
+        root_index = load_json(output / "judgments/index.json")
+        root_index["records"][0]["content"]["theme_judgments"][0]["one_line"] = "root-only tamper"
+        atomic_write_json(output / "judgments/index.json", root_index)
+        self.assert_preflight_rejects(output)
+
+    def test_immutable_record_only_tamper_is_rejected_even_with_updated_sha(self):
+        output, record_path = self.make_publication()
+        record = load_json(record_path)
+        record["theme_judgments"][0]["one_line"] = "immutable-only tamper"
+        atomic_write_json(record_path, record)
+        digest = file_sha256(record_path)
+        self.rewrite_generation_index(
+            output, lambda index: index["records"][0].__setitem__("sha256", digest),
+            update_root=True,
+        )
+        self.assert_preflight_rejects(output)
+
+    def test_canonical_json_representation_difference_is_accepted(self):
+        output, record_path = self.make_publication()
+        record = load_json(record_path)
+        record_path.write_text(json.dumps(record, ensure_ascii=False, sort_keys=True), encoding="utf-8")
+        digest = file_sha256(record_path)
+        self.rewrite_generation_index(
+            output, lambda index: index["records"][0].__setitem__("sha256", digest),
+            update_root=True,
+        )
+        validate_current_publication_inventory(output, require_consumer=False)
+
+    def test_meaningful_content_differences_are_all_rejected(self):
+        mutations = {
+            "one_line": lambda content: content["theme_judgments"][0].__setitem__("one_line", "changed"),
+            "classification": lambda content: content["theme_judgments"][0].__setitem__("research_priority_rule", "P5"),
+            "data_date": lambda content: content.__setitem__("data_date", "2026-07-11"),
+            "record_id": lambda content: content.__setitem__("judgment_id", "judgment_changed"),
+            "evidence_reference": lambda content: content.__setitem__("source_sha256", "0" * 64),
+        }
+        for name, mutate in mutations.items():
+            with self.subTest(name=name):
+                output, _ = self.make_publication()
+                self.rewrite_generation_index(
+                    output, lambda index, mutate=mutate: mutate(index["records"][0]["content"]),
+                    update_root=True,
+                )
+                self.assert_preflight_rejects(output)
+
+    def test_immutable_record_change_during_validation_is_rejected(self):
+        output, record_path = self.make_publication()
+        real_read = Path.read_bytes
+        record_reads = 0
+
+        def changing_read(path):
+            nonlocal record_reads
+            raw = real_read(path)
+            if path == record_path:
+                record_reads += 1
+                if record_reads == 2:
+                    return raw + b" "
+            return raw
+
+        with mock.patch.object(Path, "read_bytes", autospec=True, side_effect=changing_read):
+            with self.assertRaisesRegex(ContractError, "changed during validation"):
+                load_current_generation(output)
+
+    def test_duplicate_record_reference_is_rejected(self):
+        output, _ = self.make_publication()
+        self.rewrite_generation_index(
+            output, lambda index: index["records"].append(copy.deepcopy(index["records"][0])),
+            update_root=True,
+        )
+        self.assert_preflight_rejects(output)
 
 
 class MigrationBootstrapTests(unittest.TestCase):

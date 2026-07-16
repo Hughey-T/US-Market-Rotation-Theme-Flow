@@ -9,14 +9,17 @@ from pathlib import Path
 from unittest import mock
 
 from rotation.publication_lock import acquire, inspect, owned_lock, recover, release
-from rotation.validation import ContractError
-from rotation.provenance import atomic_write_json
+from rotation.validation import ContractError, load_json
+from rotation.provenance import atomic_write_json, file_sha256, stable_hash
 from rotation.publication import load_current_generation, publish_generation
 from scripts.commit_weekly_outputs import PUBLICATION_BRANCH, _validate_staged_allowlist, commit_weekly_outputs
 from scripts.export_current_latest import export_current
 from scripts.generate_weekly import history_item
 from scripts.validate_immutable_judgments import validate_immutable_judgments
 from tests.test_publication_contract import generation
+
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 class PublicationLockTests(unittest.TestCase):
@@ -72,6 +75,45 @@ class WorkflowContractTests(unittest.TestCase):
         value = generation(data_date, suffix)
         publish_generation(repo / "output", value, history_item(value), {"index_version": "1.0", "records": []})
         export_current(repo / "output", repo / "output/consumer/latest.json")
+
+    def add_judgment_publication(self, repo):
+        output = repo / "output"
+        judgments = output / "judgments"
+        empty = {"index_version": "1.0", "records": []}
+        source = load_json(ROOT / "tests/fixtures/latest_normal.json")
+        publish_generation(output, source, history_item(source), empty)
+        export_current(output, output / "consumer/latest.json")
+        record = load_json(ROOT / "tests/fixtures/judgment_record.json")
+        record_path = judgments / "judgment.json"
+        atomic_write_json(record_path, record)
+        index = {"index_version": "1.0", "records": [{
+            "file": record_path.name, "sha256": file_sha256(record_path),
+            "judgment_id": record["judgment_id"], "data_date": record["data_date"],
+            "content": record,
+        }]}
+        atomic_write_json(judgments / "index.json", index)
+        latest = generation("2026-07-17", "direct-push-judgment")
+        publish_generation(output, latest, history_item(latest), index)
+        export_current(output, output / "consumer/latest.json")
+
+    def tamper_judgment_content_with_regenerated_hashes(self, repo):
+        output = repo / "output"
+        current = load_current_generation(output)
+        index_path = current[1] / "judgment-index.json"
+        index = load_json(index_path)
+        index["records"][0]["content"]["theme_judgments"][0]["one_line"] = "commit-helper tamper"
+        atomic_write_json(index_path, index)
+        atomic_write_json(
+            output / "judgments/index.json",
+            {key: value for key, value in index.items() if key != "publication"},
+        )
+        manifest_path = current[1] / "manifest.json"
+        manifest = load_json(manifest_path)
+        manifest["files"]["judgment-index.json"] = stable_hash(index)
+        atomic_write_json(manifest_path, manifest)
+        pointer = load_json(output / "current.json")
+        pointer["manifest_sha256"] = stable_hash(manifest)
+        atomic_write_json(output / "current.json", pointer)
 
     def test_noop_success_commit_success_and_exact_staging(self):
         temporary, repo = self.make_repo()
@@ -156,6 +198,40 @@ class WorkflowContractTests(unittest.TestCase):
         finally:
             remote_temporary.cleanup()
             temporary.cleanup()
+
+    def test_bootstrap_and_nonbootstrap_direct_push_reject_content_mismatch(self):
+        for bootstrap in (True, False):
+            with self.subTest(bootstrap=bootstrap):
+                temporary, repo = self.make_repo()
+                remote_temporary = tempfile.TemporaryDirectory()
+                try:
+                    remote = Path(remote_temporary.name)
+                    self.git(remote, "init", "--bare")
+                    self.git(repo, "remote", "add", "origin", str(remote))
+                    self.git(repo, "push", "origin", "main:main")
+                    expected = self.git(repo, "rev-parse", "HEAD").stdout.strip()
+                    if not bootstrap:
+                        self.git(repo, "push", "origin", "main:publication")
+                    self.git(repo, "switch", "-c", PUBLICATION_BRANCH)
+                    self.add_judgment_publication(repo)
+                    self.tamper_judgment_content_with_regenerated_hashes(repo)
+                    local_before = self.git(repo, "rev-parse", "HEAD").stdout.strip()
+                    with self.assertRaisesRegex(ContractError, "invalid current publication|judgment index"):
+                        commit_weekly_outputs(
+                            repo, push=True, bootstrap=bootstrap,
+                            expected_remote=None if bootstrap else expected,
+                        )
+                    self.assertEqual(self.git(repo, "rev-parse", "HEAD").stdout.strip(), local_before)
+                    remote_ref = self.git(
+                        remote, "rev-parse", "--verify", "refs/heads/publication", check=False,
+                    )
+                    if bootstrap:
+                        self.assertNotEqual(remote_ref.returncode, 0)
+                    else:
+                        self.assertEqual(remote_ref.stdout.strip(), expected)
+                finally:
+                    remote_temporary.cleanup()
+                    temporary.cleanup()
 
     def test_publication_stops_when_remote_advanced_after_checkout(self):
         temporary, repo = self.make_repo()
