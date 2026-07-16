@@ -20,6 +20,8 @@ The protected branch requires:
 
 The configured approving-review count is zero, so an external approval is not required. Administrator enforcement is disabled to preserve an owner/admin emergency bypass path. That path is for recovery only and must not be used for routine merges.
 
+The scheduled weekly workflow does not bypass or push to protected `main`. After this PR is merged, its first successful run bootstraps `publication` from `main`; later runs start from the exact fetched `publication` SHA and incorporate current `main`. The allowlist stages only current, generations, judgments, and the derived consumer export. Before a normal push, the workflow requires the remote SHA to remain unchanged and to be an ancestor of local HEAD; merge conflicts or a concurrently advanced remote stop publication. The job has only `contents: write` and never receives `pull-requests: write`. After pushing, the same workflow re-fetches the remote SHA and revalidates the current pointer, manifest, generation, schemas, and derived consumer export.
+
 Before a human merge, record and verify every item:
 
 - Final independent review is complete with Blocker 0 and Major 0.

@@ -6,8 +6,7 @@ on:
     - cron: "0 23 * * FRI"
   workflow_dispatch:
 
-permissions:
-  contents: write
+permissions: {}
 
 concurrency:
   group: weekly-market-rotation
@@ -17,10 +16,31 @@ jobs:
   generate:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Bootstrap or update publication work from current main
+        id: publication_branch
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin refs/heads/publication >/dev/null 2>&1; then
+            git fetch origin publication
+            REMOTE_BEFORE="$(git rev-parse origin/publication)"
+            git switch --track -c publication origin/publication
+            git merge --no-edit origin/main
+            echo "bootstrap=false" >> "$GITHUB_OUTPUT"
+            echo "remote_before=$REMOTE_BEFORE" >> "$GITHUB_OUTPUT"
+          else
+            git switch -c publication origin/main
+            echo "bootstrap=true" >> "$GITHUB_OUTPUT"
+            echo "remote_before=" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -35,11 +55,37 @@ jobs:
         id: generate
         run: python scripts/generate_weekly.py
       - name: Validate published repository
-        run: python scripts/validate_repository.py
+        run: |
+          python scripts/export_current_latest.py output/consumer/latest.json
+          python scripts/validate_repository.py
       - name: Commit validated outputs
+        id: publish
+        env:
+          BOOTSTRAP: ${{ steps.publication_branch.outputs.bootstrap }}
+          REMOTE_BEFORE: ${{ steps.publication_branch.outputs.remote_before }}
         run: |
           set -euo pipefail
-          python scripts/commit_weekly_outputs.py
+          if [ "$BOOTSTRAP" = "true" ]; then
+            python scripts/commit_weekly_outputs.py --branch publication --bootstrap
+          else
+            python scripts/commit_weekly_outputs.py --branch publication --expected-remote "$REMOTE_BEFORE"
+          fi
+          echo "commit_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Re-fetch and verify remote publication
+        env:
+          EXPECTED_SHA: ${{ steps.publish.outputs.commit_sha }}
+        run: |
+          set -euo pipefail
+          git fetch origin publication
+          REMOTE_SHA="$(git rev-parse origin/publication)"
+          test "$REMOTE_SHA" = "$EXPECTED_SHA"
+          VERIFY_ROOT="$RUNNER_TEMP/publication-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          git worktree add --detach "$VERIFY_ROOT" origin/publication
+          python "$VERIFY_ROOT/scripts/validate_repository.py"
+          python "$VERIFY_ROOT/scripts/export_current_latest.py" "$RUNNER_TEMP/consumer-latest.json"
+          cmp "$VERIFY_ROOT/output/consumer/latest.json" "$RUNNER_TEMP/consumer-latest.json"
+          echo "Verified publication commit: $REMOTE_SHA" >> "$GITHUB_STEP_SUMMARY"
+          echo "Validated current pointer, manifest, generation, schemas, and consumer export." >> "$GITHUB_STEP_SUMMARY"
       - name: Failure summary
         if: failure()
         run: |

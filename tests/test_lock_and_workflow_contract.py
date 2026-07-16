@@ -10,7 +10,7 @@ from unittest import mock
 
 from rotation.publication_lock import acquire, inspect, owned_lock, recover, release
 from rotation.validation import ContractError
-from scripts.commit_weekly_outputs import PUBLICATION_PATHS, commit_weekly_outputs
+from scripts.commit_weekly_outputs import PUBLICATION_BRANCH, PUBLICATION_PATHS, commit_weekly_outputs
 
 
 class PublicationLockTests(unittest.TestCase):
@@ -78,13 +78,78 @@ class WorkflowContractTests(unittest.TestCase):
             hook = repo / ".git/hooks/pre-commit"; hook.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8"); os.chmod(hook, 0o755)
             with self.assertRaises(subprocess.CalledProcessError): commit_weekly_outputs(repo, push=False)
             hook.unlink(); commit_weekly_outputs(repo, push=False)
-            with self.assertRaises(subprocess.CalledProcessError): commit_weekly_outputs(repo, push=True)
+            self.git(repo, "switch", "-c", PUBLICATION_BRANCH)
+            with self.assertRaises(subprocess.CalledProcessError): commit_weekly_outputs(repo, push=True, bootstrap=True)
         finally: temporary.cleanup()
 
     def test_workflow_has_strict_shell_and_no_commit_failure_mask(self):
         text = (Path(__file__).resolve().parents[1] / ".github/workflows/weekly.yml").read_text(encoding="utf-8")
         self.assertIn("set -euo pipefail", text)
         self.assertNotIn("|| echo", text)
+        self.assertIn("git switch -c publication origin/main", text)
+        self.assertIn("git switch --track -c publication origin/publication", text)
+        self.assertIn("contents: write", text)
+        self.assertNotIn("pull-requests: write", text)
+        self.assertIn("git fetch origin publication", text)
+        self.assertIn("--expected-remote", text)
+        self.assertIn("--bootstrap", text)
+        self.assertIn("git worktree add --detach", text)
+
+    def test_publication_push_is_fast_forward_and_does_not_update_main(self):
+        temporary, repo = self.make_repo()
+        remote_temporary = tempfile.TemporaryDirectory()
+        try:
+            remote = Path(remote_temporary.name)
+            self.git(remote, "init", "--bare")
+            self.git(repo, "remote", "add", "origin", str(remote))
+            self.git(repo, "push", "origin", "main:main")
+            main_before = self.git(repo, "rev-parse", "HEAD")
+            self.git(repo, "switch", "-c", PUBLICATION_BRANCH)
+            (repo / "output/current.json").write_text('{"new":1}', encoding="utf-8")
+            self.assertTrue(commit_weekly_outputs(repo, push=True, bootstrap=True))
+            publication_sha = self.git(repo, "rev-parse", "HEAD").stdout.strip()
+            self.assertEqual(self.git(remote, "rev-parse", "refs/heads/publication").stdout.strip(), publication_sha)
+            self.assertEqual(self.git(remote, "rev-parse", "refs/heads/main").stdout.strip(), main_before.stdout.strip())
+            (repo / "output/current.json").write_text('{"new":2}', encoding="utf-8")
+            self.assertTrue(commit_weekly_outputs(repo, push=True, expected_remote=publication_sha))
+            second_sha = self.git(repo, "rev-parse", "HEAD").stdout.strip()
+            self.assertEqual(self.git(remote, "rev-parse", "refs/heads/publication").stdout.strip(), second_sha)
+            self.assertEqual(self.git(remote, "rev-parse", "refs/heads/main").stdout.strip(), main_before.stdout.strip())
+        finally:
+            remote_temporary.cleanup()
+            temporary.cleanup()
+
+    def test_publication_stops_when_remote_advanced_after_checkout(self):
+        temporary, repo = self.make_repo()
+        remote_temporary = tempfile.TemporaryDirectory()
+        other_temporary = tempfile.TemporaryDirectory()
+        try:
+            remote = Path(remote_temporary.name)
+            other = Path(other_temporary.name)
+            self.git(remote, "init", "--bare")
+            self.git(repo, "remote", "add", "origin", str(remote))
+            self.git(repo, "push", "origin", "main:publication")
+            expected = self.git(repo, "rev-parse", "HEAD").stdout.strip()
+            self.git(repo, "switch", "-c", PUBLICATION_BRANCH)
+
+            self.git(other.parent, "clone", str(remote), str(other))
+            self.git(other, "switch", "publication")
+            self.git(other, "config", "user.name", "other")
+            self.git(other, "config", "user.email", "other@example.com")
+            (other / "external.txt").write_text("advanced", encoding="utf-8")
+            self.git(other, "add", "external.txt")
+            self.git(other, "commit", "-m", "external advance")
+            self.git(other, "push", "origin", "publication")
+            remote_advanced = self.git(other, "rev-parse", "HEAD").stdout.strip()
+
+            (repo / "output/current.json").write_text('{"new":1}', encoding="utf-8")
+            with self.assertRaisesRegex(RuntimeError, "advanced after checkout"):
+                commit_weekly_outputs(repo, push=True, expected_remote=expected)
+            self.assertEqual(self.git(remote, "rev-parse", "refs/heads/publication").stdout.strip(), remote_advanced)
+        finally:
+            other_temporary.cleanup()
+            remote_temporary.cleanup()
+            temporary.cleanup()
 
 
 if __name__ == "__main__":

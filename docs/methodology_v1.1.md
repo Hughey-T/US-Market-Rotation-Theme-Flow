@@ -165,7 +165,7 @@ ordinal一軸にpositioning原因を混ぜない。`evidence.level`, `evidence.d
 | 直接的な資金流入・流出確認 | direct ETF flow等を実装し、正または負のflowを確認 | `direct_flow_confirmed / inflow|outflow`（v1.1では使用不可） |
 | 資金流入を示唆 | rel4>0、direction improving、volume>=1.10、advance>=0.60、top1<=0.50 | `flow_suggested / inflow` |
 | 資金流出を示唆 | direction outflow_signal | `flow_suggested / outflow` |
-| 相対選好を示唆 | rel4の符号とbreadthは一致するがvolume条件なし | `relative_preference_suggested / inflow|outflow` |
+| 相対選好を示唆 | inflowはrel4>0かつadvance>=0.25、outflowはrel4<0かつadvance<0.50。flow条件は未達 | `relative_preference_suggested / inflow|outflow` |
 | 価格上昇のみ確認 | rel4>0だがbreadth/concentration確認なし | `price_only / up` |
 | 価格下落のみ確認 | rel4<0だがbreadth/trend確認なし | `price_only / down` |
 | 証拠不足 | quality不足または方向を確認できない | `insufficient / unknown` |

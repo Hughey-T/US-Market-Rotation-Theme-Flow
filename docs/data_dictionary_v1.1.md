@@ -243,9 +243,9 @@ This is versioned independently of data schema 1.1. `output/current.json` and ea
 | `matched_conditions/unmatched_conditions` | id[] | no | source flags |
 | `key_metrics.*` | number | yes | schema固定9 metrics、source転記 |
 | `withdrawal_conditions[].condition_id` | string | no | unique in theme judgment |
-| `.field_path` | JSON path string | no | future latest field |
-| `.operator` | enum | no | comparison |
-| `.value` | number/string/bool | no | threshold/category |
+| `.field_path` | JSON path string | no | same themeのfuture latestに存在するfield |
+| `.operator` | enum | no | ordered comparisonはnumeric fieldだけ |
+| `.value` | number/string/bool | no | source fieldと型互換のthreshold/category |
 | `.persistence_weeks` | integer 1..12 | no | consecutive condition |
 | `one_line` | string | no | 最重要一点 |
 | `next_check[]` | string[] | no | next weekly checks |

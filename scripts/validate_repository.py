@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from rotation.judgments import build_index, verify_index
+from rotation.provenance import canonical_bytes
 from rotation.publication import load_current_generation
 from rotation.validation import (
     ContractError,
@@ -37,6 +38,14 @@ def validate_public_outputs(root: Path, latest_schema: dict) -> int:
         current_latest = current[3]
         validate_schema(current_latest, latest_schema, "output/current generation latest.json")
         validate_public_latest(current_latest, verify_source_hash=True)
+        count += 1
+    consumer_path = root / "output" / "consumer" / "latest.json"
+    if consumer_path.exists():
+        consumer = load_json(consumer_path)
+        validate_schema(consumer, latest_schema, "output/consumer/latest.json")
+        validate_public_latest(consumer, verify_source_hash=True)
+        if current is None or canonical_bytes(consumer) != canonical_bytes(current[3]):
+            raise ContractError("consumer export does not match the authoritative current generation")
         count += 1
     return count
 

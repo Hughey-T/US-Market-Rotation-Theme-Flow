@@ -62,6 +62,21 @@ class PublicLatestContractTests(unittest.TestCase):
             with self.assertRaisesRegex(ContractError, "status=success"):
                 validate_public_outputs(root, SCHEMA)
 
+    def test_consumer_export_must_match_authoritative_current(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            output = root / "output"
+            index = {"index_version": "1.0", "records": []}
+            current = generation("2026-07-10", "consumer-current")
+            publish_generation(output, current, history_item(current), index)
+            consumer_path = output / "consumer" / "latest.json"
+            atomic_write_json(consumer_path, current)
+            self.assertEqual(validate_public_outputs(root, SCHEMA), 2)
+            mismatched = generation("2026-07-17", "consumer-mismatch")
+            atomic_write_json(consumer_path, mismatched)
+            with self.assertRaisesRegex(ContractError, "consumer export does not match"):
+                validate_public_outputs(root, SCHEMA)
+
 
 class TransactionalPublicationTests(unittest.TestCase):
     def test_all_seven_failure_points_preserve_current_and_retry(self):

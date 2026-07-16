@@ -62,7 +62,7 @@ checks are the eight non-overlapping categories in that document, including
 `production-orchestration-e2e` and transactional publication; all use offline
 synthetic data and fixed source identities.
 
-Linux/macOSでは`.venv/bin/python`を使用します。PR必須checkは架空データだけを使い、networkと実時刻に依存しません。live取得はschedule/manualのweekly workflowだけです。
+Linux/macOSでは`.venv/bin/python`を使用します。PR必須checkは架空データだけを使い、networkと実時刻に依存しません。live取得はschedule/manualのweekly workflowだけです。workflowは保護された`main`へpushせず、初回だけ`main`から専用`publication`ブランチをbootstrapし、以後はcheckout時のremote SHA一致とancestor関係を確認して通常のfast-forward pushだけを許可します。競合またはremote先行時は公開せず停止します。
 
 ## 週次生成
 
@@ -71,7 +71,7 @@ python scripts/generate_weekly.py --dry-run
 python scripts/generate_weekly.py
 ```
 
-data date、raw input、theme master、各version、source commit、quantitative contentからclock非依存のanalysis identityを作り、実行時刻を含むgeneration identityを別に作ります。`output/.staging-*`へ全componentを生成し、各strict Schema・semantic・finite・hash・identity・versionを検証します。完成directoryを`output/generations/<generation_id>/`へrenameし、検証済みpointerだけをatomic replaceします。同一analysisの再実行はno-op、同一analysisのvalid orphanは決定的に再利用し、同一data dateでも異なるanalysisは新世代として明示公開します。
+data date、raw input、theme master、各version、source commit、quantitative contentからclock非依存のanalysis identityを作り、実行時刻を含むgeneration identityを別に作ります。`output/.staging-*`へ全componentを生成し、各strict Schema・semantic・finite・hash・identity・versionを検証します。完成directoryを`output/generations/<generation_id>/`へrenameし、検証済みpointerだけをatomic replaceします。同一analysisの再実行はno-op、現在世代を直接の親とする同一analysisのvalid orphanだけを決定的に再利用します。通常publishでdata dateを後退させず、後退は明示的rollbackに限定します。同一data dateでも異なるanalysisは新世代として明示公開します。
 
 汎用semantic validatorは診断用の`status=failed`も原因付きで検証できますが、公開validatorは`status=success`、`failure_reason=null`、`critical_missing=[]`、source hash一致を必須とします。固定互換パス`output/latest.json`が存在する場合にも同じ公開validatorを適用します。
 
@@ -87,7 +87,7 @@ shortlist対象は`dd_priority|dd_candidate|watch`だけです。priority→evid
 
 ## judgmentとlegacy
 
-新規判断は`schemas/judgment_record.schema.json`に準拠して`output/judgments/*.json`へ保存し、既存byteを変更しません。source latestとのtheme集合、全code-side classification、evidence、quality、condition IDs、shortlist採否・連番rank、固定metrics、version・hashが完全一致したrecordだけをindexへ含めます。旧prediction/verificationは意味が異なるため自動変換・削除しません。
+新規判断は`schemas/judgment_record.schema.json`に準拠して`output/judgments/*.json`へ保存し、既存byteを変更しません。PR CIはbase branchと比較し、既存recordの変更・削除・renameを拒否します。source latestとのtheme集合、全code-side classification、evidence、quality、condition IDs、shortlist採否・連番rank、固定metrics、version・hashが完全一致したrecordだけをindexへ含めます。撤回条件は同じthemeの実在field、型互換operator/value、一意condition IDを必須とします。旧prediction/verificationは意味が異なるため自動変換・削除しません。
 
 Market Rotation 1.0はdefaultで拒否します。`scripts/migrate_1_0_to_1_1.py --explicit`は推測を行わない非publishable reportだけを生成します。完全な1.1はsource observationから再生成してください。詳細は[Migration](docs/migration_v1.1.md)と[Rollback](docs/rollback_v1.1.md)を参照してください。
 
@@ -102,12 +102,12 @@ Market Rotation 1.0はdefaultで拒否します。`scripts/migrate_1_0_to_1_1.py
 方法論は[Methodology 1.1.0](docs/methodology_v1.1.md)、field定義は[Data Dictionary](docs/data_dictionary_v1.1.md)、Custom GPT契約は[Instructions 1.1.1](docs/custom_gpt_instructions_v1.1.md)が正本です。
 ## Publication contract 1.0
 
-`output/current.json` is the only authoritative generation pointer. Manifests and pointers carry `publication_contract_version=1.0`. `analysis_id` identifies deterministic inputs and logic without the clock; `generation_id` identifies one execution. Consumers must not read a fixed `output/latest.json`. Export and revalidate the current artifact with:
+`publication`ブランチの`output/current.json`が唯一のauthoritative generation pointerです。Manifests and pointers carry `publication_contract_version=1.0`. `analysis_id` identifies deterministic inputs and logic without the clock; `generation_id` identifies one execution. `output/consumer/latest.json`は同一workflowでcurrentから生成・Schema検証・remote再取得比較まで完了した派生consumer exportであり、authoritative pointerの代替ではありません。ローカルでは次のcommandで同じexportを再生成できます。
 
 ```bash
 python scripts/export_current_latest.py exported/latest.json
 ```
 
-Attach only that exported `latest.json` to Custom GPT. A legacy fixed publication is migrated explicitly with `python scripts/migrate_publication_v1.py --explicit`; scheduled generation stops safely until migration. Inspect a lock with `python scripts/publication_lock.py inspect`; recover only an expired, non-live lock with `python scripts/publication_lock.py recover --stale-after-hours 6`.
+Custom GPTのGitHub sourceは`publication`ブランチの`output/consumer/latest.json`へ固定します。公開URLは`https://raw.githubusercontent.com/Hughey-T/US-Market-Rotation-Theme-Flow/publication/output/consumer/latest.json`です。初期設定後の日常操作は「更新」「次」だけで、週次のbranch作成、PR、Actions承認、merge、file添付を要求しません。A legacy fixed publication is migrated explicitly with `python scripts/migrate_publication_v1.py --explicit`; scheduled generation stops safely until migration. Inspect a lock with `python scripts/publication_lock.py inspect`; recover only an expired, non-live lock with `python scripts/publication_lock.py recover --stale-after-hours 6`.
 
 This public repository protects `main` with pull requests, strict up-to-date required checks, resolved review conversations, and blocked force pushes and branch deletion. The eight required checks and the supplementary human release procedure are documented in the [Manual merge gate](docs/manual_merge_gate.md). No approving review is required by configuration, and repository administrators retain an emergency bypass path. A Draft PR remains Draft until final independent review is complete and must never be merged directly.
