@@ -97,11 +97,10 @@ def run_main(master, profile, history, *, reverse=False, omit_spy=False, output=
     config_path, master_path = root / "config.json", root / "themes.json"
     config_path.write_text(json.dumps(config), encoding="utf-8")
     master_path.write_text(json.dumps(master), encoding="utf-8")
-    legacy_history = output / "history"
-    legacy_history.mkdir(parents=True, exist_ok=True)
-    for row in history:
-        (legacy_history / f"{row['data_date']}.json").write_text(json.dumps(row), encoding="utf-8")
     (output / "judgments").mkdir(parents=True, exist_ok=True)
+    judgment_index = output / "judgments" / "index.json"
+    if not judgment_index.exists():
+        judgment_index.write_text('{"index_version":"1.0","records":[]}\n', encoding="utf-8")
 
     def download(tickers, **_kwargs):
         requested = list(tickers) if not isinstance(tickers, str) else [tickers]
@@ -116,6 +115,7 @@ def run_main(master, profile, history, *, reverse=False, omit_spy=False, output=
         stack.enter_context(mock.patch.object(generate_weekly, "OUTPUT", output))
         stack.enter_context(mock.patch.object(generate_weekly, "HISTORY", output / "history"))
         stack.enter_context(mock.patch.object(generate_weekly, "JUDGMENTS", output / "judgments"))
+        stack.enter_context(mock.patch.object(generate_weekly, "load_history", return_value=history))
         stack.enter_context(mock.patch.dict(os.environ, {"GITHUB_SHA": "a" * 40}))
         result = generate_weekly.main([])
     current = load_current_generation(output)
@@ -156,12 +156,41 @@ class ProductionOrchestrationE2E(unittest.TestCase):
             )
             self.assertEqual(generate_weekly.classify_publication_start_state(output).kind, "clean")
 
+            for relative in ("judgments/secret.txt", "generations/secret.txt"):
+                injected = output / relative
+                injected.parent.mkdir(parents=True, exist_ok=True)
+                injected.write_text("sensitive body", encoding="utf-8")
+                acquisition = mock.Mock(side_effect=AssertionError("acquisition must not start"))
+                with mock.patch.object(generate_weekly, "OUTPUT", output), mock.patch.object(
+                    generate_weekly, "download_observations", acquisition,
+                ):
+                    with self.assertRaises(RuntimeError):
+                        generate_weekly.main([])
+                acquisition.assert_not_called()
+                self.assertFalse((output / "current.json").exists())
+                injected.unlink()
+                if injected.parent.name == "generations":
+                    injected.parent.rmdir()
+
             result, latest, _, _ = run_main(master, "p1", history, output=output)
             self.assertEqual(result, 0)
             validate_schema(latest, LATEST_SCHEMA, "main-shaped bootstrap latest")
             validate_public_latest(latest, verify_source_hash=True)
             export_current(output, output / "consumer" / "latest.json")
             subprocess.run(["git", "switch", "-c", "publication"], cwd=work, check=True, capture_output=True)
+            current = load_current_generation(output)
+            for injected in (output / "judgments/secret.txt", current[1] / "secret.txt"):
+                injected.write_text("sensitive body", encoding="utf-8")
+                with self.assertRaises(ContractError):
+                    commit_weekly_outputs(work, push=True, bootstrap=True)
+                self.assertEqual(
+                    subprocess.run(
+                        ["git", "ls-remote", "--heads", "origin", "refs/heads/publication"],
+                        cwd=work, check=True, capture_output=True, text=True,
+                    ).stdout.strip(),
+                    "",
+                )
+                injected.unlink()
             self.assertTrue(commit_weekly_outputs(work, push=True, bootstrap=True))
 
             self.assertEqual(
@@ -188,6 +217,11 @@ class ProductionOrchestrationE2E(unittest.TestCase):
                 check=True, capture_output=True,
             )
             with mock.patch.object(repository_validator, "ROOT", verified):
+                self.assertEqual(repository_validator.main(), 0)
+                unknown = verified / "output/generations/secret.txt"
+                unknown.write_text("remote tamper", encoding="utf-8")
+                self.assertEqual(repository_validator.main(), 1)
+                unknown.unlink()
                 self.assertEqual(repository_validator.main(), 0)
             current = load_current_generation(verified / "output")
             self.assertIsNotNone(current)
@@ -343,9 +377,9 @@ class ProductionOrchestrationE2E(unittest.TestCase):
             self.assertEqual(latest["market_regime"], classify_market_regime(latest["market_regime"]["inputs"]))
             validate_schema(latest, LATEST_SCHEMA, "production-generated latest")
             validate_latest_semantics(latest, verify_source_hash=True)
-            self.assertEqual(validate_public_outputs(output.parent, LATEST_SCHEMA), 1)
             consumer = output / "consumer" / "latest.json"
             export_current(output, consumer)
+            self.assertEqual(validate_public_outputs(output.parent, LATEST_SCHEMA), 2)
             self.assertEqual(load_json(consumer)["market_regime"], latest["market_regime"])
             root = output.parent
             shutil.copytree(ROOT / "schemas", root / "schemas")
