@@ -19,6 +19,26 @@ class ContractError(ValueError):
     pass
 
 
+_MISSING = object()
+
+
+def _path_value(value: dict, path: str):
+    current = value
+    for part in path.split("."):
+        if not isinstance(current, dict) or part not in current:
+            return _MISSING
+        current = current[part]
+    return current
+
+
+def _compatible_scalar(observed, expected) -> bool:
+    if isinstance(expected, bool):
+        return isinstance(observed, bool)
+    if isinstance(expected, (int, float)) and not isinstance(expected, bool):
+        return isinstance(observed, (int, float)) and not isinstance(observed, bool)
+    return isinstance(observed, str) and isinstance(expected, str)
+
+
 def load_json(path: Path):
     with path.open(encoding="utf-8") as handle:
         return json.load(handle, parse_constant=lambda value: (_ for _ in ()).throw(ValueError(f"non-finite JSON constant: {value}")))
@@ -242,6 +262,29 @@ def validate_judgment_semantics(record: dict, source_latest: dict | None) -> Non
         if source_theme is None:
             errors.append(f"judgment theme_id not found in source latest: {theme_id}")
             continue
+        seen_condition_ids = set()
+        expected_prefix = f"themes.{theme_id}."
+        for condition in theme.get("withdrawal_conditions", []):
+            condition_id = condition.get("condition_id")
+            if condition_id in seen_condition_ids:
+                errors.append(f"{theme_id}: duplicate withdrawal condition_id: {condition_id}")
+            seen_condition_ids.add(condition_id)
+            field_path = condition.get("field_path", "")
+            if not field_path.startswith(expected_prefix):
+                errors.append(f"{theme_id}/{condition_id}: withdrawal field_path must target the same source theme")
+                continue
+            observed = _path_value(source_latest, field_path)
+            if observed is _MISSING:
+                errors.append(f"{theme_id}/{condition_id}: withdrawal field_path is absent from source latest")
+                continue
+            operator, expected = condition.get("operator"), condition.get("value")
+            if operator in {"<", "<=", ">", ">="}:
+                if isinstance(expected, bool) or not isinstance(expected, (int, float)):
+                    errors.append(f"{theme_id}/{condition_id}: ordered withdrawal comparison requires a numeric value")
+                if observed is not None and (isinstance(observed, bool) or not isinstance(observed, (int, float))):
+                    errors.append(f"{theme_id}/{condition_id}: ordered withdrawal comparison targets a non-numeric field")
+            elif observed is not None and not _compatible_scalar(observed, expected):
+                errors.append(f"{theme_id}/{condition_id}: withdrawal value type does not match the source field")
         rule = theme.get("research_priority_rule")
         if theme.get("research_priority") != priority_by_rule.get(rule):
             errors.append(f"{theme_id}: research_priority is inconsistent with {rule}")

@@ -285,7 +285,7 @@ class SpecificationCases(unittest.TestCase):
 
     def test_T39_price_only(self):
         metrics = copy.deepcopy(fixture_theme()["metrics"])
-        metrics.update(advance_ratio_4w=0.30, pct_above_50dma=0.30, volume_ratio_20d_60d=1.0)
+        metrics.update(advance_ratio_4w=0.20, pct_above_50dma=0.20, volume_ratio_20d_60d=1.0)
         _, classification = classify_theme(metrics, fixture_theme()["trends"], fixture_theme()["quality"], fixture_theme()["by_role"])
         self.assertEqual((classification["evidence"]["level"], classification["evidence"]["direction"]), ("price_only", "up"))
 

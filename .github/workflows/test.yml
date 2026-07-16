@@ -18,12 +18,19 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with: {python-version: "3.12", cache: pip}
       - run: python -m pip install -r requirements.txt
       - run: python scripts/validate_repository.py
+      - name: Validate immutable judgments against PR base
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python scripts/validate_immutable_judgments.py --base "$BASE_SHA"
       - run: python scripts/generate_weekly.py --fixture tests/fixtures/latest_normal.json --dry-run
-      - run: python -m unittest tests.test_condition_audit -v
+      - run: python -m unittest tests.test_condition_audit tests.test_immutable_judgments -v
 
   unit-and-rule-contracts:
     runs-on: ubuntu-latest

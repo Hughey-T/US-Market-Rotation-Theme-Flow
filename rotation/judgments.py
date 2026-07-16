@@ -45,7 +45,13 @@ def get_path(value, path: str):
 def _compare(observed, operator, expected):
     if observed is None:
         return None
-    return {"<": observed < expected, "<=": observed <= expected, ">": observed > expected, ">=": observed >= expected, "==": observed == expected, "!=": observed != expected}[operator]
+    if operator == "==":
+        return observed == expected
+    if operator == "!=":
+        return observed != expected
+    if isinstance(observed, bool) or isinstance(expected, bool) or not isinstance(observed, (int, float)) or not isinstance(expected, (int, float)):
+        return None
+    return {"<": observed < expected, "<=": observed <= expected, ">": observed > expected, ">=": observed >= expected}[operator]
 
 
 def evaluate_withdrawal(condition: dict, current: dict, history: list[dict]) -> dict:

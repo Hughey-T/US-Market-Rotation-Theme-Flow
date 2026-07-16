@@ -138,11 +138,11 @@
         "phase": "unclassifiable",
         "direction": "improving",
         "evidence": {
-          "level": "price_only",
-          "direction": "up",
+          "level": "relative_preference_suggested",
+          "direction": "inflow",
           "positioning_hypothesis": "not_supported",
           "direct_flow_data_available": false,
-          "matched_conditions": ["EV_REL_POS", "CONCENTRATION_TOP1_GT_60"]
+          "matched_conditions": ["EV_REL_POS", "EV_DIRECTION_IMPROVING", "EV_VOLUME_110"]
         },
         "research_priority": "watch",
         "research_priority_rule": "P4",

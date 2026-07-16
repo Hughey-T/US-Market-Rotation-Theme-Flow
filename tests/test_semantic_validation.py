@@ -16,6 +16,7 @@ from rotation.validation import (
     load_json,
     validate_judgment_semantics,
     validate_latest_semantics,
+    validate_schema,
 )
 from scripts import generate_weekly
 
@@ -171,6 +172,32 @@ class SemanticValidatorTests(unittest.TestCase):
                 with self.assertRaisesRegex(ContractError, "status=success"):
                     generate_weekly.publish(failed, {"index_version": "1.0", "records": []})
             self.assertEqual(hashlib.sha256(latest_path.read_bytes()).hexdigest(), before)
+
+    def test_T65_withdrawal_conditions_are_unique_resolvable_and_type_safe(self):
+        source = load_json(FIXTURES / "latest_normal.json")
+        schema = load_json(ROOT / "schemas" / "judgment_record.schema.json")
+
+        duplicate = load_json(FIXTURES / "judgment_record.json")
+        duplicate["theme_judgments"][0]["withdrawal_conditions"][1]["condition_id"] = duplicate["theme_judgments"][0]["withdrawal_conditions"][0]["condition_id"]
+        with self.assertRaisesRegex(ContractError, "duplicate withdrawal condition_id"):
+            validate_judgment_semantics(duplicate, source)
+
+        missing = load_json(FIXTURES / "judgment_record.json")
+        missing["theme_judgments"][0]["withdrawal_conditions"][0]["field_path"] = "themes.fixture_theme.metrics.not_a_field"
+        with self.assertRaisesRegex(ContractError, "absent from source latest"):
+            validate_judgment_semantics(missing, source)
+
+        wrong_type = load_json(FIXTURES / "judgment_record.json")
+        wrong_type["theme_judgments"][0]["withdrawal_conditions"][0].update(
+            field_path="themes.fixture_theme.classifications.phase", operator="==", value=1,
+        )
+        with self.assertRaisesRegex(ContractError, "value type does not match"):
+            validate_judgment_semantics(wrong_type, source)
+
+        ordered_string = load_json(FIXTURES / "judgment_record.json")
+        ordered_string["theme_judgments"][0]["withdrawal_conditions"][0]["value"] = "zero"
+        with self.assertRaisesRegex(ContractError, "JSON Schema"):
+            validate_schema(ordered_string, schema, "ordered string withdrawal")
 
 
 if __name__ == "__main__":

@@ -3,6 +3,7 @@ import unittest
 from pathlib import Path
 
 from rotation.provenance import snapshot_source_hash
+from rotation.judgments import evaluate_withdrawal
 from rotation.shortlist import apply_shortlist
 from rotation.validation import ContractError, load_json, validate_judgment_semantics, validate_schema
 from tests.test_pipeline_contract import build_synthetic
@@ -62,6 +63,8 @@ def complete_projection(source):
         }
         theme["matched_conditions"] = copy.deepcopy(source_theme["condition_flags"]["matched_conditions"])
         theme["unmatched_conditions"] = copy.deepcopy(source_theme["condition_flags"]["unmatched_conditions"])
+        for condition in theme["withdrawal_conditions"]:
+            condition["field_path"] = condition["field_path"].replace("themes.fixture_theme.", f"themes.{theme_id}.", 1)
         for field in theme["key_metrics"]:
             theme["key_metrics"][field] = source_theme["metrics"][field]
         judgments.append(theme)
@@ -80,6 +83,14 @@ def complete_projection(source):
 
 
 class CompleteJudgmentProjectionTests(unittest.TestCase):
+    def test_non_orderable_withdrawal_comparison_returns_unknown_instead_of_crashing(self):
+        condition = {
+            "condition_id": "TYPE_SAFE", "field_path": "themes.fixture_theme.classifications.phase",
+            "operator": "<", "value": 1, "persistence_weeks": 1,
+        }
+        source = load_json(ROOT / "tests" / "fixtures" / "latest_normal.json")
+        self.assertEqual(evaluate_withdrawal(condition, source, [])["status"], "unknown")
+
     def test_complete_projection_is_valid(self):
         sources = (
             two_theme_source(),

@@ -1,7 +1,22 @@
+import copy
 import unittest
 
-from rotation.classification import evaluate_priority, evaluate_timing, priority_matches, timing_matches
+from rotation.classification import classify_theme, evaluate_priority, evaluate_timing, priority_matches, timing_matches
 from tests.test_spec_cases import direct_theme, fixture_theme
+
+
+def production_theme(*, advance_ratio_4w):
+    base = fixture_theme()
+    metrics = copy.deepcopy(base["metrics"])
+    metrics.update(
+        advance_ratio_4w=advance_ratio_4w,
+        top1_contribution_ratio=0.40,
+        top3_contribution_ratio=0.70,
+        volume_ratio_20d_60d=1.00,
+        pct_within_5pct_52w_high=0.20,
+    )
+    flags, classifications = classify_theme(metrics, base["trends"], base["quality"], base["by_role"])
+    return {"quality": base["quality"], "metrics": metrics, "condition_flags": flags, "classifications": classifications}
 
 
 class PriorityReachability(unittest.TestCase):
@@ -20,7 +35,8 @@ class PriorityReachability(unittest.TestCase):
         self.assert_priority(fixture_theme("latest_p2_overheat_diffusion.json"), "dd_priority", "P2")
 
     def test_reachability_P3(self):
-        theme = direct_theme(phase="initial", direction="improving", level="relative_preference_suggested", evidence_direction="inflow")
+        theme = production_theme(advance_ratio_4w=0.40)
+        self.assertEqual((theme["classifications"]["phase"], theme["classifications"]["evidence"]["level"], theme["classifications"]["evidence"]["direction"]), ("initial", "relative_preference_suggested", "inflow"))
         self.assert_priority(theme, "dd_candidate", "P3")
 
     def test_reachability_P4(self):
@@ -31,7 +47,9 @@ class PriorityReachability(unittest.TestCase):
         self.assert_priority(fixture_theme("latest_p5_low_priority.json"), "low_priority", "P5")
 
     def test_reachability_priority_fallback(self):
-        self.assert_priority(direct_theme(), "watch", "fallback")
+        theme = production_theme(advance_ratio_4w=0.10)
+        self.assertEqual((theme["classifications"]["phase"], theme["classifications"]["evidence"]["level"]), ("unclassifiable", "price_only"))
+        self.assert_priority(theme, "watch", "fallback")
 
 
 class TimingReachability(unittest.TestCase):
@@ -50,13 +68,13 @@ class TimingReachability(unittest.TestCase):
         self.assert_timing(direct_theme(direction="outflow_signal"), "deteriorating", "T2")
 
     def test_reachability_T3(self):
-        self.assert_timing(direct_theme(phase="initial"), "early_unconfirmed", "T3")
+        self.assert_timing(production_theme(advance_ratio_4w=0.40), "early_unconfirmed", "T3")
 
     def test_reachability_T4(self):
         self.assert_timing(direct_theme(phase="diffusion", direction="flat"), "favorable", "T4")
 
     def test_reachability_timing_fallback(self):
-        self.assert_timing(direct_theme(phase="unclassifiable", direction="improving"), "unclassifiable", "fallback")
+        self.assert_timing(production_theme(advance_ratio_4w=0.10), "unclassifiable", "fallback")
 
     def test_T1_precedes_T2_but_direction_is_preserved(self):
         theme = direct_theme(phase="price_overheat", direction="outflow_signal")

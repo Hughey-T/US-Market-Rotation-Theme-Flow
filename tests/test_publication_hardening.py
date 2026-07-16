@@ -91,6 +91,27 @@ class PublicationHardeningTests(unittest.TestCase):
         self.assertEqual(list(self.output.glob(".staging-*")), [])
         self.assertFalse((self.output / ".publish.lock").exists())
 
+    def test_stale_orphan_cannot_roll_current_back_after_newer_publication(self):
+        stale = generation("2026-07-17", "stale-orphan")
+        with self.assertRaises(OSError):
+            publish_generation(
+                self.output, stale, history_item(stale), self.index,
+                lambda step: (_ for _ in ()).throw(OSError("after rename")) if step == "generation_rename" else None,
+            )
+        newest = generation("2026-07-24", "newest")
+        newest_pointer = publish_generation(self.output, newest, history_item(newest), self.index)
+        with self.assertRaisesRegex(ContractError, "cannot move backwards"):
+            publish_generation(self.output, stale, history_item(stale), self.index)
+        self.assertEqual(load_current_generation(self.output)[0], newest_pointer)
+
+    def test_fresh_older_analysis_requires_explicit_rollback(self):
+        newest = generation("2026-07-24", "newest-first")
+        newest_pointer = publish_generation(self.output, newest, history_item(newest), self.index)
+        older = generation("2026-07-17", "fresh-but-older")
+        with self.assertRaisesRegex(ContractError, "cannot move backwards"):
+            publish_generation(self.output, older, history_item(older), self.index)
+        self.assertEqual(load_current_generation(self.output)[0], newest_pointer)
+
     def test_invalid_orphan_is_ignored_and_export_resolves_current(self):
         invalid = self.output / "generations" / ("f" * 64)
         invalid.mkdir(parents=True); (invalid / "manifest.json").write_text("{}", encoding="utf-8")

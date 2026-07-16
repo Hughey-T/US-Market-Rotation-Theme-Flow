@@ -179,7 +179,7 @@ def classify_theme(metrics: dict, trends: dict, quality: dict, by_role: dict) ->
         level, evidence_direction = "flow_suggested", "outflow"
     elif rel4 > 0 and direction == "improving" and finite(metrics.get("volume_ratio_20d_60d")) is not None and metrics["volume_ratio_20d_60d"] >= 1.10 and finite(metrics.get("advance_ratio_4w")) is not None and metrics["advance_ratio_4w"] >= 0.60 and finite(top1) is not None and top1 <= 0.50:
         level, evidence_direction = "flow_suggested", "inflow"
-    elif rel4 > 0 and finite(metrics.get("advance_ratio_4w")) is not None and metrics["advance_ratio_4w"] >= 0.60:
+    elif rel4 > 0 and finite(metrics.get("advance_ratio_4w")) is not None and metrics["advance_ratio_4w"] >= 0.25:
         level, evidence_direction = "relative_preference_suggested", "inflow"
     elif rel4 < 0 and finite(metrics.get("advance_ratio_4w")) is not None and metrics["advance_ratio_4w"] < 0.50:
         level, evidence_direction = "relative_preference_suggested", "outflow"

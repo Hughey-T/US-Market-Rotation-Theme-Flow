@@ -214,7 +214,7 @@ def _valid_orphans(output: Path, analysis_id: str, current_generation_id: str | 
             manifest, *_ = validate_generation(path)
         except (ContractError, OSError, ValueError):
             continue
-        if manifest["analysis_id"] == analysis_id:
+        if manifest["analysis_id"] == analysis_id and manifest["previous_generation_id"] == current_generation_id:
             candidates.append((manifest, path))
     return sorted(candidates, key=lambda item: (item[0]["generated_at"], item[0]["generation_id"]))
 
@@ -233,6 +233,8 @@ def publish_generation(output: Path, snapshot: dict, history: dict, index: dict,
         current_generation_id = current[2]["generation_id"] if current else None
         if current and current[2]["analysis_id"] == analysis_id:
             return current[0]
+        if current and snapshot["meta"]["data_date"] < current[2]["data_date"]:
+            raise ContractError("publication data_date cannot move backwards; use explicit rollback")
         orphans = _valid_orphans(output, analysis_id, current_generation_id)
         if orphans:
             manifest, _ = orphans[0]
