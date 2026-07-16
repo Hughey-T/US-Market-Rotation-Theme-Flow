@@ -21,7 +21,15 @@ def _git(repo: Path, *args: str) -> str:
 def immutable_judgment_violations(repo: Path, base: str, head: str = "HEAD") -> list[str]:
     _git(repo, "rev-parse", "--verify", f"{base}^{{commit}}")
     _git(repo, "rev-parse", "--verify", f"{head}^{{commit}}")
-    output = _git(repo, "diff", "--name-status", "--find-renames", f"{base}...{head}", "--", "output/judgments")
+    ancestor = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", base, head],
+        cwd=repo, text=True, capture_output=True,
+    )
+    if ancestor.returncode != 0:
+        if ancestor.returncode == 1:
+            raise ContractError(f"immutable judgment base is not an ancestor of head: {base} -> {head}")
+        ancestor.check_returncode()
+    output = _git(repo, "diff", "--name-status", "--find-renames", f"{base}..{head}", "--", "output/judgments")
     violations = []
     for line in output.splitlines():
         fields = line.split("\t")

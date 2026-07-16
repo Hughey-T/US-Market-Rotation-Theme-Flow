@@ -62,7 +62,7 @@ checks are the eight non-overlapping categories in that document, including
 `production-orchestration-e2e` and transactional publication; all use offline
 synthetic data and fixed source identities.
 
-Linux/macOSでは`.venv/bin/python`を使用します。PR必須checkは架空データだけを使い、networkと実時刻に依存しません。live取得はschedule/manualのweekly workflowだけです。workflowは保護された`main`へpushせず、初回だけ`main`から専用`publication`ブランチをbootstrapし、以後はcheckout時のremote SHA一致とancestor関係を確認して通常のfast-forward pushだけを許可します。競合またはremote先行時は公開せず停止します。
+Linux/macOSでは`.venv/bin/python`を使用します。PR必須checkは架空データだけを使い、networkと実時刻に依存しません。feature branchではpull request eventだけが8 required checksを生成し、push eventは`main`に限定します。live取得はschedule/manualのweekly workflowだけです。workflowは保護された`main`へpushせず、初回だけ`main`から専用`publication`ブランチをbootstrapし、以後はcheckout時のremote SHA一致とancestor関係を確認して通常のfast-forward pushだけを許可します。競合またはremote先行時は公開せず停止します。
 
 ## 週次生成
 
@@ -87,7 +87,7 @@ shortlist対象は`dd_priority|dd_candidate|watch`だけです。priority→evid
 
 ## judgmentとlegacy
 
-新規判断は`schemas/judgment_record.schema.json`に準拠して`output/judgments/*.json`へ保存し、既存byteを変更しません。PR CIはbase branchと比較し、既存recordの変更・削除・renameを拒否します。source latestとのtheme集合、全code-side classification、evidence、quality、condition IDs、shortlist採否・連番rank、固定metrics、version・hashが完全一致したrecordだけをindexへ含めます。撤回条件は同じthemeの実在field、型互換operator/value、一意condition IDを必須とします。旧prediction/verificationは意味が異なるため自動変換・削除しません。
+新規判断は`schemas/judgment_record.schema.json`に準拠して`output/judgments/*.json`へ保存し、既存byteを変更しません。PR CIはbase branch、通常のweekly publicationは取得済みの正確な`origin/publication` SHAと比較し、既存recordの変更・削除・renameをpush前に拒否します。source latestとのtheme集合、全code-side classification、evidence、quality、condition IDs、shortlist採否・連番rank、固定metrics、version・hashが完全一致したrecordだけをindexへ含めます。撤回条件は同じthemeの実在field、Schema上の型と互換なoperator/value、一意condition IDを必須とし、source値が`null`でも型検証を省略しません。旧prediction/verificationは意味が異なるため自動変換・削除しません。
 
 Market Rotation 1.0はdefaultで拒否します。`scripts/migrate_1_0_to_1_1.py --explicit`は推測を行わない非publishable reportだけを生成します。完全な1.1はsource observationから再生成してください。詳細は[Migration](docs/migration_v1.1.md)と[Rollback](docs/rollback_v1.1.md)を参照してください。
 

@@ -84,6 +84,7 @@ class WorkflowContractTests(unittest.TestCase):
 
     def test_workflow_has_strict_shell_and_no_commit_failure_mask(self):
         text = (Path(__file__).resolve().parents[1] / ".github/workflows/weekly.yml").read_text(encoding="utf-8")
+        test_workflow = (Path(__file__).resolve().parents[1] / ".github/workflows/test.yml").read_text(encoding="utf-8")
         self.assertIn("set -euo pipefail", text)
         self.assertNotIn("|| echo", text)
         self.assertIn("git switch -c publication origin/main", text)
@@ -94,6 +95,7 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("--expected-remote", text)
         self.assertIn("--bootstrap", text)
         self.assertIn("git worktree add --detach", text)
+        self.assertIn("push:\n    branches: [main]", test_workflow)
 
     def test_publication_push_is_fast_forward_and_does_not_update_main(self):
         temporary, repo = self.make_repo()
@@ -148,6 +150,65 @@ class WorkflowContractTests(unittest.TestCase):
             self.assertEqual(self.git(remote, "rev-parse", "refs/heads/publication").stdout.strip(), remote_advanced)
         finally:
             other_temporary.cleanup()
+            remote_temporary.cleanup()
+            temporary.cleanup()
+
+    def test_pre_staged_path_outside_publication_allowlist_is_rejected(self):
+        temporary, repo = self.make_repo()
+        try:
+            outside = repo / "outside_allowlist.txt"
+            outside.write_text("base\n", encoding="utf-8")
+            self.git(repo, "add", outside.name)
+            self.git(repo, "-c", "user.name=test", "-c", "user.email=test@example.com", "commit", "-m", "tracked outside path")
+            outside.write_text("staged change\n", encoding="utf-8")
+            self.git(repo, "add", outside.name)
+            (repo / "output/current.json").write_text('{"new":1}', encoding="utf-8")
+            with self.assertRaisesRegex(RuntimeError, "outside the allowlist"):
+                commit_weekly_outputs(repo, push=False)
+        finally:
+            temporary.cleanup()
+
+    def test_publication_push_rejects_changed_existing_judgment(self):
+        temporary, repo = self.make_repo()
+        remote_temporary = tempfile.TemporaryDirectory()
+        try:
+            record = repo / "output/judgments/existing.json"
+            record.write_text('{"value":"immutable"}\n', encoding="utf-8")
+            self.git(repo, "add", str(record.relative_to(repo)))
+            self.git(repo, "-c", "user.name=test", "-c", "user.email=test@example.com", "commit", "-m", "add immutable judgment")
+            remote = Path(remote_temporary.name)
+            self.git(remote, "init", "--bare")
+            self.git(repo, "remote", "add", "origin", str(remote))
+            self.git(repo, "push", "origin", "main:publication")
+            expected = self.git(repo, "rev-parse", "HEAD").stdout.strip()
+            self.git(repo, "switch", "-c", PUBLICATION_BRANCH)
+            record.write_text('{"value":"rewritten"}\n', encoding="utf-8")
+            (repo / "output/current.json").write_text('{"new":1}', encoding="utf-8")
+            with self.assertRaisesRegex(ContractError, "immutable judgment"):
+                commit_weekly_outputs(repo, push=True, expected_remote=expected)
+            self.assertEqual(self.git(remote, "rev-parse", "refs/heads/publication").stdout.strip(), expected)
+        finally:
+            remote_temporary.cleanup()
+            temporary.cleanup()
+
+    def test_publication_push_allows_new_judgment_record(self):
+        temporary, repo = self.make_repo()
+        remote_temporary = tempfile.TemporaryDirectory()
+        try:
+            remote = Path(remote_temporary.name)
+            self.git(remote, "init", "--bare")
+            self.git(repo, "remote", "add", "origin", str(remote))
+            self.git(repo, "push", "origin", "main:publication")
+            expected = self.git(repo, "rev-parse", "HEAD").stdout.strip()
+            self.git(repo, "switch", "-c", PUBLICATION_BRANCH)
+            (repo / "output/judgments/new.json").write_text('{"value":"new"}\n', encoding="utf-8")
+            (repo / "output/current.json").write_text('{"new":1}', encoding="utf-8")
+            self.assertTrue(commit_weekly_outputs(repo, push=True, expected_remote=expected))
+            self.assertEqual(
+                self.git(remote, "rev-parse", "refs/heads/publication").stdout.strip(),
+                self.git(repo, "rev-parse", "HEAD").stdout.strip(),
+            )
+        finally:
             remote_temporary.cleanup()
             temporary.cleanup()
 
