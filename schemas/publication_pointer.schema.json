@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/us-market-rotation/publication_pointer.schema.1.0.json",
+  "title": "Market Rotation current generation pointer 1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["publication_contract_version", "pointer_version", "analysis_id", "generation_id", "run_id", "data_date", "generation", "previous_generation_id", "manifest_sha256"],
+  "properties": {
+    "publication_contract_version": {"const": "1.0"},
+    "pointer_version": {"const": "1.0"},
+    "analysis_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "generation_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "run_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "data_date": {"type": "string", "format": "date"},
+    "generation": {"type": "string", "pattern": "^generations/[a-f0-9]{64}$"},
+    "previous_generation_id": {"anyOf": [{"type": "null"}, {"type": "string", "pattern": "^[a-f0-9]{64}$"}]},
+    "manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

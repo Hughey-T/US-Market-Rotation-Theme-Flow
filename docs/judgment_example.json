@@ -1,0 +1,128 @@
+{
+  "judgment_schema_version": "1.0",
+  "instruction_version": "1.1.1",
+  "data_schema_version": "1.1",
+  "methodology_version": "1.1.0",
+  "judgment_id": "judgment_fixture-normal-20260710",
+  "run_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "data_date": "2026-07-10",
+  "generated_at": "2026-07-11T01:00:00Z",
+  "source_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "source_snapshot": "output/generations/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/archive.json",
+  "source_sha256": "4df6b21af87109e60f729917b4152c8c0a30dac7dc5d519b87805f3923351d48",
+  "previous_judgment_date": null,
+  "regime": {
+    "primary_regime": "mixed",
+    "secondary_regimes": [
+      "broad_risk_on",
+      "cyclical_recovery_expectation"
+    ],
+    "confidence": "low",
+    "matched_conditions": [
+      "R_BROAD_IWM_NONNEG",
+      "R_BROAD_RSP_NONNEG",
+      "R_BROAD_SECTORS_7_OF_11",
+      "R_BROAD_SPY_POS",
+      "R_CYCLE_BASKET2",
+      "R_CYCLE_CREDIT_NONNEG",
+      "R_CYCLE_IWM2"
+    ],
+    "contrary_evidence": []
+  },
+  "theme_judgments": [
+    {
+      "theme_id": "fixture_theme",
+      "phase": "diffusion",
+      "direction": "improving",
+      "evidence": {
+        "level": "flow_suggested",
+        "direction": "inflow",
+        "positioning_hypothesis": "not_supported",
+        "matched_conditions": [
+          "EV_REL_POS",
+          "EV_DIRECTION_IMPROVING",
+          "EV_VOLUME_110",
+          "EV_ADVANCE_60",
+          "EV_TOP1_50"
+        ]
+      },
+      "research_priority": "dd_priority",
+      "research_priority_rule": "P1",
+      "timing_status": "favorable",
+      "timing_rule": "T4",
+      "selected_for_deep_dive": true,
+      "shortlist_rank": 1,
+      "shortlist_reason_codes": [
+        "SL_PRIORITY_DD_PRIORITY",
+        "SL_EVIDENCE_INFLOW",
+        "SL_PHASE_DIFFUSION",
+        "SL_CONCENTRATION_PASS"
+      ],
+      "data_quality": {
+        "classification_eligible": true,
+        "coverage_ratio": 1.0,
+        "valid_constituent_count": 6,
+        "history_weeks": 4,
+        "missing_required_fields": [],
+        "quality_reasons": []
+      },
+      "matched_conditions": [
+        "PH_DIFF_REL_POS",
+        "PH_DIFF_ADVANCE_60",
+        "PH_DIFF_ABOVE50_60",
+        "PH_DIFF_CONCENTRATION_PASS",
+        "DIR_REL_IMPROVING",
+        "DIR_BREADTH_IMPROVING"
+      ],
+      "unmatched_conditions": [
+        "PH_OVERHEAT_REL13_15"
+      ],
+      "key_metrics": {
+        "equal_weight_rel_spy_1w": 0.02,
+        "equal_weight_rel_spy_4w": 0.07,
+        "equal_weight_rel_spy_13w": 0.06,
+        "market_cap_weight_rel_spy_4w": 0.065,
+        "advance_ratio_4w": 0.8333,
+        "pct_above_50dma": 0.8333,
+        "volume_ratio_20d_60d": 1.2,
+        "top1_contribution_ratio": 0.28,
+        "top3_contribution_ratio": 0.68
+      },
+      "withdrawal_conditions": [
+        {
+          "condition_id": "W_FIXTURE_REL4_NEG_2W",
+          "field_path": "themes.fixture_theme.metrics.equal_weight_rel_spy_4w",
+          "operator": "<",
+          "value": 0,
+          "persistence_weeks": 2
+        },
+        {
+          "condition_id": "W_FIXTURE_COVERAGE_LOW",
+          "field_path": "themes.fixture_theme.quality.coverage_ratio",
+          "operator": "<",
+          "value": 0.75,
+          "persistence_weeks": 1
+        }
+      ],
+      "one_line": "架空fixtureでは等金額ベースの拡散と直近改善が同時成立するが、直接flowは未確認。",
+      "next_check": [
+        "equal_weight_rel_spy_4wの改善継続",
+        "top1_contribution_ratioが0.50以下を維持",
+        "coverage_ratioが0.75以上を維持"
+      ]
+    }
+  ],
+  "dd_handoff": [
+    {
+      "ticker": "AAA",
+      "theme_id": "fixture_theme",
+      "role": "core",
+      "selection_reason": "架空fixture内でcoreに分類され相対強度が確認されるため。企業品質は未評価。",
+      "dd_questions": [
+        "theme売上比率はどの程度か",
+        "利益率とvaluationは妥当か",
+        "競争優位と主要反証は何か"
+      ]
+    }
+  ]
+}

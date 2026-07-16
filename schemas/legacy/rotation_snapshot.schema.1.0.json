@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "rotation_snapshot.schema.json",
+  "title": "US Market Rotation Snapshot 1.0",
+  "type": "object",
+  "required": ["meta", "not_implemented", "market_regime_inputs", "style_factor", "sectors", "industries", "theme_universe_coverage", "themes", "history_weekly", "previous_predictions"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["schema_version", "status", "analysis_ready", "data_date", "generated_at_utc", "run_id", "archive_file", "coverage", "missing"]
+    },
+    "themes": {"type": "object"},
+    "history_weekly": {"type": "array", "maxItems": 12},
+    "previous_predictions": {"type": "array", "maxItems": 3}
+  }
+}

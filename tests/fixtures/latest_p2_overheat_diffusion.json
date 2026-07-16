@@ -6,10 +6,10 @@
     "data_date": "2026-07-10",
     "valid_until": "2026-07-21T00:00:00Z",
     "hard_stop_after": "2026-07-25T00:00:00Z",
-    "run_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "run_id": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
     "source_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "source_snapshot": "output/generations/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/archive.json",
-    "source_sha256": "4df6b21af87109e60f729917b4152c8c0a30dac7dc5d519b87805f3923351d48",
+    "source_snapshot": "output/generations/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/archive.json",
+    "source_sha256": "78c9dd4932bc117fd43b49e8184103ac3aaddb2e3af445c93ecf006878a104f8",
     "status": "success",
     "failure_reason": null,
     "universe_definition": {
@@ -168,7 +168,7 @@
   "themes": {
     "fixture_theme": {
       "theme_id": "fixture_theme",
-      "label": "架空拡散theme",
+      "label": "架空P2過熱拡散theme",
       "quality": {
         "classification_eligible": true,
         "phase_initial_diffusion_eligible": true,
@@ -197,18 +197,18 @@
       "metrics": {
         "equal_weight_return_1w": 0.04,
         "equal_weight_return_4w": 0.12,
-        "equal_weight_return_13w": 0.14,
+        "equal_weight_return_13w": 0.26,
         "equal_weight_rel_spy_1w": 0.02,
         "equal_weight_rel_spy_4w": 0.07,
-        "equal_weight_rel_spy_13w": 0.06,
+        "equal_weight_rel_spy_13w": 0.18,
         "market_cap_weight_rel_spy_4w": 0.065,
         "weighting_divergence_4w": -0.005,
         "advance_count_4w": 5,
         "advance_ratio_4w": 0.8333,
         "above_50dma_count": 5,
         "pct_above_50dma": 0.8333,
-        "pct_within_5pct_52w_high": 0.3333,
-        "volume_ratio_20d_60d": 1.2,
+        "pct_within_5pct_52w_high": 0.6667,
+        "volume_ratio_20d_60d": 1.4,
         "top1_contribution_ratio": 0.28,
         "top3_contribution_ratio": 0.68,
         "single_name_concentrated": false,
@@ -227,12 +227,12 @@
         "above_50dma_count_change_3w": 2,
         "advance_breadth_trend_3w": "improving",
         "above_50dma_breadth_trend_3w": "improving",
-        "volume_ratio_change_1w": 0.1
+        "volume_ratio_change_1w": 0.3
       },
       "condition_flags": {
         "phase_initial": false,
         "phase_diffusion": true,
-        "phase_price_overheat": false,
+        "phase_price_overheat": true,
         "direction_improving": true,
         "direction_worsening": false,
         "direction_outflow_signal": false,
@@ -243,16 +243,17 @@
           "PH_DIFF_ADVANCE_60",
           "PH_DIFF_ABOVE50_60",
           "PH_DIFF_CONCENTRATION_PASS",
+          "PH_OVERHEAT_REL13_15",
+          "PH_OVERHEAT_HIGH_50",
+          "PH_OVERHEAT_VOLUME_130",
           "DIR_REL_IMPROVING",
           "DIR_BREADTH_IMPROVING"
         ],
-        "unmatched_conditions": [
-          "PH_OVERHEAT_REL13_15"
-        ],
+        "unmatched_conditions": [],
         "contrary_evidence": []
       },
       "classifications": {
-        "phase": "diffusion",
+        "phase": "price_overheat",
         "direction": "improving",
         "evidence": {
           "level": "flow_suggested",
@@ -268,17 +269,19 @@
           ]
         },
         "research_priority": "dd_priority",
-        "research_priority_rule": "P1",
-        "timing_status": "favorable",
-        "timing_rule": "T4"
+        "research_priority_rule": "P2",
+        "timing_status": "price_overheat",
+        "timing_rule": "T1"
       },
       "relative_strength_rank_4w": 1,
       "selected_for_deep_dive": true,
       "shortlist_rank": 1,
       "shortlist_reason_codes": [
         "SL_PRIORITY_DD_PRIORITY",
+        "SL_RULE_P2",
         "SL_EVIDENCE_INFLOW",
-        "SL_PHASE_DIFFUSION",
+        "SL_PHASE_PRICE_OVERHEAT",
+        "SL_DIFFUSION_FLAG_TRUE",
         "SL_CONCENTRATION_PASS"
       ],
       "by_role": {

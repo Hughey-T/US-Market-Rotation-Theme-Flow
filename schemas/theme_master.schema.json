@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/us-market-rotation/theme_master.schema.1.0.json",
+  "title": "US Market Rotation theme master 1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["theme_master_schema_version", "theme_master_version", "effective_date", "review_cycle", "overlap_policy", "themes"],
+  "properties": {
+    "theme_master_schema_version": {"const": "1.0"},
+    "theme_master_version": {"type": "string", "minLength": 1},
+    "effective_date": {"type": "string", "format": "date"},
+    "review_cycle": {"const": "quarterly"},
+    "overlap_policy": {"const": "allow_with_warning"},
+    "themes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["theme_id", "label", "definition", "reference_etfs", "members"],
+        "properties": {
+          "theme_id": {"type": "string", "pattern": "^[a-z0-9_]+$"},
+          "label": {"type": "string", "minLength": 1},
+          "definition": {"type": "string", "minLength": 1},
+          "reference_etfs": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+          "members": {
+            "type": "array",
+            "minItems": 6,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["ticker", "role", "active", "valid_from", "valid_to", "rationale"],
+              "properties": {
+                "ticker": {"type": "string", "minLength": 1},
+                "role": {"enum": ["core", "beneficiary", "peripheral"]},
+                "active": {"type": "boolean"},
+                "valid_from": {"type": "string", "format": "date"},
+                "valid_to": {"type": ["string", "null"], "format": "date"},
+                "rationale": {"type": "string", "minLength": 1}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

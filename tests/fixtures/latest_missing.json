@@ -6,10 +6,10 @@
     "data_date": "2026-07-10",
     "valid_until": "2026-07-21T00:00:00Z",
     "hard_stop_after": "2026-07-25T00:00:00Z",
-    "run_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "run_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
     "source_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "source_snapshot": "output/generations/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/archive.json",
-    "source_sha256": "4df6b21af87109e60f729917b4152c8c0a30dac7dc5d519b87805f3923351d48",
+    "source_snapshot": "output/generations/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/archive.json",
+    "source_sha256": "80ad2c73bd5498a62b4cd1b22134ac5bcdde530bda5381cace5417feff3462d0",
     "status": "success",
     "failure_reason": null,
     "universe_definition": {
@@ -32,7 +32,8 @@
       "critical_missing": [],
       "missing_tickers": [],
       "warnings": [
-        "FIXTURE: 架空test data"
+        "FIXTURE: 架空test data",
+        "2 theme constituents unavailable"
       ]
     }
   },
@@ -168,118 +169,110 @@
   "themes": {
     "fixture_theme": {
       "theme_id": "fixture_theme",
-      "label": "架空拡散theme",
+      "label": "架空欠損theme",
       "quality": {
-        "classification_eligible": true,
-        "phase_initial_diffusion_eligible": true,
-        "phase_overheat_eligible": true,
-        "direction_eligible": true,
-        "evidence_eligible": true,
+        "classification_eligible": false,
+        "phase_initial_diffusion_eligible": false,
+        "phase_overheat_eligible": false,
+        "direction_eligible": false,
+        "evidence_eligible": false,
         "constituent_count": 6,
-        "valid_constituent_count": 6,
-        "coverage_ratio": 1.0,
-        "history_weeks": 4,
+        "valid_constituent_count": 4,
+        "coverage_ratio": 0.6667,
+        "history_weeks": 1,
         "role_valid_counts": {
           "core": 2,
           "beneficiary": 2,
-          "peripheral": 2
+          "peripheral": 0
         },
         "metric_valid_counts": {
-          "return_4w": 6,
-          "return_13w": 6,
-          "above_50dma": 6,
-          "within_5pct_52w_high": 6,
-          "market_cap": 6
+          "return_4w": 4,
+          "return_13w": 3,
+          "above_50dma": 4,
+          "within_5pct_52w_high": 3,
+          "market_cap": 3
         },
-        "missing_required_fields": [],
-        "quality_reasons": []
+        "missing_required_fields": [
+          "themes.fixture_theme.metrics.equal_weight_rel_spy_4w"
+        ],
+        "quality_reasons": [
+          "Q_VALID_CONSTITUENTS_BELOW_5",
+          "Q_COVERAGE_BELOW_075",
+          "Q_HISTORY_BELOW_3",
+          "Q_REQUIRED_FIELD_NULL"
+        ]
       },
       "metrics": {
         "equal_weight_return_1w": 0.04,
         "equal_weight_return_4w": 0.12,
         "equal_weight_return_13w": 0.14,
         "equal_weight_rel_spy_1w": 0.02,
-        "equal_weight_rel_spy_4w": 0.07,
+        "equal_weight_rel_spy_4w": null,
         "equal_weight_rel_spy_13w": 0.06,
-        "market_cap_weight_rel_spy_4w": 0.065,
-        "weighting_divergence_4w": -0.005,
-        "advance_count_4w": 5,
-        "advance_ratio_4w": 0.8333,
-        "above_50dma_count": 5,
-        "pct_above_50dma": 0.8333,
-        "pct_within_5pct_52w_high": 0.3333,
-        "volume_ratio_20d_60d": 1.2,
-        "top1_contribution_ratio": 0.28,
-        "top3_contribution_ratio": 0.68,
-        "single_name_concentrated": false,
-        "market_cap_led": false,
-        "equal_weight_led": false
+        "market_cap_weight_rel_spy_4w": null,
+        "weighting_divergence_4w": null,
+        "advance_count_4w": null,
+        "advance_ratio_4w": null,
+        "above_50dma_count": null,
+        "pct_above_50dma": null,
+        "pct_within_5pct_52w_high": null,
+        "volume_ratio_20d_60d": null,
+        "top1_contribution_ratio": null,
+        "top3_contribution_ratio": null,
+        "single_name_concentrated": null,
+        "market_cap_led": null,
+        "equal_weight_led": null
       },
       "trends": {
-        "rel_spy_4w_change_1w": 0.02,
-        "rel_spy_4w_slope_3w": 0.01,
-        "rel_spy_4w_slope_4w": 0.009,
-        "rel_spy_4w_trend_3w": "improving",
-        "rel_spy_4w_trend_4w": "improving",
-        "advance_count_change_1w": 1,
-        "advance_count_change_3w": 2,
-        "above_50dma_count_change_1w": 1,
-        "above_50dma_count_change_3w": 2,
-        "advance_breadth_trend_3w": "improving",
-        "above_50dma_breadth_trend_3w": "improving",
-        "volume_ratio_change_1w": 0.1
+        "rel_spy_4w_change_1w": null,
+        "rel_spy_4w_slope_3w": null,
+        "rel_spy_4w_slope_4w": null,
+        "rel_spy_4w_trend_3w": "insufficient",
+        "rel_spy_4w_trend_4w": "insufficient",
+        "advance_count_change_1w": null,
+        "advance_count_change_3w": null,
+        "above_50dma_count_change_1w": null,
+        "above_50dma_count_change_3w": null,
+        "advance_breadth_trend_3w": "insufficient",
+        "above_50dma_breadth_trend_3w": "insufficient",
+        "volume_ratio_change_1w": null
       },
       "condition_flags": {
-        "phase_initial": false,
-        "phase_diffusion": true,
-        "phase_price_overheat": false,
-        "direction_improving": true,
-        "direction_worsening": false,
-        "direction_outflow_signal": false,
-        "broad_concentration_pass": true,
-        "overheat_breadth_weak": false,
-        "matched_conditions": [
-          "PH_DIFF_REL_POS",
-          "PH_DIFF_ADVANCE_60",
-          "PH_DIFF_ABOVE50_60",
-          "PH_DIFF_CONCENTRATION_PASS",
-          "DIR_REL_IMPROVING",
-          "DIR_BREADTH_IMPROVING"
-        ],
-        "unmatched_conditions": [
-          "PH_OVERHEAT_REL13_15"
-        ],
-        "contrary_evidence": []
+        "phase_initial": null,
+        "phase_diffusion": null,
+        "phase_price_overheat": null,
+        "direction_improving": null,
+        "direction_worsening": null,
+        "direction_outflow_signal": null,
+        "broad_concentration_pass": null,
+        "overheat_breadth_weak": null,
+        "matched_conditions": [],
+        "unmatched_conditions": [],
+        "contrary_evidence": [
+          "Q_REQUIRED_FIELD_NULL",
+          "Q_HISTORY_BELOW_3"
+        ]
       },
       "classifications": {
-        "phase": "diffusion",
-        "direction": "improving",
+        "phase": "unclassifiable",
+        "direction": "unclassifiable",
         "evidence": {
-          "level": "flow_suggested",
-          "direction": "inflow",
-          "positioning_hypothesis": "not_supported",
+          "level": "insufficient",
+          "direction": "unknown",
+          "positioning_hypothesis": "not_assessable",
           "direct_flow_data_available": false,
-          "matched_conditions": [
-            "EV_REL_POS",
-            "EV_DIRECTION_IMPROVING",
-            "EV_VOLUME_110",
-            "EV_ADVANCE_60",
-            "EV_TOP1_50"
-          ]
+          "matched_conditions": []
         },
-        "research_priority": "dd_priority",
-        "research_priority_rule": "P1",
-        "timing_status": "favorable",
-        "timing_rule": "T4"
+        "research_priority": "unclassifiable",
+        "research_priority_rule": "P0",
+        "timing_status": "unclassifiable",
+        "timing_rule": "T0"
       },
-      "relative_strength_rank_4w": 1,
-      "selected_for_deep_dive": true,
-      "shortlist_rank": 1,
+      "relative_strength_rank_4w": null,
+      "selected_for_deep_dive": false,
+      "shortlist_rank": null,
       "shortlist_reason_codes": [
-        "SL_PRIORITY_DD_PRIORITY",
-        "SL_EVIDENCE_INFLOW",
-        "SL_PHASE_DIFFUSION",
-        "SL_CONCENTRATION_PASS"
+        "SL_EXCLUDED_CLASSIFICATION_INELIGIBLE"
       ],
       "by_role": {
         "core": {
@@ -287,16 +280,8 @@
           "equal_weight_rel_spy_4w": 0.08,
           "advance_ratio_4w": 1.0
         },
-        "beneficiary": {
-          "valid_count": 2,
-          "equal_weight_rel_spy_4w": 0.06,
-          "advance_ratio_4w": 1.0
-        },
-        "peripheral": {
-          "valid_count": 2,
-          "equal_weight_rel_spy_4w": 0.03,
-          "advance_ratio_4w": 0.5
-        }
+        "beneficiary": null,
+        "peripheral": null
       },
       "constituents": [
         {
@@ -306,7 +291,7 @@
           "return_4w": 0.18,
           "rel_spy_4w": 0.13,
           "market_cap": 10000000000,
-          "positive_contribution_ratio": 0.28,
+          "positive_contribution_ratio": null,
           "overlap_theme_count": 1
         },
         {
@@ -316,7 +301,7 @@
           "return_4w": 0.15,
           "rel_spy_4w": 0.1,
           "market_cap": 9000000000,
-          "positive_contribution_ratio": 0.22,
+          "positive_contribution_ratio": null,
           "overlap_theme_count": 1
         },
         {
@@ -326,7 +311,7 @@
           "return_4w": 0.13,
           "rel_spy_4w": 0.08,
           "market_cap": 8000000000,
-          "positive_contribution_ratio": 0.18,
+          "positive_contribution_ratio": null,
           "overlap_theme_count": 1
         },
         {
@@ -336,27 +321,27 @@
           "return_4w": 0.11,
           "rel_spy_4w": 0.06,
           "market_cap": 7000000000,
-          "positive_contribution_ratio": 0.14,
+          "positive_contribution_ratio": null,
           "overlap_theme_count": 1
         },
         {
           "ticker": "EEE",
           "role": "peripheral",
-          "valid": true,
-          "return_4w": 0.09,
-          "rel_spy_4w": 0.04,
-          "market_cap": 6000000000,
-          "positive_contribution_ratio": 0.18,
+          "valid": false,
+          "return_4w": null,
+          "rel_spy_4w": null,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
           "overlap_theme_count": 1
         },
         {
           "ticker": "FFF",
           "role": "peripheral",
-          "valid": true,
-          "return_4w": 0.02,
-          "rel_spy_4w": -0.03,
-          "market_cap": 5000000000,
-          "positive_contribution_ratio": 0.0,
+          "valid": false,
+          "return_4w": null,
+          "rel_spy_4w": null,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
           "overlap_theme_count": 1
         }
       ]
@@ -366,60 +351,13 @@
     "selection_version": "1.0",
     "max_themes": 5,
     "minimum_preferred_themes": 3,
-    "selected_theme_ids": [
-      "fixture_theme"
-    ],
+    "selected_theme_ids": [],
     "quality_reasons": [
+      "SHORTLIST_NO_ELIGIBLE_THEME",
       "SHORTLIST_BELOW_MINIMUM_3"
     ]
   },
-  "history_weekly": [
-    {
-      "data_date": "2026-06-19",
-      "schema_version": "1.1",
-      "methodology_version": "1.1.0",
-      "theme_master_version": "fixture-1",
-      "themes": {
-        "fixture_theme": {
-          "equal_weight_rel_spy_4w": 0.04,
-          "advance_count_4w": 3,
-          "above_50dma_count": 3,
-          "pct_above_50dma": 0.5,
-          "volume_ratio_20d_60d": 1.0
-        }
-      }
-    },
-    {
-      "data_date": "2026-06-26",
-      "schema_version": "1.1",
-      "methodology_version": "1.1.0",
-      "theme_master_version": "fixture-1",
-      "themes": {
-        "fixture_theme": {
-          "equal_weight_rel_spy_4w": 0.05,
-          "advance_count_4w": 4,
-          "above_50dma_count": 4,
-          "pct_above_50dma": 0.6667,
-          "volume_ratio_20d_60d": 1.05
-        }
-      }
-    },
-    {
-      "data_date": "2026-07-03",
-      "schema_version": "1.1",
-      "methodology_version": "1.1.0",
-      "theme_master_version": "fixture-1",
-      "themes": {
-        "fixture_theme": {
-          "equal_weight_rel_spy_4w": 0.05,
-          "advance_count_4w": 4,
-          "above_50dma_count": 4,
-          "pct_above_50dma": 0.6667,
-          "volume_ratio_20d_60d": 1.1
-        }
-      }
-    }
-  ],
+  "history_weekly": [],
   "previous_judgments": {
     "source": "output/judgments/index.json",
     "available": false,

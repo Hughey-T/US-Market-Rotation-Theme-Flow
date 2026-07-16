@@ -6,10 +6,10 @@
     "data_date": "2026-07-10",
     "valid_until": "2026-07-21T00:00:00Z",
     "hard_stop_after": "2026-07-25T00:00:00Z",
-    "run_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "run_id": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
     "source_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "source_snapshot": "output/generations/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/archive.json",
-    "source_sha256": "4df6b21af87109e60f729917b4152c8c0a30dac7dc5d519b87805f3923351d48",
+    "source_snapshot": "output/generations/ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff/archive.json",
+    "source_sha256": "4ccf166d08d300519cc406e9944428053ed2e9b07ea80391c4fd60c01e2f67cc",
     "status": "success",
     "failure_reason": null,
     "universe_definition": {
@@ -168,7 +168,7 @@
   "themes": {
     "fixture_theme": {
       "theme_id": "fixture_theme",
-      "label": "架空拡散theme",
+      "label": "架空過熱・流出theme",
       "quality": {
         "classification_eligible": true,
         "phase_initial_diffusion_eligible": true,
@@ -195,107 +195,110 @@
         "quality_reasons": []
       },
       "metrics": {
-        "equal_weight_return_1w": 0.04,
-        "equal_weight_return_4w": 0.12,
-        "equal_weight_return_13w": 0.14,
-        "equal_weight_rel_spy_1w": 0.02,
-        "equal_weight_rel_spy_4w": 0.07,
-        "equal_weight_rel_spy_13w": 0.06,
-        "market_cap_weight_rel_spy_4w": 0.065,
-        "weighting_divergence_4w": -0.005,
-        "advance_count_4w": 5,
-        "advance_ratio_4w": 0.8333,
-        "above_50dma_count": 5,
-        "pct_above_50dma": 0.8333,
-        "pct_within_5pct_52w_high": 0.3333,
-        "volume_ratio_20d_60d": 1.2,
-        "top1_contribution_ratio": 0.28,
-        "top3_contribution_ratio": 0.68,
+        "equal_weight_return_1w": -0.04,
+        "equal_weight_return_4w": 0.0125,
+        "equal_weight_return_13w": 0.3,
+        "equal_weight_rel_spy_1w": -0.06,
+        "equal_weight_rel_spy_4w": -0.0375,
+        "equal_weight_rel_spy_13w": 0.22,
+        "market_cap_weight_rel_spy_4w": -0.03,
+        "weighting_divergence_4w": 0.0075,
+        "advance_count_4w": 3,
+        "advance_ratio_4w": 0.5,
+        "above_50dma_count": 3,
+        "pct_above_50dma": 0.5,
+        "pct_within_5pct_52w_high": 0.6667,
+        "volume_ratio_20d_60d": 1.5,
+        "top1_contribution_ratio": 0.4,
+        "top3_contribution_ratio": 1.0,
         "single_name_concentrated": false,
         "market_cap_led": false,
         "equal_weight_led": false
       },
       "trends": {
-        "rel_spy_4w_change_1w": 0.02,
-        "rel_spy_4w_slope_3w": 0.01,
-        "rel_spy_4w_slope_4w": 0.009,
-        "rel_spy_4w_trend_3w": "improving",
-        "rel_spy_4w_trend_4w": "improving",
-        "advance_count_change_1w": 1,
-        "advance_count_change_3w": 2,
-        "above_50dma_count_change_1w": 1,
-        "above_50dma_count_change_3w": 2,
-        "advance_breadth_trend_3w": "improving",
-        "above_50dma_breadth_trend_3w": "improving",
-        "volume_ratio_change_1w": 0.1
+        "rel_spy_4w_change_1w": -0.0875,
+        "rel_spy_4w_slope_3w": -0.04375,
+        "rel_spy_4w_slope_4w": -0.02325,
+        "rel_spy_4w_trend_3w": "worsening",
+        "rel_spy_4w_trend_4w": "worsening",
+        "advance_count_change_1w": -1,
+        "advance_count_change_3w": -2,
+        "above_50dma_count_change_1w": -1,
+        "above_50dma_count_change_3w": -2,
+        "advance_breadth_trend_3w": "worsening",
+        "above_50dma_breadth_trend_3w": "worsening",
+        "volume_ratio_change_1w": 0.4
       },
       "condition_flags": {
         "phase_initial": false,
-        "phase_diffusion": true,
-        "phase_price_overheat": false,
-        "direction_improving": true,
-        "direction_worsening": false,
-        "direction_outflow_signal": false,
-        "broad_concentration_pass": true,
-        "overheat_breadth_weak": false,
+        "phase_diffusion": false,
+        "phase_price_overheat": true,
+        "direction_improving": false,
+        "direction_worsening": true,
+        "direction_outflow_signal": true,
+        "broad_concentration_pass": false,
+        "overheat_breadth_weak": true,
         "matched_conditions": [
-          "PH_DIFF_REL_POS",
-          "PH_DIFF_ADVANCE_60",
-          "PH_DIFF_ABOVE50_60",
-          "PH_DIFF_CONCENTRATION_PASS",
-          "DIR_REL_IMPROVING",
-          "DIR_BREADTH_IMPROVING"
+          "PH_OVERHEAT_REL13_15",
+          "PH_OVERHEAT_HIGH_50",
+          "PH_OVERHEAT_VOLUME_130",
+          "DIR_REL_WORSENING",
+          "DIR_BREADTH_WORSENING",
+          "DIR_OUTFLOW_REL_NEG",
+          "DIR_OUTFLOW_VOLUME_120"
         ],
         "unmatched_conditions": [
-          "PH_OVERHEAT_REL13_15"
+          "PH_DIFF_REL_POS",
+          "PH_DIFF_ADVANCE_60"
         ],
-        "contrary_evidence": []
+        "contrary_evidence": [
+          "REL_4W_TREND_WORSENING",
+          "EVIDENCE_DIRECT_FLOW_UNAVAILABLE"
+        ]
       },
       "classifications": {
-        "phase": "diffusion",
-        "direction": "improving",
+        "phase": "price_overheat",
+        "direction": "outflow_signal",
         "evidence": {
           "level": "flow_suggested",
-          "direction": "inflow",
+          "direction": "outflow",
           "positioning_hypothesis": "not_supported",
           "direct_flow_data_available": false,
           "matched_conditions": [
-            "EV_REL_POS",
-            "EV_DIRECTION_IMPROVING",
-            "EV_VOLUME_110",
-            "EV_ADVANCE_60",
-            "EV_TOP1_50"
+            "EV_DIRECTION_OUTFLOW",
+            "EV_VOLUME_120",
+            "EV_BREADTH_WORSENING"
           ]
         },
-        "research_priority": "dd_priority",
-        "research_priority_rule": "P1",
-        "timing_status": "favorable",
-        "timing_rule": "T4"
+        "research_priority": "watch",
+        "research_priority_rule": "P4",
+        "timing_status": "price_overheat",
+        "timing_rule": "T1"
       },
       "relative_strength_rank_4w": 1,
       "selected_for_deep_dive": true,
       "shortlist_rank": 1,
       "shortlist_reason_codes": [
-        "SL_PRIORITY_DD_PRIORITY",
-        "SL_EVIDENCE_INFLOW",
-        "SL_PHASE_DIFFUSION",
-        "SL_CONCENTRATION_PASS"
+        "SL_PRIORITY_WATCH",
+        "SL_PHASE_PRICE_OVERHEAT",
+        "SL_OVERHEAT_BREADTH_WEAK",
+        "SL_EVIDENCE_OUTFLOW"
       ],
       "by_role": {
         "core": {
           "valid_count": 2,
-          "equal_weight_rel_spy_4w": 0.08,
+          "equal_weight_rel_spy_4w": 0.0275,
           "advance_ratio_4w": 1.0
         },
         "beneficiary": {
           "valid_count": 2,
-          "equal_weight_rel_spy_4w": 0.06,
-          "advance_ratio_4w": 1.0
+          "equal_weight_rel_spy_4w": -0.03,
+          "advance_ratio_4w": 0.5
         },
         "peripheral": {
           "valid_count": 2,
-          "equal_weight_rel_spy_4w": 0.03,
-          "advance_ratio_4w": 0.5
+          "equal_weight_rel_spy_4w": -0.11,
+          "advance_ratio_4w": 0.0
         }
       },
       "constituents": [
@@ -303,58 +306,58 @@
           "ticker": "AAA",
           "role": "core",
           "valid": true,
-          "return_4w": 0.18,
-          "rel_spy_4w": 0.13,
+          "return_4w": 0.08,
+          "rel_spy_4w": 0.03,
           "market_cap": 10000000000,
-          "positive_contribution_ratio": 0.28,
+          "positive_contribution_ratio": 0.4,
           "overlap_theme_count": 1
         },
         {
           "ticker": "BBB",
           "role": "core",
           "valid": true,
-          "return_4w": 0.15,
-          "rel_spy_4w": 0.1,
+          "return_4w": 0.075,
+          "rel_spy_4w": 0.025,
           "market_cap": 9000000000,
-          "positive_contribution_ratio": 0.22,
+          "positive_contribution_ratio": 0.3333,
           "overlap_theme_count": 1
         },
         {
           "ticker": "CCC",
           "role": "beneficiary",
           "valid": true,
-          "return_4w": 0.13,
-          "rel_spy_4w": 0.08,
+          "return_4w": 0.07,
+          "rel_spy_4w": 0.02,
           "market_cap": 8000000000,
-          "positive_contribution_ratio": 0.18,
+          "positive_contribution_ratio": 0.2667,
           "overlap_theme_count": 1
         },
         {
           "ticker": "DDD",
           "role": "beneficiary",
           "valid": true,
-          "return_4w": 0.11,
-          "rel_spy_4w": 0.06,
+          "return_4w": -0.03,
+          "rel_spy_4w": -0.08,
           "market_cap": 7000000000,
-          "positive_contribution_ratio": 0.14,
+          "positive_contribution_ratio": 0.0,
           "overlap_theme_count": 1
         },
         {
           "ticker": "EEE",
           "role": "peripheral",
           "valid": true,
-          "return_4w": 0.09,
-          "rel_spy_4w": 0.04,
+          "return_4w": -0.05,
+          "rel_spy_4w": -0.1,
           "market_cap": 6000000000,
-          "positive_contribution_ratio": 0.18,
+          "positive_contribution_ratio": 0.0,
           "overlap_theme_count": 1
         },
         {
           "ticker": "FFF",
           "role": "peripheral",
           "valid": true,
-          "return_4w": 0.02,
-          "rel_spy_4w": -0.03,
+          "return_4w": -0.07,
+          "rel_spy_4w": -0.12,
           "market_cap": 5000000000,
           "positive_contribution_ratio": 0.0,
           "overlap_theme_count": 1
@@ -382,9 +385,9 @@
       "themes": {
         "fixture_theme": {
           "equal_weight_rel_spy_4w": 0.04,
-          "advance_count_4w": 3,
-          "above_50dma_count": 3,
-          "pct_above_50dma": 0.5,
+          "advance_count_4w": 5,
+          "above_50dma_count": 5,
+          "pct_above_50dma": 0.8333,
           "volume_ratio_20d_60d": 1.0
         }
       }
@@ -397,9 +400,9 @@
       "themes": {
         "fixture_theme": {
           "equal_weight_rel_spy_4w": 0.05,
-          "advance_count_4w": 4,
-          "above_50dma_count": 4,
-          "pct_above_50dma": 0.6667,
+          "advance_count_4w": 5,
+          "above_50dma_count": 5,
+          "pct_above_50dma": 0.8333,
           "volume_ratio_20d_60d": 1.05
         }
       }

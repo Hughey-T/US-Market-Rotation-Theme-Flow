@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/us-market-rotation/judgment_record.schema.1.0.json",
+  "title": "US Market Rotation judgment record 1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["judgment_schema_version", "instruction_version", "data_schema_version", "methodology_version", "judgment_id", "run_id", "data_date", "generated_at", "source_commit", "source_snapshot", "source_sha256", "previous_judgment_date", "regime", "theme_judgments", "dd_handoff"],
+  "properties": {
+    "judgment_schema_version": {"const": "1.0"},
+    "instruction_version": {"const": "1.1.1"},
+    "data_schema_version": {"const": "1.1"},
+    "methodology_version": {"const": "1.1.0"},
+    "judgment_id": {"type": "string", "pattern": "^judgment_[A-Za-z0-9._-]+$"},
+    "run_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "data_date": {"type": "string", "format": "date"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "source_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "source_snapshot": {"type": "string", "minLength": 1},
+    "source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "previous_judgment_date": {"type": ["string", "null"], "format": "date"},
+    "regime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["primary_regime", "secondary_regimes", "confidence", "matched_conditions", "contrary_evidence"],
+      "properties": {
+        "primary_regime": {"enum": ["broad_risk_on", "large_growth_concentration", "defensive_shift", "real_asset_leadership", "cyclical_recovery_expectation", "liquidity_contraction", "mixed", "directionless", "unclassifiable"]},
+        "secondary_regimes": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "confidence": {"enum": ["high", "medium", "low", "unclassifiable"]},
+        "matched_conditions": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "contrary_evidence": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      }
+    },
+    "theme_judgments": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/themeJudgment"}},
+    "dd_handoff": {"type": "array", "maxItems": 5, "items": {"$ref": "#/$defs/ddCandidate"}}
+  },
+  "$defs": {
+    "conditionList": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["level", "direction", "positioning_hypothesis", "matched_conditions"],
+      "properties": {
+        "level": {"enum": ["direct_flow_confirmed", "flow_suggested", "relative_preference_suggested", "price_only", "insufficient"]},
+        "direction": {"enum": ["inflow", "outflow", "up", "down", "unknown"]},
+        "positioning_hypothesis": {"enum": ["possible_short_term_adjustment", "not_supported", "not_assessable"]},
+        "matched_conditions": {"$ref": "#/$defs/conditionList"}
+      }
+    },
+    "dataQuality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["classification_eligible", "coverage_ratio", "valid_constituent_count", "history_weeks", "missing_required_fields", "quality_reasons"],
+      "properties": {
+        "classification_eligible": {"type": "boolean"},
+        "coverage_ratio": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "valid_constituent_count": {"type": "integer", "minimum": 0},
+        "history_weeks": {"type": "integer", "minimum": 0},
+        "missing_required_fields": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "quality_reasons": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      }
+    },
+    "keyMetrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["equal_weight_rel_spy_1w", "equal_weight_rel_spy_4w", "equal_weight_rel_spy_13w", "market_cap_weight_rel_spy_4w", "advance_ratio_4w", "pct_above_50dma", "volume_ratio_20d_60d", "top1_contribution_ratio", "top3_contribution_ratio"],
+      "properties": {
+        "equal_weight_rel_spy_1w": {"type": ["number", "null"]},
+        "equal_weight_rel_spy_4w": {"type": ["number", "null"]},
+        "equal_weight_rel_spy_13w": {"type": ["number", "null"]},
+        "market_cap_weight_rel_spy_4w": {"type": ["number", "null"]},
+        "advance_ratio_4w": {"type": ["number", "null"]},
+        "pct_above_50dma": {"type": ["number", "null"]},
+        "volume_ratio_20d_60d": {"type": ["number", "null"]},
+        "top1_contribution_ratio": {"type": ["number", "null"]},
+        "top3_contribution_ratio": {"type": ["number", "null"]}
+      }
+    },
+    "withdrawalCondition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["condition_id", "field_path", "operator", "value", "persistence_weeks"],
+      "properties": {
+        "condition_id": {"type": "string", "minLength": 1},
+        "field_path": {"type": "string", "minLength": 1},
+        "operator": {"enum": ["<", "<=", ">", ">=", "==", "!="]},
+        "value": {"anyOf": [{"type": "number"}, {"type": "string"}, {"type": "boolean"}]},
+        "persistence_weeks": {"type": "integer", "minimum": 1, "maximum": 12}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"operator": {"enum": ["<", "<=", ">", ">="]}}, "required": ["operator"]},
+          "then": {"properties": {"value": {"type": "number"}}}
+        }
+      ]
+    },
+    "themeJudgment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["theme_id", "phase", "direction", "evidence", "research_priority", "research_priority_rule", "timing_status", "timing_rule", "selected_for_deep_dive", "shortlist_rank", "shortlist_reason_codes", "data_quality", "matched_conditions", "unmatched_conditions", "key_metrics", "withdrawal_conditions", "one_line", "next_check"],
+      "properties": {
+        "theme_id": {"type": "string", "minLength": 1},
+        "phase": {"enum": ["initial", "diffusion", "price_overheat", "unclassifiable"]},
+        "direction": {"enum": ["improving", "flat", "worsening", "outflow_signal", "unclassifiable"]},
+        "evidence": {"$ref": "#/$defs/evidence"},
+        "research_priority": {"enum": ["dd_priority", "dd_candidate", "watch", "low_priority", "unclassifiable"]},
+        "research_priority_rule": {"enum": ["P0", "P1", "P2", "P3", "P4", "P5", "fallback"]},
+        "timing_status": {"enum": ["favorable", "early_unconfirmed", "price_overheat", "deteriorating", "unclassifiable"]},
+        "timing_rule": {"enum": ["T0", "T1", "T2", "T3", "T4", "fallback"]},
+        "selected_for_deep_dive": {"type": "boolean"},
+        "shortlist_rank": {"type": ["integer", "null"], "minimum": 1, "maximum": 5},
+        "shortlist_reason_codes": {"$ref": "#/$defs/conditionList"},
+        "data_quality": {"$ref": "#/$defs/dataQuality"},
+        "matched_conditions": {"$ref": "#/$defs/conditionList"},
+        "unmatched_conditions": {"$ref": "#/$defs/conditionList"},
+        "key_metrics": {"$ref": "#/$defs/keyMetrics"},
+        "withdrawal_conditions": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/withdrawalCondition"}},
+        "one_line": {"type": "string", "minLength": 1},
+        "next_check": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "ddCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ticker", "theme_id", "role", "selection_reason", "dd_questions"],
+      "properties": {
+        "ticker": {"type": "string", "minLength": 1},
+        "theme_id": {"type": "string", "minLength": 1},
+        "role": {"enum": ["core", "beneficiary", "peripheral"]},
+        "selection_reason": {"type": "string", "minLength": 1},
+        "dd_questions": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      }
+    }
+  }
+}

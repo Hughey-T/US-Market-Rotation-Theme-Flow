@@ -1,0 +1,23 @@
+{
+  "theme_master_schema_version": "1.0",
+  "theme_master_version": "fixture-1",
+  "effective_date": "2026-07-10",
+  "review_cycle": "quarterly",
+  "overlap_policy": "allow_with_warning",
+  "themes": [
+    {
+      "theme_id": "fixture_theme",
+      "label": "架空theme",
+      "definition": "JSON Schemaと計算規則を検証するための架空theme。",
+      "reference_etfs": ["FAKE"],
+      "members": [
+        {"ticker": "AAA", "role": "core", "active": true, "valid_from": "2026-07-10", "valid_to": null, "rationale": "架空core"},
+        {"ticker": "BBB", "role": "core", "active": true, "valid_from": "2026-07-10", "valid_to": null, "rationale": "架空core"},
+        {"ticker": "CCC", "role": "beneficiary", "active": true, "valid_from": "2026-07-10", "valid_to": null, "rationale": "架空beneficiary"},
+        {"ticker": "DDD", "role": "beneficiary", "active": true, "valid_from": "2026-07-10", "valid_to": null, "rationale": "架空beneficiary"},
+        {"ticker": "EEE", "role": "peripheral", "active": true, "valid_from": "2026-07-10", "valid_to": null, "rationale": "架空peripheral"},
+        {"ticker": "FFF", "role": "peripheral", "active": true, "valid_from": "2026-07-10", "valid_to": null, "rationale": "架空peripheral"}
+      ]
+    }
+  ]
+}

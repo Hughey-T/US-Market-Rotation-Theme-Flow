@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/us-market-rotation/judgment_index.schema.1.0.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["index_version", "records", "publication"],
+  "properties": {
+    "index_version": {"const": "1.0"},
+    "records": {"type": "array", "items": {"$ref": "#/$defs/record"}},
+    "publication": {"type": "object", "additionalProperties": false,
+      "required": ["analysis_id", "generation_id", "run_id", "data_date", "source_sha256", "instruction_version"],
+      "properties": {
+        "analysis_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "generation_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "run_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "data_date": {"type": "string", "format": "date"},
+        "source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "instruction_version": {"const": "1.1.1"}
+      }
+    }
+  },
+  "$defs": {"record": {"type": "object", "additionalProperties": false,
+    "required": ["file", "sha256", "judgment_id", "data_date", "content"],
+    "properties": {
+      "file": {"type": "string", "pattern": "^[A-Za-z0-9._-]+\\.json$"},
+      "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+      "judgment_id": {"type": "string", "pattern": "^judgment_[A-Za-z0-9._-]+$"},
+      "data_date": {"type": "string", "format": "date"},
+      "content": {"type": "object"}
+    }
+  }}
+}

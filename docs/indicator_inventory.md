@@ -1,68 +1,18 @@
-# 指標一覧と判定境界（schema 1.0）
+# Indicator inventory — schema 1.1 / methodology 1.1.0
 
-## 第1期：実装済み
+全returnはsplit-adjusted price、配当除外です。1/4/13週は5/21/63 trading intervalsで、期間間の大小を加速・減速に使いません。欠損は`null`であり0ではありません。
 
-| 領域 | 指標 | 取得元・更新/遅延 | 出力フィールド | 用途・注意 |
-|---|---|---|---|---|
-| 市場 | 資産別1/4/13週リターン | Yahoo Finance価格・週次/原則なし | `market_regime_inputs.assets.*.r_*` | 期間間の大小は加速ではない |
-| 市場 | RSP−SPY、IWM−SPY | Yahoo Finance価格・週次/原則なし | `breadth.rsp_minus_spy_4w`, `iwm_minus_spy_4w` | 大型集中・小型波及の代理 |
-| 市場 | SPY超過セクター比率 | セクターETF11本・週次/原則なし | `sector_advance_ratio_4w` | 市場の広がり |
-| 市場 | VIX現在値・4週前 | Yahoo Financeの`^VIX`・週次/原則なし | `vix_level`, `vix_4w_ago` | 警戒度の補助。資金フローではない |
-| スタイル | 対SPY相対1/4/13週 | スタイルETF・週次/原則なし | `style_factor.*.rel_spy_*` | グロース、バリュー、規模、因子 |
-| セクター | 相対リターン・順位 | セクターETF・週次/原則なし | `sectors.etfs.*`, `rank_by_rel_spy_4w` | ETF価格による代理 |
-| 業種 | 相対リターン等 | 業種ETF・週次/原則なし | `industries.*` | 固定テーマ外の空白検出にも使用 |
-| テーマ | 等ウェイト相対リターン | 構成銘柄価格・週次/原則なし | `themes.*.metrics.rel_spy_*` | 構成銘柄平均−SPY。流入額ではない |
-| テーマ | 上昇銘柄比率 | 構成銘柄価格・週次/原則なし | `advance_ratio_4w` | テーマ内の広がり |
-| テーマ | 移動平均超過比率 | 構成銘柄価格・週次/原則なし | `pct_above_20/50/200dma` | トレンドの健全性 |
-| テーマ | 52週高値圏・更新比率 | 構成銘柄価格・週次/原則なし | `pct_within_5pct_52w_high`, `new_52w_high_ratio_4w` | IPO等は252日不足で欠損 |
-| テーマ | 20日平均出来高÷60日平均 | 構成銘柄出来高・週次/原則なし | `volume_ratio_20d_60d` | 売買方向は示さない |
-| テーマ | 最強銘柄−中央値 | 構成銘柄価格・週次/原則なし | `dispersion_4w_top_minus_median` | リーダー集中の粗い代理 |
-| テーマ | 役割別集計 | 手動役割×価格・週次/役割は四半期見直し | `by_role.*` | 役割自体は利益感応度ではない |
-| 履歴 | 同じ4週指標の前週差 | リポジトリ履歴・週次/1週 | `trend_vs_previous` | 異なる期間同士を比較しない |
-| 品質 | テーマ別取得率 | 取得成否・週次/なし | `coverage` | 75%未満は判定不能 |
-| 判定 | 決定的な局面ルール | 上記集計・週次/なし | `phase_assessment` | GPTは再分類せず留保だけを追記 |
+| 領域 | 実装field | 用途・制約 |
+|---|---|---|
+| market | SPY、QQQ−SPY、RSP−SPY、IWM−SPY、sector breadth、defensive/cyclical basket、DBC/GLD/XLE、HYG−LQD、VIX change、UUP | deterministic regime candidates。価格ベースでありflow確認ではない |
+| ETF | 1/4/13週return/relative、50/200DMA、高値圏、volume ratio | style、sector、industry comparison |
+| theme | equal-weight return/relative、advance、50DMA、高値圏、volume | 主経路。defined>=6、valid>=5、coverage>=0.75 |
+| concentration | top1/top3 positive contribution | positive sum=0は`null`。top1>0.60はsingle-name |
+| weighting | market-cap relative、equal/cap divergence | market-cap coverage<0.75は`null`。point-in-time非保証 |
+| role | core/beneficiary/peripheral aggregate | valid>=2。coreは中心性だけ |
+| trend | 4週relativeのchange/slope/state、breadth count change | current込み連続3/4週、version一致、4〜10日間隔 |
+| classification | regime、phase、direction、evidence、P/T rule | code-sideのみ。GPTは変更しない |
+| shortlist | relative rank、selected、rank、reason | 総合scoreなしの辞書式順序、最大5 |
+| judgment | immutable record/index/projection/withdrawal | previous sourceは検証済みindexだけ |
 
-## 証拠水準と原因仮説
-
-両者は別軸です。
-
-### `flow_evidence`
-
-- `直接証拠`：ETF設定・解約等の直接データ。第1期では使用不可。
-- `間接証拠`：相対価格、出来高、広がりが同方向に揃う。
-- `価格のみ`：相対価格は動いたが、出来高・広がりの裏付けが弱い。
-- `証拠不足`：欠損または方向判定に不足。
-
-`direction`は`流入示唆／流出示唆／上昇／下落／不明`。間接証拠は確認ではありません。
-
-### `move_hypothesis`
-
-`広範上昇／リーダー集中／反発の可能性（ショートカバーは判定不能）／分配・流出の可能性／不明`。これは因果の仮説であり、証拠の順位ではありません。
-
-## 局面ルール v1
-
-優先順位は`流出 > 過熱 > 拡散 > 初動 > 判定不能`です。
-
-- 初動：`rel_spy_1w>0`かつ`rel_spy_4w>0`、広がりが未成熟。
-- 拡散：`rel_spy_4w>0`、`advance_ratio_4w>=0.6`、`pct_above_50dma>=0.6`、同じ4週指標の前週比較が改善。
-- 過熱：`rel_spy_13w>=0.15`、52週高値圏比率`>=0.5`、出来高比率`>=1.3`、周辺銘柄の上昇比率`>=0.5`。
-- 流出：`rel_spy_4w<0`かつ同期間指標が悪化、またはテーマ絶対リターンが負で出来高比率`>=1.2`。
-- 判定不能：上記外、履歴不足、またはcoverage不足。
-
-初回は履歴がないため「拡散」を確定できません。これは欠陥ではなく、加速・拡散を事後推測しないための制約です。
-
-## 未実装
-
-| 期 | 領域 | 例 | 扱い |
-|---|---|---|---|
-| 第2期 | 業績 | EPS予想修正、受注、ガイダンス | 定量判定不能。一次資料は段階5の定性補助のみ |
-| 第3期 | 直接フロー | ETF設定・解約、発行済口数変化 | 実装まで「直接証拠」は使用不可 |
-| 第3期 | ポジション | 空売り、オプション、センチメント | ショートカバー等を断定不可 |
-
-## 検証順序
-
-1. 同じ入力で同じ局面・証拠分類になるか。
-2. 欠損時に停止・判定不能が守られるか。
-3. 撤回条件が機械判定可能で、抵触時に実際に撤回されるか。
-4. 半年以降に4/13/26/52週の相対リターンと局面遷移を検証する。
-5. 十分な標本後に閾値を事前ルールで改訂する。履歴へ後付け適合させない。
+未実装: direct ETF flow、earnings revisions/guidance、short interest/options positioning、point-in-time market-cap history。詳細な式と境界は[methodology_v1.1.md](methodology_v1.1.md)を参照してください。
