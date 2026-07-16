@@ -1,0 +1,11 @@
+{
+  "publication_contract_version": "1.0",
+  "pointer_version": "1.0",
+  "analysis_id": "58debc5b25d53d0f19456d592614c4a5fc3a55df4fe8dd4249fa430ac63e74c4",
+  "generation_id": "19448af70418f4f554bffdb5cecac5bbb1b74b693c1ca35ab10201083d17a369",
+  "run_id": "58debc5b25d53d0f19456d592614c4a5fc3a55df4fe8dd4249fa430ac63e74c4",
+  "data_date": "2026-07-16",
+  "generation": "generations/19448af70418f4f554bffdb5cecac5bbb1b74b693c1ca35ab10201083d17a369",
+  "previous_generation_id": null,
+  "manifest_sha256": "f9f39f386405937bd9de79624a738558f1bb28bc25c656621e5efdd979dff7f3"
+}

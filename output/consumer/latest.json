@@ -1,0 +1,2255 @@
+{
+  "meta": {
+    "schema_version": "1.1",
+    "methodology_version": "1.1.0",
+    "generated_at": "2026-07-16T20:59:21.126735Z",
+    "data_date": "2026-07-16",
+    "valid_until": "2026-07-26T20:59:21.126735Z",
+    "hard_stop_after": "2026-07-30T20:59:21.126735Z",
+    "run_id": "58debc5b25d53d0f19456d592614c4a5fc3a55df4fe8dd4249fa430ac63e74c4",
+    "source_commit": "e683be900c74d965d87a18cbe310f2a4a8ee5b46",
+    "source_snapshot": "output/generations/19448af70418f4f554bffdb5cecac5bbb1b74b693c1ca35ab10201083d17a369/archive.json",
+    "source_sha256": "c6e9cdfb0dfcfe9d83cb50cce7f707440bc3e815117ce819aba7cbda829eaf5f",
+    "status": "success",
+    "failure_reason": null,
+    "universe_definition": {
+      "theme_master_schema_version": "1.0",
+      "theme_master_version": "2026-Q3-r1",
+      "universe_hash": "bc9a16a78e68495b3ea5f6339ed8297ab6e33b8b580498f8af6c4954d682ec13",
+      "theme_count": 8,
+      "unique_constituent_count": 56,
+      "overlap_policy": "allow_with_warning"
+    },
+    "periods": {
+      "1w": 5,
+      "4w": 21,
+      "13w": 63
+    },
+    "global_quality": {
+      "requested_ticker_count": 104,
+      "usable_ticker_count": 104,
+      "coverage_ratio": 1.0,
+      "critical_missing": [],
+      "missing_tickers": [],
+      "warnings": [
+        "OVERLAP:CEG",
+        "OVERLAP:PLTR",
+        "OVERLAP:VST"
+      ]
+    }
+  },
+  "not_implemented": [
+    "direct_etf_flow",
+    "earnings_revision",
+    "positioning",
+    "point_in_time_market_cap"
+  ],
+  "market_regime": {
+    "inputs": {
+      "spy_r_4w": -0.0028827704688862976,
+      "qqq_rel_spy_4w": -0.04723042059097049,
+      "rsp_minus_spy_4w": 0.01703569399848681,
+      "iwm_minus_spy_4w": 0.006106981853027937,
+      "sector_advance_ratio_4w": 0.7272727272727273,
+      "defensive_basket_rel_spy_4w": 0.03507493444400844,
+      "cyclical_basket_rel_spy_4w": 0.012516447988643098,
+      "dbc_rel_spy_4w": 0.011387369227136013,
+      "gld_rel_spy_4w": -0.07677930823576151,
+      "xle_rel_spy_4w": 0.03674801154616247,
+      "hyg_minus_lqd_4w": 0.011827670469208074,
+      "vix_change_4w": 0.529998779296875,
+      "uup_r_4w": 0.0132284893928023,
+      "rsp_minus_spy_4w_trend_3w": "worsening",
+      "iwm_minus_spy_4w_trend_3w": "worsening",
+      "dbc_rel_spy_4w_trend_3w": "improving"
+    },
+    "candidate_flags": {
+      "broad_risk_on": {
+        "eligible": true,
+        "full_match": false,
+        "matched_conditions": [
+          "R_BROAD_RSP_NONNEG",
+          "R_BROAD_IWM_NONNEG",
+          "R_BROAD_SECTORS_7_OF_11"
+        ],
+        "unmatched_conditions": [
+          "R_BROAD_SPY_POS"
+        ],
+        "contrary_evidence": []
+      },
+      "large_growth_concentration": {
+        "eligible": true,
+        "full_match": false,
+        "matched_conditions": [],
+        "unmatched_conditions": [
+          "R_LG_SPY_POS",
+          "R_LG_QQQ_POS",
+          "R_LG_RSP_NEG2",
+          "R_LG_IWM_NEG",
+          "R_LG_SECTORS_5"
+        ],
+        "contrary_evidence": []
+      },
+      "defensive_shift": {
+        "eligible": true,
+        "full_match": false,
+        "matched_conditions": [
+          "R_DEF_REL2",
+          "R_DEF_VIX_POS"
+        ],
+        "unmatched_conditions": [
+          "R_DEF_CYCLICAL_NONPOS"
+        ],
+        "contrary_evidence": []
+      },
+      "real_asset_leadership": {
+        "eligible": true,
+        "full_match": false,
+        "matched_conditions": [
+          "R_REAL_GLD_OR_XLE_NONNEG"
+        ],
+        "unmatched_conditions": [
+          "R_REAL_DBC2"
+        ],
+        "contrary_evidence": []
+      },
+      "cyclical_recovery_expectation": {
+        "eligible": true,
+        "full_match": false,
+        "matched_conditions": [
+          "R_CYCLE_CREDIT_NONNEG"
+        ],
+        "unmatched_conditions": [
+          "R_CYCLE_IWM2",
+          "R_CYCLE_BASKET2"
+        ],
+        "contrary_evidence": []
+      },
+      "liquidity_contraction": {
+        "eligible": true,
+        "full_match": false,
+        "matched_conditions": [
+          "R_LIQ_SPY_NEG",
+          "R_LIQ_UUP_POS"
+        ],
+        "unmatched_conditions": [
+          "R_LIQ_CREDIT_NEG1",
+          "R_LIQ_VIX3"
+        ],
+        "contrary_evidence": [
+          "R_LIQ_SECTORS_CONTRARY"
+        ]
+      }
+    },
+    "classification": {
+      "primary_regime": "directionless",
+      "secondary_regimes": [
+        "broad_risk_on"
+      ],
+      "confidence": "low",
+      "matched_conditions": [],
+      "contrary_evidence": []
+    }
+  },
+  "style_factor": {
+    "IWF": {
+      "label": "大型グロース",
+      "return_1w": -0.017031679250114062,
+      "return_4w": -0.02541012903345341,
+      "return_13w": 0.03479759242659597,
+      "rel_spy_1w": -0.01571461383846351,
+      "rel_spy_4w": -0.022527358564567113,
+      "rel_spy_13w": -0.040514587679116865,
+      "above_50dma": false,
+      "above_200dma": true,
+      "within_5pct_52w_high": false,
+      "volume_ratio_20d_60d": 1.0948144679426248,
+      "last_date": "2026-07-16"
+    },
+    "IWD": {
+      "label": "大型バリュー",
+      "return_1w": 0.012501021876834661,
+      "return_4w": 0.02329972911236511,
+      "return_13w": 0.11707221313608152,
+      "rel_spy_1w": 0.013818087288485215,
+      "rel_spy_4w": 0.026182499581251406,
+      "rel_spy_13w": 0.04176003303036868,
+      "above_50dma": true,
+      "above_200dma": true,
+      "within_5pct_52w_high": true,
+      "volume_ratio_20d_60d": 1.4007585536987412,
+      "last_date": "2026-07-16"
+    },
+    "IJR": {
+      "label": "小型株（S&P600・黒字基準あり）",
+      "return_1w": 0.011617532324360358,
+      "return_4w": 0.02629196100500919,
+      "return_13w": 0.1160204256863373,
+      "rel_spy_1w": 0.012934597736010911,
+      "rel_spy_4w": 0.029174731473895488,
+      "rel_spy_13w": 0.04070824558062447,
+      "above_50dma": true,
+      "above_200dma": true,
+      "within_5pct_52w_high": true,
+      "volume_ratio_20d_60d": 0.9832139419364085,
+      "last_date": "2026-07-16"
+    },
+    "MTUM": {
+      "label": "モメンタム（直近の勝ち組銘柄）",
+      "return_1w": -0.05538607680206198,
+      "return_4w": -0.09057938668111665,
+      "return_13w": 0.12502391858842365,
+      "rel_spy_1w": -0.054069011390411426,
+      "rel_spy_4w": -0.08769661621223035,
+      "rel_spy_13w": 0.04971173848271082,
+      "above_50dma": false,
+      "above_200dma": true,
+      "within_5pct_52w_high": false,
+      "volume_ratio_20d_60d": 1.302421216501323,
+      "last_date": "2026-07-16"
+    },
+    "QUAL": {
+      "label": "クオリティ（財務・収益性の高い企業）",
+      "return_1w": 0.009885600284253337,
+      "return_4w": 0.006660614663292819,
+      "return_13w": 0.08163327127037534,
+      "rel_spy_1w": 0.01120266569590389,
+      "rel_spy_4w": 0.009543385132179116,
+      "rel_spy_13w": 0.006321091164662507,
+      "above_50dma": true,
+      "above_200dma": true,
+      "within_5pct_52w_high": true,
+      "volume_ratio_20d_60d": 0.7561203577975475,
+      "last_date": "2026-07-16"
+    },
+    "USMV": {
+      "label": "低ボラティリティ（値動きの小さい銘柄）",
+      "return_1w": -0.004815586352982848,
+      "return_4w": 0.008200134373646861,
+      "return_13w": 0.0371973610866021,
+      "rel_spy_1w": -0.003498520941332295,
+      "rel_spy_4w": 0.011082904842533159,
+      "rel_spy_13w": -0.038114819019110735,
+      "above_50dma": true,
+      "above_200dma": true,
+      "within_5pct_52w_high": true,
+      "volume_ratio_20d_60d": 0.9936937425150616,
+      "last_date": "2026-07-16"
+    },
+    "SPHB": {
+      "label": "高ベータ（市場より値動きの大きい銘柄）",
+      "return_1w": -0.04484399181248666,
+      "return_4w": -0.07224920808809987,
+      "return_13w": 0.11532571794648905,
+      "rel_spy_1w": -0.04352692640083611,
+      "rel_spy_4w": -0.06936643761921357,
+      "rel_spy_13w": 0.040013537840776214,
+      "above_50dma": false,
+      "above_200dma": true,
+      "within_5pct_52w_high": false,
+      "volume_ratio_20d_60d": 0.9544095010635408,
+      "last_date": "2026-07-16"
+    },
+    "VYM": {
+      "label": "高配当",
+      "return_1w": 0.0018685957399895425,
+      "return_4w": 0.008644237691563195,
+      "return_13w": 0.057478291103952195,
+      "rel_spy_1w": 0.0031856611516400957,
+      "rel_spy_4w": 0.011527008160449492,
+      "rel_spy_13w": -0.01783388900176064,
+      "above_50dma": true,
+      "above_200dma": true,
+      "within_5pct_52w_high": true,
+      "volume_ratio_20d_60d": 1.2393489055644413,
+      "last_date": "2026-07-16"
+    },
+    "ARKK": {
+      "label": "赤字成長・投機的グロースの代理指標",
+      "return_1w": -0.05960996790282891,
+      "return_4w": -0.037171909915463486,
+      "return_13w": -0.010326617260256632,
+      "rel_spy_1w": -0.058292902491178356,
+      "rel_spy_4w": -0.03428913944657719,
+      "rel_spy_13w": -0.08563879736596947,
+      "above_50dma": false,
+      "above_200dma": false,
+      "within_5pct_52w_high": false,
+      "volume_ratio_20d_60d": 0.8250383008832813,
+      "last_date": "2026-07-16"
+    }
+  },
+  "sectors": {
+    "etfs": {
+      "XLK": {
+        "label": "情報技術",
+        "return_1w": -0.04224441096959952,
+        "return_4w": -0.07330060585398646,
+        "return_13w": 0.18251278418186834,
+        "rel_spy_1w": -0.04092734555794897,
+        "rel_spy_4w": -0.07041783538510016,
+        "rel_spy_13w": 0.1072006040761555,
+        "above_50dma": false,
+        "above_200dma": true,
+        "within_5pct_52w_high": false,
+        "volume_ratio_20d_60d": 0.8663308635243739,
+        "last_date": "2026-07-16"
+      },
+      "XLC": {
+        "label": "コミュニケーション",
+        "return_1w": 0.019364757472453586,
+        "return_4w": 0.006712365304743839,
+        "return_13w": -0.037635823586676054,
+        "rel_spy_1w": 0.02068182288410414,
+        "rel_spy_4w": 0.009595135773630137,
+        "rel_spy_13w": -0.11294800369238889,
+        "above_50dma": true,
+        "above_200dma": false,
+        "within_5pct_52w_high": false,
+        "volume_ratio_20d_60d": 1.2459748995565734,
+        "last_date": "2026-07-16"
+      },
+      "XLY": {
+        "label": "一般消費財",
+        "return_1w": 0.0041933921280969955,
+        "return_4w": -0.008401642779314433,
+        "return_13w": -0.005129344929558188,
+        "rel_spy_1w": 0.005510457539747549,
+        "rel_spy_4w": -0.005518872310428136,
+        "rel_spy_13w": -0.08044152503527102,
+        "above_50dma": true,
+        "above_200dma": true,
+        "within_5pct_52w_high": false,
+        "volume_ratio_20d_60d": 1.0623704654242696,
+        "last_date": "2026-07-16"
+      },
+      "XLP": {
+        "label": "生活必需品",
+        "return_1w": 0.03137020079430064,
+        "return_4w": 0.010825813746969004,
+        "return_13w": 0.06594370990848297,
+        "rel_spy_1w": 0.03268726620595119,
+        "rel_spy_4w": 0.013708584215855302,
+        "rel_spy_13w": -0.009368470197229861,
+        "above_50dma": true,
+        "above_200dma": true,
+        "within_5pct_52w_high": true,
+        "volume_ratio_20d_60d": 0.985321965735179,
+        "last_date": "2026-07-16"
+      },
+      "XLV": {
+        "label": "ヘルスケア",
+        "return_1w": -0.002281526307979842,
+        "return_4w": 0.06294450682316,
+        "return_13w": 0.09977387880102873,
+        "rel_spy_1w": -0.0009644608963292889,
+        "rel_spy_4w": 0.0658272772920463,
+        "rel_spy_13w": 0.024461698695315892,
+        "above_50dma": true,
+        "above_200dma": true,
+        "within_5pct_52w_high": true,
+        "volume_ratio_20d_60d": 1.0668635743369876,
+        "last_date": "2026-07-16"
+      },
+      "XLF": {
+        "label": "金融",
+        "return_1w": 0.021786083264798473,
+        "return_4w": 0.06327098584196711,
+        "return_13w": 0.09160048581218283,
+        "rel_spy_1w": 0.023103148676449026,
+        "rel_spy_4w": 0.0661537563108534,
+        "rel_spy_13w": 0.016288305706469997,
+        "above_50dma": true,
+        "above_200dma": true,
+        "within_5pct_52w_high": true,
+        "volume_ratio_20d_60d": 0.9785429957294565,
+        "last_date": "2026-07-16"
+      },
+      "XLI": {
+        "label": "資本財",
+        "return_1w": -0.0053006830690293105,
+        "return_4w": 0.010707603444568115,
+        "return_13w": 0.05499021125968295,
+        "rel_spy_1w": -0.003983617657378757,
+        "rel_spy_4w": 0.013590373913454412,
+        "rel_spy_13w": -0.02032196884602988,
+        "above_50dma": true,
+        "above_200dma": true,
+        "within_5pct_52w_high": true,
+        "volume_ratio_20d_60d": 0.9082421818814462,
+        "last_date": "2026-07-16"
+      },
+      "XLE": {
+        "label": "エネルギー",
+        "return_1w": 0.040131353067978326,
+        "return_4w": 0.033865241077276176,
+        "return_13w": 0.02997163546319559,
+        "rel_spy_1w": 0.04144841847962888,
+        "rel_spy_4w": 0.03674801154616247,
+        "rel_spy_13w": -0.045340544642517244,
+        "above_50dma": true,
+        "above_200dma": true,
+        "within_5pct_52w_high": false,
+        "volume_ratio_20d_60d": 0.8829957952749925,
+        "last_date": "2026-07-16"
+      },
+      "XLB": {
+        "label": "素材",
+        "return_1w": 0.012534840611909015,
+        "return_4w": -0.02704223642819359,
+        "return_13w": -0.005833389535639721,
+        "rel_spy_1w": 0.013851906023559568,
+        "rel_spy_4w": -0.02415946595930729,
+        "rel_spy_13w": -0.08114556964135256,
+        "above_50dma": false,
+        "above_200dma": true,
+        "within_5pct_52w_high": true,
+        "volume_ratio_20d_60d": 0.9995806741602451,
+        "last_date": "2026-07-16"
+      },
+      "XLU": {
+        "label": "公益",
+        "return_1w": 0.00753379447243363,
+        "return_4w": 0.022806171355237437,
+        "return_13w": -0.005642127574449041,
+        "rel_spy_1w": 0.008850859884084183,
+        "rel_spy_4w": 0.025688941824123734,
+        "rel_spy_13w": -0.08095430768016187,
+        "above_50dma": true,
+        "above_200dma": true,
+        "within_5pct_52w_high": true,
+        "volume_ratio_20d_60d": 0.9890023530373331,
+        "last_date": "2026-07-16"
+      },
+      "XLRE": {
+        "label": "不動産",
+        "return_1w": 0.02780916922826937,
+        "return_4w": 0.019301095359849363,
+        "return_13w": 0.05640078082983169,
+        "rel_spy_1w": 0.029126234639919923,
+        "rel_spy_4w": 0.02218386582873566,
+        "rel_spy_13w": -0.018911399275881147,
+        "above_50dma": true,
+        "above_200dma": true,
+        "within_5pct_52w_high": true,
+        "volume_ratio_20d_60d": 1.046206561875688,
+        "last_date": "2026-07-16"
+      }
+    },
+    "rank_by_rel_spy_4w": [
+      "XLF",
+      "XLV",
+      "XLE",
+      "XLU",
+      "XLRE",
+      "XLP",
+      "XLI",
+      "XLC",
+      "XLY",
+      "XLB",
+      "XLK"
+    ]
+  },
+  "industries": {
+    "etfs": {
+      "SMH": {
+        "label": "半導体",
+        "return_1w": -0.06386059402344957,
+        "return_4w": -0.12081594131569962,
+        "return_13w": 0.2558940020091749,
+        "rel_spy_1w": -0.06254352861179902,
+        "rel_spy_4w": -0.11793317084681332,
+        "rel_spy_13w": 0.18058182190346206,
+        "above_50dma": false,
+        "above_200dma": true,
+        "within_5pct_52w_high": false,
+        "volume_ratio_20d_60d": 1.0615060199705937,
+        "last_date": "2026-07-16"
+      },
+      "IGV": {
+        "label": "ソフトウェア",
+        "return_1w": -0.0019173445935442013,
+        "return_4w": 0.011005574446566468,
+        "return_13w": 0.12939940314406906,
+        "rel_spy_1w": -0.0006002791818936482,
+        "rel_spy_4w": 0.013888344915452766,
+        "rel_spy_13w": 0.054087223038356225,
+        "above_50dma": true,
+        "above_200dma": false,
+        "within_5pct_52w_high": false,
+        "volume_ratio_20d_60d": 0.8352732285246519,
+        "last_date": "2026-07-16"
+      },
+      "XBI": {
+        "label": "バイオテクノロジー",
+        "return_1w": -0.07475041922659453,
+        "return_4w": 0.1154634132794885,
+        "return_13w": 0.11505474210501743,
+        "rel_spy_1w": -0.07343335381494398,
+        "rel_spy_4w": 0.1183461837483748,
+        "rel_spy_13w": 0.03974256199930459,
+        "above_50dma": true,
+        "above_200dma": true,
+        "within_5pct_52w_high": false,
+        "volume_ratio_20d_60d": 1.1848767267197617,
+        "last_date": "2026-07-16"
+      },
+      "ITA": {
+        "label": "航空宇宙・防衛",
+        "return_1w": -0.03643266799696587,
+        "return_4w": -0.027422050017720467,
+        "return_13w": -0.012597925462127568,
+        "rel_spy_1w": -0.03511560258531532,
+        "rel_spy_4w": -0.02453927954883417,
+        "rel_spy_13w": -0.0879101055678404,
+        "above_50dma": false,
+        "above_200dma": true,
+        "within_5pct_52w_high": false,
+        "volume_ratio_20d_60d": 0.8004008518995455,
+        "last_date": "2026-07-16"
+      },
+      "KRE": {
+        "label": "地方銀行",
+        "return_1w": 0.04380437476525434,
+        "return_4w": 0.08508496235664742,
+        "return_13w": 0.13308793207372416,
+        "rel_spy_1w": 0.04512144017690489,
+        "rel_spy_4w": 0.08796773282553372,
+        "rel_spy_13w": 0.057775751968011324,
+        "above_50dma": true,
+        "above_200dma": true,
+        "within_5pct_52w_high": true,
+        "volume_ratio_20d_60d": 0.9975110008857245,
+        "last_date": "2026-07-16"
+      },
+      "XHB": {
+        "label": "住宅建設",
+        "return_1w": 0.02964410764160319,
+        "return_4w": 0.024276637206714025,
+        "return_13w": 0.07853708834054096,
+        "rel_spy_1w": 0.030961173053253743,
+        "rel_spy_4w": 0.027159407675600322,
+        "rel_spy_13w": 0.0032249082348281277,
+        "above_50dma": true,
+        "above_200dma": true,
+        "within_5pct_52w_high": false,
+        "volume_ratio_20d_60d": 1.1415458427450849,
+        "last_date": "2026-07-16"
+      },
+      "XOP": {
+        "label": "石油・ガス開発",
+        "return_1w": 0.04377270433748248,
+        "return_4w": 0.05617437906081735,
+        "return_13w": 0.01823805187950689,
+        "rel_spy_1w": 0.045089769749133035,
+        "rel_spy_4w": 0.059057149529703645,
+        "rel_spy_13w": -0.057074128226205945,
+        "above_50dma": true,
+        "above_200dma": true,
+        "within_5pct_52w_high": false,
+        "volume_ratio_20d_60d": 0.9098625278758449,
+        "last_date": "2026-07-16"
+      },
+      "TAN": {
+        "label": "太陽光",
+        "return_1w": -0.014012746989495839,
+        "return_4w": -0.13588517311150738,
+        "return_13w": -0.020607364351722834,
+        "rel_spy_1w": -0.012695681577845286,
+        "rel_spy_4w": -0.1330024026426211,
+        "rel_spy_13w": -0.09591954445743567,
+        "above_50dma": false,
+        "above_200dma": false,
+        "within_5pct_52w_high": false,
+        "volume_ratio_20d_60d": 0.6510293933454367,
+        "last_date": "2026-07-16"
+      },
+      "URA": {
+        "label": "ウラン・原子力",
+        "return_1w": -0.07650526518317124,
+        "return_4w": -0.18622556194751483,
+        "return_13w": -0.28683441827988454,
+        "rel_spy_1w": -0.07518819977152069,
+        "rel_spy_4w": -0.18334279147862853,
+        "rel_spy_13w": -0.3621465983855974,
+        "above_50dma": false,
+        "above_200dma": false,
+        "within_5pct_52w_high": false,
+        "volume_ratio_20d_60d": 0.7573950563373937,
+        "last_date": "2026-07-16"
+      },
+      "XRT": {
+        "label": "小売",
+        "return_1w": 0.04095726257458887,
+        "return_4w": 0.036999421139428446,
+        "return_13w": 0.0810113495574738,
+        "rel_spy_1w": 0.042274327986239424,
+        "rel_spy_4w": 0.03988219160831474,
+        "rel_spy_13w": 0.005699169451760966,
+        "above_50dma": true,
+        "above_200dma": true,
+        "within_5pct_52w_high": true,
+        "volume_ratio_20d_60d": 0.8519625382530932,
+        "last_date": "2026-07-16"
+      },
+      "IYT": {
+        "label": "運輸",
+        "return_1w": 0.020753025909745704,
+        "return_4w": 0.04045774955002801,
+        "return_13w": 0.1413989883183029,
+        "rel_spy_1w": 0.022070091321396257,
+        "rel_spy_4w": 0.04334052001891431,
+        "rel_spy_13w": 0.06608680821259005,
+        "above_50dma": true,
+        "above_200dma": true,
+        "within_5pct_52w_high": true,
+        "volume_ratio_20d_60d": 1.1011593931983334,
+        "last_date": "2026-07-16"
+      },
+      "PAVE": {
+        "label": "インフラ建設",
+        "return_1w": 0.006380727083215465,
+        "return_4w": -0.022183752148667968,
+        "return_13w": 0.052156273651722485,
+        "rel_spy_1w": 0.007697792494866018,
+        "rel_spy_4w": -0.01930098167978167,
+        "rel_spy_13w": -0.02315590645399035,
+        "above_50dma": false,
+        "above_200dma": true,
+        "within_5pct_52w_high": false,
+        "volume_ratio_20d_60d": 1.27423093487299,
+        "last_date": "2026-07-16"
+      }
+    },
+    "rank_by_rel_spy_4w": [
+      "XBI",
+      "KRE",
+      "XOP",
+      "IYT",
+      "XRT",
+      "XHB",
+      "IGV",
+      "PAVE",
+      "ITA",
+      "SMH",
+      "TAN",
+      "URA"
+    ]
+  },
+  "themes": {
+    "ai_semis": {
+      "theme_id": "ai_semis",
+      "label": "AI半導体",
+      "quality": {
+        "classification_eligible": true,
+        "phase_initial_diffusion_eligible": false,
+        "phase_overheat_eligible": true,
+        "direction_eligible": false,
+        "evidence_eligible": true,
+        "constituent_count": 8,
+        "valid_constituent_count": 8,
+        "coverage_ratio": 1.0,
+        "history_weeks": 1,
+        "role_valid_counts": {
+          "core": 5,
+          "beneficiary": 2,
+          "peripheral": 1
+        },
+        "metric_valid_counts": {
+          "return_4w": 8,
+          "return_13w": 8,
+          "above_50dma": 8,
+          "within_5pct_52w_high": 8,
+          "market_cap": 0
+        },
+        "missing_required_fields": [],
+        "quality_reasons": [
+          "Q_HISTORY_BELOW_3",
+          "Q_ROLE_PERIPHERAL_BELOW_2",
+          "Q_MARKET_CAP_COVERAGE_BELOW_075"
+        ]
+      },
+      "metrics": {
+        "equal_weight_return_1w": -0.10790391653989194,
+        "equal_weight_return_4w": -0.17828266222759181,
+        "equal_weight_return_13w": 0.4032727449371617,
+        "equal_weight_rel_spy_1w": -0.10658685112824139,
+        "equal_weight_rel_spy_4w": -0.17539989175870552,
+        "equal_weight_rel_spy_13w": 0.32796056483144886,
+        "market_cap_weight_rel_spy_4w": null,
+        "weighting_divergence_4w": null,
+        "advance_count_4w": 0,
+        "advance_ratio_4w": 0.0,
+        "above_50dma_count": 1,
+        "pct_above_50dma": 0.125,
+        "pct_within_5pct_52w_high": 0.0,
+        "volume_ratio_20d_60d": 0.93817340477687,
+        "top1_contribution_ratio": null,
+        "top3_contribution_ratio": null,
+        "single_name_concentrated": null,
+        "market_cap_led": null,
+        "equal_weight_led": null
+      },
+      "trends": {
+        "rel_spy_4w_change_1w": null,
+        "rel_spy_4w_slope_3w": null,
+        "rel_spy_4w_slope_4w": null,
+        "rel_spy_4w_trend_3w": "insufficient",
+        "rel_spy_4w_trend_4w": "insufficient",
+        "advance_count_change_1w": null,
+        "advance_count_change_3w": null,
+        "above_50dma_count_change_1w": null,
+        "above_50dma_count_change_3w": null,
+        "advance_breadth_trend_3w": "insufficient",
+        "above_50dma_breadth_trend_3w": "insufficient",
+        "volume_ratio_change_1w": null
+      },
+      "condition_flags": {
+        "phase_initial": null,
+        "phase_diffusion": null,
+        "phase_price_overheat": null,
+        "direction_improving": null,
+        "direction_worsening": null,
+        "direction_outflow_signal": null,
+        "broad_concentration_pass": null,
+        "overheat_breadth_weak": null,
+        "matched_conditions": [],
+        "unmatched_conditions": [],
+        "contrary_evidence": []
+      },
+      "classifications": {
+        "phase": "unclassifiable",
+        "direction": "unclassifiable",
+        "evidence": {
+          "level": "relative_preference_suggested",
+          "direction": "outflow",
+          "positioning_hypothesis": "not_assessable",
+          "direct_flow_data_available": false,
+          "matched_conditions": [
+            "EV_DIRECTION_OUTFLOW"
+          ]
+        },
+        "research_priority": "watch",
+        "research_priority_rule": "fallback",
+        "timing_status": "unclassifiable",
+        "timing_rule": "fallback"
+      },
+      "relative_strength_rank_4w": 7,
+      "selected_for_deep_dive": false,
+      "shortlist_rank": null,
+      "shortlist_reason_codes": [
+        "SL_PRIORITY_WATCH",
+        "SL_EXCLUDED_TOP5_LIMIT"
+      ],
+      "by_role": {
+        "core": {
+          "valid_count": 5,
+          "equal_weight_rel_spy_4w": -0.12078410964313868,
+          "advance_ratio_4w": 0.0
+        },
+        "beneficiary": {
+          "valid_count": 2,
+          "equal_weight_rel_spy_4w": -0.2874082957890551,
+          "advance_ratio_4w": 0.0
+        },
+        "peripheral": null
+      },
+      "constituents": [
+        {
+          "ticker": "AMD",
+          "role": "core",
+          "valid": true,
+          "return_4w": -0.08463985399564677,
+          "rel_spy_4w": -0.08175708352676048,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "ARM",
+          "role": "beneficiary",
+          "valid": true,
+          "return_4w": -0.3649011816305996,
+          "rel_spy_4w": -0.3620184111617133,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "AVGO",
+          "role": "core",
+          "valid": true,
+          "return_4w": -0.047970132123671294,
+          "rel_spy_4w": -0.045087361654784996,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "MRVL",
+          "role": "core",
+          "valid": true,
+          "return_4w": -0.39022776622402233,
+          "rel_spy_4w": -0.38734499575513603,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "MU",
+          "role": "beneficiary",
+          "valid": true,
+          "return_4w": -0.21568095088528316,
+          "rel_spy_4w": -0.21279818041639686,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "NVDA",
+          "role": "core",
+          "valid": true,
+          "return_4w": -0.02377031359990145,
+          "rel_spy_4w": -0.02088754313101515,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "QCOM",
+          "role": "peripheral",
+          "valid": true,
+          "return_4w": -0.22734476474472676,
+          "rel_spy_4w": -0.22446199427584046,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "TSM",
+          "role": "core",
+          "valid": true,
+          "return_4w": -0.07172633461688305,
+          "rel_spy_4w": -0.06884356414799675,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        }
+      ]
+    },
+    "ai_software_data": {
+      "theme_id": "ai_software_data",
+      "label": "AIソフトウェア・データ基盤",
+      "quality": {
+        "classification_eligible": true,
+        "phase_initial_diffusion_eligible": false,
+        "phase_overheat_eligible": true,
+        "direction_eligible": false,
+        "evidence_eligible": true,
+        "constituent_count": 7,
+        "valid_constituent_count": 7,
+        "coverage_ratio": 1.0,
+        "history_weeks": 1,
+        "role_valid_counts": {
+          "core": 2,
+          "beneficiary": 3,
+          "peripheral": 2
+        },
+        "metric_valid_counts": {
+          "return_4w": 7,
+          "return_13w": 7,
+          "above_50dma": 7,
+          "within_5pct_52w_high": 7,
+          "market_cap": 0
+        },
+        "missing_required_fields": [],
+        "quality_reasons": [
+          "Q_HISTORY_BELOW_3",
+          "Q_MARKET_CAP_COVERAGE_BELOW_075"
+        ]
+      },
+      "metrics": {
+        "equal_weight_return_1w": -0.011413028481161198,
+        "equal_weight_return_4w": -0.0025116965860864093,
+        "equal_weight_return_13w": 0.3350864413613842,
+        "equal_weight_rel_spy_1w": -0.010095963069510645,
+        "equal_weight_rel_spy_4w": 0.0003710738827998883,
+        "equal_weight_rel_spy_13w": 0.2597742612556714,
+        "market_cap_weight_rel_spy_4w": null,
+        "weighting_divergence_4w": null,
+        "advance_count_4w": 3,
+        "advance_ratio_4w": 0.42857142857142855,
+        "above_50dma_count": 4,
+        "pct_above_50dma": 0.5714285714285714,
+        "pct_within_5pct_52w_high": 0.14285714285714285,
+        "volume_ratio_20d_60d": 0.8986921441546085,
+        "top1_contribution_ratio": 0.4910277823485751,
+        "top3_contribution_ratio": 0.990748635765823,
+        "single_name_concentrated": false,
+        "market_cap_led": null,
+        "equal_weight_led": null
+      },
+      "trends": {
+        "rel_spy_4w_change_1w": null,
+        "rel_spy_4w_slope_3w": null,
+        "rel_spy_4w_slope_4w": null,
+        "rel_spy_4w_trend_3w": "insufficient",
+        "rel_spy_4w_trend_4w": "insufficient",
+        "advance_count_change_1w": null,
+        "advance_count_change_3w": null,
+        "above_50dma_count_change_1w": null,
+        "above_50dma_count_change_3w": null,
+        "advance_breadth_trend_3w": "insufficient",
+        "above_50dma_breadth_trend_3w": "insufficient",
+        "volume_ratio_change_1w": null
+      },
+      "condition_flags": {
+        "phase_initial": null,
+        "phase_diffusion": null,
+        "phase_price_overheat": false,
+        "direction_improving": null,
+        "direction_worsening": null,
+        "direction_outflow_signal": null,
+        "broad_concentration_pass": false,
+        "overheat_breadth_weak": false,
+        "matched_conditions": [],
+        "unmatched_conditions": [],
+        "contrary_evidence": []
+      },
+      "classifications": {
+        "phase": "unclassifiable",
+        "direction": "unclassifiable",
+        "evidence": {
+          "level": "relative_preference_suggested",
+          "direction": "inflow",
+          "positioning_hypothesis": "not_supported",
+          "direct_flow_data_available": false,
+          "matched_conditions": [
+            "EV_REL_POS",
+            "EV_ADVANCE_25",
+            "EV_TOP1_50"
+          ]
+        },
+        "research_priority": "watch",
+        "research_priority_rule": "fallback",
+        "timing_status": "unclassifiable",
+        "timing_rule": "fallback"
+      },
+      "relative_strength_rank_4w": 2,
+      "selected_for_deep_dive": true,
+      "shortlist_rank": 2,
+      "shortlist_reason_codes": [
+        "SL_PRIORITY_WATCH",
+        "SL_EVIDENCE_INFLOW",
+        "SL_PHASE_UNCLASSIFIABLE",
+        "SL_CONCENTRATION_FAIL"
+      ],
+      "by_role": {
+        "core": {
+          "valid_count": 2,
+          "equal_weight_rel_spy_4w": 0.06259991076481647,
+          "advance_ratio_4w": 0.5
+        },
+        "beneficiary": {
+          "valid_count": 3,
+          "equal_weight_rel_spy_4w": 0.045352786145585876,
+          "advance_ratio_4w": 0.6666666666666666
+        },
+        "peripheral": {
+          "valid_count": 2,
+          "equal_weight_rel_spy_4w": -0.12933033139339567,
+          "advance_ratio_4w": 0.0
+        }
+      },
+      "constituents": [
+        {
+          "ticker": "AI",
+          "role": "peripheral",
+          "valid": true,
+          "return_4w": -0.1922030767799493,
+          "rel_spy_4w": -0.189320306311063,
+          "market_cap": null,
+          "positive_contribution_ratio": 0.0,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "DDOG",
+          "role": "beneficiary",
+          "valid": true,
+          "return_4w": 0.1254022542604354,
+          "rel_spy_4w": 0.12828502472932168,
+          "market_cap": null,
+          "positive_contribution_ratio": 0.4910277823485751,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "MDB",
+          "role": "peripheral",
+          "valid": true,
+          "return_4w": -0.07222312694461464,
+          "rel_spy_4w": -0.06934035647572834,
+          "market_cap": null,
+          "positive_contribution_ratio": 0.0,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "MSFT",
+          "role": "beneficiary",
+          "valid": true,
+          "return_4w": 0.003352001964068929,
+          "rel_spy_4w": 0.006234772432955227,
+          "market_cap": null,
+          "positive_contribution_ratio": 0.02386441042250733,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "NOW",
+          "role": "beneficiary",
+          "valid": true,
+          "return_4w": -0.0013442091944055878,
+          "rel_spy_4w": 0.0015385612744807098,
+          "market_cap": null,
+          "positive_contribution_ratio": 0.005889045367607771,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "PLTR",
+          "role": "core",
+          "valid": true,
+          "return_4w": -0.002004337161339742,
+          "rel_spy_4w": 0.0008784333075465556,
+          "market_cap": null,
+          "positive_contribution_ratio": 0.003362318866569312,
+          "overlap_theme_count": 2
+        },
+        {
+          "ticker": "SNOW",
+          "role": "core",
+          "valid": true,
+          "return_4w": 0.12143861775320008,
+          "rel_spy_4w": 0.12432138822208638,
+          "market_cap": null,
+          "positive_contribution_ratio": 0.4758564429947405,
+          "overlap_theme_count": 1
+        }
+      ]
+    },
+    "cybersecurity": {
+      "theme_id": "cybersecurity",
+      "label": "サイバーセキュリティ",
+      "quality": {
+        "classification_eligible": true,
+        "phase_initial_diffusion_eligible": false,
+        "phase_overheat_eligible": true,
+        "direction_eligible": false,
+        "evidence_eligible": true,
+        "constituent_count": 7,
+        "valid_constituent_count": 7,
+        "coverage_ratio": 1.0,
+        "history_weeks": 1,
+        "role_valid_counts": {
+          "core": 4,
+          "beneficiary": 2,
+          "peripheral": 1
+        },
+        "metric_valid_counts": {
+          "return_4w": 7,
+          "return_13w": 7,
+          "above_50dma": 7,
+          "within_5pct_52w_high": 7,
+          "market_cap": 0
+        },
+        "missing_required_fields": [],
+        "quality_reasons": [
+          "Q_HISTORY_BELOW_3",
+          "Q_ROLE_PERIPHERAL_BELOW_2",
+          "Q_MARKET_CAP_COVERAGE_BELOW_075"
+        ]
+      },
+      "metrics": {
+        "equal_weight_return_1w": 0.010283293197929247,
+        "equal_weight_return_4w": 0.18822667426258802,
+        "equal_weight_return_13w": 0.7689836342235236,
+        "equal_weight_rel_spy_1w": 0.0116003586095798,
+        "equal_weight_rel_spy_4w": 0.19110944473147431,
+        "equal_weight_rel_spy_13w": 0.6936714541178107,
+        "market_cap_weight_rel_spy_4w": null,
+        "weighting_divergence_4w": null,
+        "advance_count_4w": 7,
+        "advance_ratio_4w": 1.0,
+        "above_50dma_count": 7,
+        "pct_above_50dma": 1.0,
+        "pct_within_5pct_52w_high": 0.8571428571428571,
+        "volume_ratio_20d_60d": 0.889524359301319,
+        "top1_contribution_ratio": 0.22065166116175253,
+        "top3_contribution_ratio": 0.5948617566517975,
+        "single_name_concentrated": false,
+        "market_cap_led": null,
+        "equal_weight_led": null
+      },
+      "trends": {
+        "rel_spy_4w_change_1w": null,
+        "rel_spy_4w_slope_3w": null,
+        "rel_spy_4w_slope_4w": null,
+        "rel_spy_4w_trend_3w": "insufficient",
+        "rel_spy_4w_trend_4w": "insufficient",
+        "advance_count_change_1w": null,
+        "advance_count_change_3w": null,
+        "above_50dma_count_change_1w": null,
+        "above_50dma_count_change_3w": null,
+        "advance_breadth_trend_3w": "insufficient",
+        "above_50dma_breadth_trend_3w": "insufficient",
+        "volume_ratio_change_1w": null
+      },
+      "condition_flags": {
+        "phase_initial": null,
+        "phase_diffusion": null,
+        "phase_price_overheat": null,
+        "direction_improving": null,
+        "direction_worsening": null,
+        "direction_outflow_signal": null,
+        "broad_concentration_pass": true,
+        "overheat_breadth_weak": null,
+        "matched_conditions": [],
+        "unmatched_conditions": [],
+        "contrary_evidence": []
+      },
+      "classifications": {
+        "phase": "unclassifiable",
+        "direction": "unclassifiable",
+        "evidence": {
+          "level": "relative_preference_suggested",
+          "direction": "inflow",
+          "positioning_hypothesis": "not_supported",
+          "direct_flow_data_available": false,
+          "matched_conditions": [
+            "EV_REL_POS",
+            "EV_ADVANCE_60",
+            "EV_TOP1_50"
+          ]
+        },
+        "research_priority": "watch",
+        "research_priority_rule": "fallback",
+        "timing_status": "unclassifiable",
+        "timing_rule": "fallback"
+      },
+      "relative_strength_rank_4w": 1,
+      "selected_for_deep_dive": true,
+      "shortlist_rank": 1,
+      "shortlist_reason_codes": [
+        "SL_PRIORITY_WATCH",
+        "SL_EVIDENCE_INFLOW",
+        "SL_PHASE_UNCLASSIFIABLE",
+        "SL_CONCENTRATION_PASS"
+      ],
+      "by_role": {
+        "core": {
+          "valid_count": 4,
+          "equal_weight_rel_spy_4w": 0.1575366115366979,
+          "advance_ratio_4w": 1.0
+        },
+        "beneficiary": {
+          "valid_count": 2,
+          "equal_weight_rel_spy_4w": 0.20621967593381452,
+          "advance_ratio_4w": 1.0
+        },
+        "peripheral": null
+      },
+      "constituents": [
+        {
+          "ticker": "CRWD",
+          "role": "core",
+          "valid": true,
+          "return_4w": 0.17625667058675432,
+          "rel_spy_4w": 0.1791394410556406,
+          "market_cap": null,
+          "positive_contribution_ratio": 0.13390938767151192,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "FTNT",
+          "role": "core",
+          "valid": true,
+          "return_4w": 0.07552339869737379,
+          "rel_spy_4w": 0.07840616916626009,
+          "market_cap": null,
+          "positive_contribution_ratio": 0.05860977370953045,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "NET",
+          "role": "beneficiary",
+          "valid": true,
+          "return_4w": 0.1559118564950126,
+          "rel_spy_4w": 0.1587946269638989,
+          "market_cap": null,
+          "positive_contribution_ratio": 0.11870133755557069,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "OKTA",
+          "role": "beneficiary",
+          "valid": true,
+          "return_4w": 0.25076195443484384,
+          "rel_spy_4w": 0.25364472490373013,
+          "market_cap": null,
+          "positive_contribution_ratio": 0.1896031917807422,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "PANW",
+          "role": "core",
+          "valid": true,
+          "return_4w": 0.2440780895614849,
+          "rel_spy_4w": 0.2469608600303712,
+          "market_cap": null,
+          "positive_contribution_ratio": 0.18460690370930277,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "S",
+          "role": "peripheral",
+          "valid": true,
+          "return_4w": 0.2922975446370133,
+          "rel_spy_4w": 0.2951803151058996,
+          "market_cap": null,
+          "positive_contribution_ratio": 0.22065166116175253,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "ZS",
+          "role": "core",
+          "valid": true,
+          "return_4w": 0.1227572054256334,
+          "rel_spy_4w": 0.1256399758945197,
+          "market_cap": null,
+          "positive_contribution_ratio": 0.09391774441158945,
+          "overlap_theme_count": 1
+        }
+      ]
+    },
+    "dc_power_infra": {
+      "theme_id": "dc_power_infra",
+      "label": "データセンター電力・インフラ",
+      "quality": {
+        "classification_eligible": true,
+        "phase_initial_diffusion_eligible": false,
+        "phase_overheat_eligible": true,
+        "direction_eligible": false,
+        "evidence_eligible": true,
+        "constituent_count": 8,
+        "valid_constituent_count": 8,
+        "coverage_ratio": 1.0,
+        "history_weeks": 1,
+        "role_valid_counts": {
+          "core": 3,
+          "beneficiary": 3,
+          "peripheral": 2
+        },
+        "metric_valid_counts": {
+          "return_4w": 8,
+          "return_13w": 8,
+          "above_50dma": 8,
+          "within_5pct_52w_high": 8,
+          "market_cap": 0
+        },
+        "missing_required_fields": [],
+        "quality_reasons": [
+          "Q_HISTORY_BELOW_3",
+          "Q_MARKET_CAP_COVERAGE_BELOW_075"
+        ]
+      },
+      "metrics": {
+        "equal_weight_return_1w": -0.04545533401695963,
+        "equal_weight_return_4w": -0.04860189002428611,
+        "equal_weight_return_13w": -0.04572189101013152,
+        "equal_weight_rel_spy_1w": -0.044138268605309075,
+        "equal_weight_rel_spy_4w": -0.04571911955539981,
+        "equal_weight_rel_spy_13w": -0.12103407111584435,
+        "market_cap_weight_rel_spy_4w": null,
+        "weighting_divergence_4w": null,
+        "advance_count_4w": 2,
+        "advance_ratio_4w": 0.25,
+        "above_50dma_count": 0,
+        "pct_above_50dma": 0.0,
+        "pct_within_5pct_52w_high": 0.0,
+        "volume_ratio_20d_60d": 1.0455452081090875,
+        "top1_contribution_ratio": 0.7472259688166241,
+        "top3_contribution_ratio": 1.0,
+        "single_name_concentrated": true,
+        "market_cap_led": null,
+        "equal_weight_led": null
+      },
+      "trends": {
+        "rel_spy_4w_change_1w": null,
+        "rel_spy_4w_slope_3w": null,
+        "rel_spy_4w_slope_4w": null,
+        "rel_spy_4w_trend_3w": "insufficient",
+        "rel_spy_4w_trend_4w": "insufficient",
+        "advance_count_change_1w": null,
+        "advance_count_change_3w": null,
+        "above_50dma_count_change_1w": null,
+        "above_50dma_count_change_3w": null,
+        "advance_breadth_trend_3w": "insufficient",
+        "above_50dma_breadth_trend_3w": "insufficient",
+        "volume_ratio_change_1w": null
+      },
+      "condition_flags": {
+        "phase_initial": null,
+        "phase_diffusion": null,
+        "phase_price_overheat": false,
+        "direction_improving": null,
+        "direction_worsening": null,
+        "direction_outflow_signal": null,
+        "broad_concentration_pass": false,
+        "overheat_breadth_weak": false,
+        "matched_conditions": [
+          "P5_REL_ALL_NONPOSITIVE",
+          "CONCENTRATION_TOP1_GT_60"
+        ],
+        "unmatched_conditions": [],
+        "contrary_evidence": [
+          "CONCENTRATION_SINGLE_NAME",
+          "ROLE_CORE_NOT_ADVANCING"
+        ]
+      },
+      "classifications": {
+        "phase": "unclassifiable",
+        "direction": "unclassifiable",
+        "evidence": {
+          "level": "relative_preference_suggested",
+          "direction": "outflow",
+          "positioning_hypothesis": "not_supported",
+          "direct_flow_data_available": false,
+          "matched_conditions": [
+            "EV_REL_ALL_NONPOSITIVE",
+            "EV_BREADTH_WEAK",
+            "EV_DIRECTION_OUTFLOW"
+          ]
+        },
+        "research_priority": "watch",
+        "research_priority_rule": "P4",
+        "timing_status": "unclassifiable",
+        "timing_rule": "fallback"
+      },
+      "relative_strength_rank_4w": 4,
+      "selected_for_deep_dive": true,
+      "shortlist_rank": 4,
+      "shortlist_reason_codes": [
+        "SL_PRIORITY_WATCH",
+        "SL_SINGLE_NAME_CONCENTRATION"
+      ],
+      "by_role": {
+        "core": {
+          "valid_count": 3,
+          "equal_weight_rel_spy_4w": -0.0053582094435019965,
+          "advance_ratio_4w": 0.3333333333333333
+        },
+        "beneficiary": {
+          "valid_count": 3,
+          "equal_weight_rel_spy_4w": -0.05508484499110089,
+          "advance_ratio_4w": 0.0
+        },
+        "peripheral": {
+          "valid_count": 2,
+          "equal_weight_rel_spy_4w": -0.09221189656969492,
+          "advance_ratio_4w": 0.5
+        }
+      },
+      "constituents": [
+        {
+          "ticker": "CEG",
+          "role": "beneficiary",
+          "valid": true,
+          "return_4w": -0.04032781240675909,
+          "rel_spy_4w": -0.03744504193787279,
+          "market_cap": null,
+          "positive_contribution_ratio": 0.0,
+          "overlap_theme_count": 2
+        },
+        {
+          "ticker": "ETN",
+          "role": "core",
+          "valid": true,
+          "return_4w": -0.02650716997404967,
+          "rel_spy_4w": -0.023624399505163374,
+          "market_cap": null,
+          "positive_contribution_ratio": 0.0,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "GEV",
+          "role": "core",
+          "valid": true,
+          "return_4w": 0.0589124568987589,
+          "rel_spy_4w": 0.0617952273676452,
+          "market_cap": null,
+          "positive_contribution_ratio": 0.7472259688166241,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "MOD",
+          "role": "peripheral",
+          "valid": true,
+          "return_4w": -0.2082108541194191,
+          "rel_spy_4w": -0.2053280836505328,
+          "market_cap": null,
+          "positive_contribution_ratio": 0.0,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "NRG",
+          "role": "peripheral",
+          "valid": true,
+          "return_4w": 0.018021520042256656,
+          "rel_spy_4w": 0.020904290511142953,
+          "market_cap": null,
+          "positive_contribution_ratio": 0.25277403118337594,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "PWR",
+          "role": "beneficiary",
+          "valid": true,
+          "return_4w": -0.12871339195547726,
+          "rel_spy_4w": -0.12583062148659097,
+          "market_cap": null,
+          "positive_contribution_ratio": 0.0,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "VRT",
+          "role": "core",
+          "valid": true,
+          "return_4w": -0.057128226661874115,
+          "rel_spy_4w": -0.05424545619298782,
+          "market_cap": null,
+          "positive_contribution_ratio": 0.0,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "VST",
+          "role": "beneficiary",
+          "valid": true,
+          "return_4w": -0.0048616420177252095,
+          "rel_spy_4w": -0.001978871548838912,
+          "market_cap": null,
+          "positive_contribution_ratio": 0.0,
+          "overlap_theme_count": 2
+        }
+      ]
+    },
+    "defense": {
+      "theme_id": "defense",
+      "label": "防衛",
+      "quality": {
+        "classification_eligible": true,
+        "phase_initial_diffusion_eligible": false,
+        "phase_overheat_eligible": true,
+        "direction_eligible": false,
+        "evidence_eligible": true,
+        "constituent_count": 8,
+        "valid_constituent_count": 8,
+        "coverage_ratio": 1.0,
+        "history_weeks": 1,
+        "role_valid_counts": {
+          "core": 5,
+          "beneficiary": 2,
+          "peripheral": 1
+        },
+        "metric_valid_counts": {
+          "return_4w": 8,
+          "return_13w": 8,
+          "above_50dma": 8,
+          "within_5pct_52w_high": 8,
+          "market_cap": 0
+        },
+        "missing_required_fields": [],
+        "quality_reasons": [
+          "Q_HISTORY_BELOW_3",
+          "Q_ROLE_PERIPHERAL_BELOW_2",
+          "Q_MARKET_CAP_COVERAGE_BELOW_075"
+        ]
+      },
+      "metrics": {
+        "equal_weight_return_1w": -0.008000781969713794,
+        "equal_weight_return_4w": -0.04575171545107398,
+        "equal_weight_return_13w": -0.1475104468959615,
+        "equal_weight_rel_spy_1w": -0.006683716558063241,
+        "equal_weight_rel_spy_4w": -0.042868944982187684,
+        "equal_weight_rel_spy_13w": -0.22282262700167432,
+        "market_cap_weight_rel_spy_4w": null,
+        "weighting_divergence_4w": null,
+        "advance_count_4w": 2,
+        "advance_ratio_4w": 0.25,
+        "above_50dma_count": 3,
+        "pct_above_50dma": 0.375,
+        "pct_within_5pct_52w_high": 0.125,
+        "volume_ratio_20d_60d": 1.0921334010971848,
+        "top1_contribution_ratio": 0.6422960805271032,
+        "top3_contribution_ratio": 1.0,
+        "single_name_concentrated": true,
+        "market_cap_led": null,
+        "equal_weight_led": null
+      },
+      "trends": {
+        "rel_spy_4w_change_1w": null,
+        "rel_spy_4w_slope_3w": null,
+        "rel_spy_4w_slope_4w": null,
+        "rel_spy_4w_trend_3w": "insufficient",
+        "rel_spy_4w_trend_4w": "insufficient",
+        "advance_count_change_1w": null,
+        "advance_count_change_3w": null,
+        "above_50dma_count_change_1w": null,
+        "above_50dma_count_change_3w": null,
+        "advance_breadth_trend_3w": "insufficient",
+        "above_50dma_breadth_trend_3w": "insufficient",
+        "volume_ratio_change_1w": null
+      },
+      "condition_flags": {
+        "phase_initial": null,
+        "phase_diffusion": null,
+        "phase_price_overheat": null,
+        "direction_improving": null,
+        "direction_worsening": null,
+        "direction_outflow_signal": null,
+        "broad_concentration_pass": false,
+        "overheat_breadth_weak": null,
+        "matched_conditions": [
+          "P5_REL_ALL_NONPOSITIVE",
+          "CONCENTRATION_TOP1_GT_60"
+        ],
+        "unmatched_conditions": [],
+        "contrary_evidence": [
+          "CONCENTRATION_SINGLE_NAME",
+          "ROLE_CORE_NOT_ADVANCING"
+        ]
+      },
+      "classifications": {
+        "phase": "unclassifiable",
+        "direction": "unclassifiable",
+        "evidence": {
+          "level": "relative_preference_suggested",
+          "direction": "outflow",
+          "positioning_hypothesis": "not_supported",
+          "direct_flow_data_available": false,
+          "matched_conditions": [
+            "EV_REL_ALL_NONPOSITIVE",
+            "EV_BREADTH_WEAK",
+            "EV_DIRECTION_OUTFLOW"
+          ]
+        },
+        "research_priority": "watch",
+        "research_priority_rule": "P4",
+        "timing_status": "unclassifiable",
+        "timing_rule": "fallback"
+      },
+      "relative_strength_rank_4w": 3,
+      "selected_for_deep_dive": true,
+      "shortlist_rank": 3,
+      "shortlist_reason_codes": [
+        "SL_PRIORITY_WATCH",
+        "SL_SINGLE_NAME_CONCENTRATION"
+      ],
+      "by_role": {
+        "core": {
+          "valid_count": 5,
+          "equal_weight_rel_spy_4w": -0.00827673396851869,
+          "advance_ratio_4w": 0.4
+        },
+        "beneficiary": {
+          "valid_count": 2,
+          "equal_weight_rel_spy_4w": -0.0640106573856356,
+          "advance_ratio_4w": 0.0
+        },
+        "peripheral": null
+      },
+      "constituents": [
+        {
+          "ticker": "AVAV",
+          "role": "beneficiary",
+          "valid": true,
+          "return_4w": -0.13178251854770406,
+          "rel_spy_4w": -0.12889974807881777,
+          "market_cap": null,
+          "positive_contribution_ratio": 0.0,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "GD",
+          "role": "core",
+          "valid": true,
+          "return_4w": 0.030354178403499743,
+          "rel_spy_4w": 0.03323694887238604,
+          "market_cap": null,
+          "positive_contribution_ratio": 0.3484934397119586,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "KTOS",
+          "role": "peripheral",
+          "valid": true,
+          "return_4w": -0.1764293457125231,
+          "rel_spy_4w": -0.1735465752436368,
+          "market_cap": null,
+          "positive_contribution_ratio": 0.0,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "LHX",
+          "role": "core",
+          "valid": true,
+          "return_4w": -0.06489798428681404,
+          "rel_spy_4w": -0.06201521381792774,
+          "market_cap": null,
+          "positive_contribution_ratio": 0.0,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "LMT",
+          "role": "core",
+          "valid": true,
+          "return_4w": -0.03175195392832986,
+          "rel_spy_4w": -0.02886918345944356,
+          "market_cap": null,
+          "positive_contribution_ratio": 0.0,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "NOC",
+          "role": "core",
+          "valid": true,
+          "return_4w": -0.04787685089821059,
+          "rel_spy_4w": -0.04499408042932429,
+          "market_cap": null,
+          "positive_contribution_ratio": 0.0,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "PLTR",
+          "role": "beneficiary",
+          "valid": true,
+          "return_4w": -0.002004337161339742,
+          "rel_spy_4w": 0.0008784333075465556,
+          "market_cap": null,
+          "positive_contribution_ratio": 0.009210479760938278,
+          "overlap_theme_count": 2
+        },
+        {
+          "ticker": "RTX",
+          "role": "core",
+          "valid": true,
+          "return_4w": 0.0583750885228298,
+          "rel_spy_4w": 0.061257858991716096,
+          "market_cap": null,
+          "positive_contribution_ratio": 0.6422960805271032,
+          "overlap_theme_count": 1
+        }
+      ]
+    },
+    "networking_optical": {
+      "theme_id": "networking_optical",
+      "label": "ネットワーク・光通信",
+      "quality": {
+        "classification_eligible": true,
+        "phase_initial_diffusion_eligible": false,
+        "phase_overheat_eligible": true,
+        "direction_eligible": false,
+        "evidence_eligible": true,
+        "constituent_count": 7,
+        "valid_constituent_count": 7,
+        "coverage_ratio": 1.0,
+        "history_weeks": 1,
+        "role_valid_counts": {
+          "core": 4,
+          "beneficiary": 2,
+          "peripheral": 1
+        },
+        "metric_valid_counts": {
+          "return_4w": 7,
+          "return_13w": 7,
+          "above_50dma": 7,
+          "within_5pct_52w_high": 7,
+          "market_cap": 0
+        },
+        "missing_required_fields": [],
+        "quality_reasons": [
+          "Q_HISTORY_BELOW_3",
+          "Q_ROLE_PERIPHERAL_BELOW_2",
+          "Q_MARKET_CAP_COVERAGE_BELOW_075"
+        ]
+      },
+      "metrics": {
+        "equal_weight_return_1w": -0.16174471059932044,
+        "equal_weight_return_4w": -0.23007836087264666,
+        "equal_weight_return_13w": 0.06595183486266494,
+        "equal_weight_rel_spy_1w": -0.1604276451876699,
+        "equal_weight_rel_spy_4w": -0.22719559040376036,
+        "equal_weight_rel_spy_13w": -0.009360345243047893,
+        "market_cap_weight_rel_spy_4w": null,
+        "weighting_divergence_4w": null,
+        "advance_count_4w": 0,
+        "advance_ratio_4w": 0.0,
+        "above_50dma_count": 1,
+        "pct_above_50dma": 0.14285714285714285,
+        "pct_within_5pct_52w_high": 0.0,
+        "volume_ratio_20d_60d": 0.944433959582505,
+        "top1_contribution_ratio": null,
+        "top3_contribution_ratio": null,
+        "single_name_concentrated": null,
+        "market_cap_led": null,
+        "equal_weight_led": null
+      },
+      "trends": {
+        "rel_spy_4w_change_1w": null,
+        "rel_spy_4w_slope_3w": null,
+        "rel_spy_4w_slope_4w": null,
+        "rel_spy_4w_trend_3w": "insufficient",
+        "rel_spy_4w_trend_4w": "insufficient",
+        "advance_count_change_1w": null,
+        "advance_count_change_3w": null,
+        "above_50dma_count_change_1w": null,
+        "above_50dma_count_change_3w": null,
+        "advance_breadth_trend_3w": "insufficient",
+        "above_50dma_breadth_trend_3w": "insufficient",
+        "volume_ratio_change_1w": null
+      },
+      "condition_flags": {
+        "phase_initial": null,
+        "phase_diffusion": null,
+        "phase_price_overheat": null,
+        "direction_improving": null,
+        "direction_worsening": null,
+        "direction_outflow_signal": null,
+        "broad_concentration_pass": null,
+        "overheat_breadth_weak": null,
+        "matched_conditions": [
+          "P5_REL_ALL_NONPOSITIVE"
+        ],
+        "unmatched_conditions": [],
+        "contrary_evidence": []
+      },
+      "classifications": {
+        "phase": "unclassifiable",
+        "direction": "unclassifiable",
+        "evidence": {
+          "level": "relative_preference_suggested",
+          "direction": "outflow",
+          "positioning_hypothesis": "not_assessable",
+          "direct_flow_data_available": false,
+          "matched_conditions": [
+            "EV_REL_ALL_NONPOSITIVE",
+            "EV_BREADTH_WEAK",
+            "EV_DIRECTION_OUTFLOW"
+          ]
+        },
+        "research_priority": "watch",
+        "research_priority_rule": "fallback",
+        "timing_status": "unclassifiable",
+        "timing_rule": "fallback"
+      },
+      "relative_strength_rank_4w": 8,
+      "selected_for_deep_dive": false,
+      "shortlist_rank": null,
+      "shortlist_reason_codes": [
+        "SL_PRIORITY_WATCH",
+        "SL_EXCLUDED_TOP5_LIMIT"
+      ],
+      "by_role": {
+        "core": {
+          "valid_count": 4,
+          "equal_weight_rel_spy_4w": -0.1863906052158146,
+          "advance_ratio_4w": 0.0
+        },
+        "beneficiary": {
+          "valid_count": 2,
+          "equal_weight_rel_spy_4w": -0.18549965185746486,
+          "advance_ratio_4w": 0.0
+        },
+        "peripheral": null
+      },
+      "constituents": [
+        {
+          "ticker": "AAOI",
+          "role": "peripheral",
+          "valid": true,
+          "return_4w": -0.4766901787170207,
+          "rel_spy_4w": -0.4738074082481344,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "ALAB",
+          "role": "beneficiary",
+          "valid": true,
+          "return_4w": -0.17846870450689412,
+          "rel_spy_4w": -0.17558593403800782,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "ANET",
+          "role": "core",
+          "valid": true,
+          "return_4w": -0.0031344183025339145,
+          "rel_spy_4w": -0.0002516478336476169,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "CIEN",
+          "role": "core",
+          "valid": true,
+          "return_4w": -0.16098056907271563,
+          "rel_spy_4w": -0.15809779860382933,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "COHR",
+          "role": "core",
+          "valid": true,
+          "return_4w": -0.3307558623962803,
+          "rel_spy_4w": -0.327873091927394,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "CRDO",
+          "role": "beneficiary",
+          "valid": true,
+          "return_4w": -0.1982961401458082,
+          "rel_spy_4w": -0.1954133696769219,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "LITE",
+          "role": "core",
+          "valid": true,
+          "return_4w": -0.26222265296727376,
+          "rel_spy_4w": -0.25933988249838746,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        }
+      ]
+    },
+    "nuclear_uranium": {
+      "theme_id": "nuclear_uranium",
+      "label": "原子力・ウラン",
+      "quality": {
+        "classification_eligible": true,
+        "phase_initial_diffusion_eligible": false,
+        "phase_overheat_eligible": true,
+        "direction_eligible": false,
+        "evidence_eligible": true,
+        "constituent_count": 7,
+        "valid_constituent_count": 7,
+        "coverage_ratio": 1.0,
+        "history_weeks": 1,
+        "role_valid_counts": {
+          "core": 3,
+          "beneficiary": 2,
+          "peripheral": 2
+        },
+        "metric_valid_counts": {
+          "return_4w": 7,
+          "return_13w": 7,
+          "above_50dma": 7,
+          "within_5pct_52w_high": 7,
+          "market_cap": 0
+        },
+        "missing_required_fields": [],
+        "quality_reasons": [
+          "Q_HISTORY_BELOW_3",
+          "Q_MARKET_CAP_COVERAGE_BELOW_075"
+        ]
+      },
+      "metrics": {
+        "equal_weight_return_1w": -0.09268431212917684,
+        "equal_weight_return_4w": -0.1565601667260015,
+        "equal_weight_return_13w": -0.24134986621041563,
+        "equal_weight_rel_spy_1w": -0.09136724671752629,
+        "equal_weight_rel_spy_4w": -0.1536773962571152,
+        "equal_weight_rel_spy_13w": -0.3166620463161285,
+        "market_cap_weight_rel_spy_4w": null,
+        "weighting_divergence_4w": null,
+        "advance_count_4w": 0,
+        "advance_ratio_4w": 0.0,
+        "above_50dma_count": 0,
+        "pct_above_50dma": 0.0,
+        "pct_within_5pct_52w_high": 0.0,
+        "volume_ratio_20d_60d": 0.9425494278569071,
+        "top1_contribution_ratio": null,
+        "top3_contribution_ratio": null,
+        "single_name_concentrated": null,
+        "market_cap_led": null,
+        "equal_weight_led": null
+      },
+      "trends": {
+        "rel_spy_4w_change_1w": null,
+        "rel_spy_4w_slope_3w": null,
+        "rel_spy_4w_slope_4w": null,
+        "rel_spy_4w_trend_3w": "insufficient",
+        "rel_spy_4w_trend_4w": "insufficient",
+        "advance_count_change_1w": null,
+        "advance_count_change_3w": null,
+        "above_50dma_count_change_1w": null,
+        "above_50dma_count_change_3w": null,
+        "advance_breadth_trend_3w": "insufficient",
+        "above_50dma_breadth_trend_3w": "insufficient",
+        "volume_ratio_change_1w": null
+      },
+      "condition_flags": {
+        "phase_initial": null,
+        "phase_diffusion": null,
+        "phase_price_overheat": false,
+        "direction_improving": null,
+        "direction_worsening": null,
+        "direction_outflow_signal": null,
+        "broad_concentration_pass": null,
+        "overheat_breadth_weak": false,
+        "matched_conditions": [
+          "P5_REL_ALL_NONPOSITIVE"
+        ],
+        "unmatched_conditions": [
+          "PH_OVERHEAT_REL13_15"
+        ],
+        "contrary_evidence": []
+      },
+      "classifications": {
+        "phase": "unclassifiable",
+        "direction": "unclassifiable",
+        "evidence": {
+          "level": "relative_preference_suggested",
+          "direction": "outflow",
+          "positioning_hypothesis": "not_assessable",
+          "direct_flow_data_available": false,
+          "matched_conditions": [
+            "EV_REL_ALL_NONPOSITIVE",
+            "EV_BREADTH_WEAK",
+            "EV_DIRECTION_OUTFLOW"
+          ]
+        },
+        "research_priority": "watch",
+        "research_priority_rule": "fallback",
+        "timing_status": "unclassifiable",
+        "timing_rule": "fallback"
+      },
+      "relative_strength_rank_4w": 5,
+      "selected_for_deep_dive": true,
+      "shortlist_rank": 5,
+      "shortlist_reason_codes": [
+        "SL_PRIORITY_WATCH",
+        "SL_EVIDENCE_OUTFLOW",
+        "SL_PHASE_UNCLASSIFIABLE"
+      ],
+      "by_role": {
+        "core": {
+          "valid_count": 3,
+          "equal_weight_rel_spy_4w": -0.1488870781664011,
+          "advance_ratio_4w": 0.0
+        },
+        "beneficiary": {
+          "valid_count": 2,
+          "equal_weight_rel_spy_4w": -0.019711956743355852,
+          "advance_ratio_4w": 0.0
+        },
+        "peripheral": {
+          "valid_count": 2,
+          "equal_weight_rel_spy_4w": -0.29482831290694583,
+          "advance_ratio_4w": 0.0
+        }
+      },
+      "constituents": [
+        {
+          "ticker": "BWXT",
+          "role": "core",
+          "valid": true,
+          "return_4w": -0.10415590746599623,
+          "rel_spy_4w": -0.10127313699710994,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "CCJ",
+          "role": "core",
+          "valid": true,
+          "return_4w": -0.18370394925618394,
+          "rel_spy_4w": -0.18082117878729764,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "CEG",
+          "role": "beneficiary",
+          "valid": true,
+          "return_4w": -0.04032781240675909,
+          "rel_spy_4w": -0.03744504193787279,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 2
+        },
+        {
+          "ticker": "LEU",
+          "role": "core",
+          "valid": true,
+          "return_4w": -0.16744968918368197,
+          "rel_spy_4w": -0.16456691871479567,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "OKLO",
+          "role": "peripheral",
+          "valid": true,
+          "return_4w": -0.3134672438159859,
+          "rel_spy_4w": -0.3105844733470996,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "SMR",
+          "role": "peripheral",
+          "valid": true,
+          "return_4w": -0.28195492293567836,
+          "rel_spy_4w": -0.27907215246679207,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "VST",
+          "role": "beneficiary",
+          "valid": true,
+          "return_4w": -0.0048616420177252095,
+          "rel_spy_4w": -0.001978871548838912,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 2
+        }
+      ]
+    },
+    "semi_equipment": {
+      "theme_id": "semi_equipment",
+      "label": "半導体製造装置",
+      "quality": {
+        "classification_eligible": true,
+        "phase_initial_diffusion_eligible": false,
+        "phase_overheat_eligible": true,
+        "direction_eligible": false,
+        "evidence_eligible": true,
+        "constituent_count": 7,
+        "valid_constituent_count": 7,
+        "coverage_ratio": 1.0,
+        "history_weeks": 1,
+        "role_valid_counts": {
+          "core": 4,
+          "beneficiary": 2,
+          "peripheral": 1
+        },
+        "metric_valid_counts": {
+          "return_4w": 7,
+          "return_13w": 7,
+          "above_50dma": 7,
+          "within_5pct_52w_high": 7,
+          "market_cap": 0
+        },
+        "missing_required_fields": [],
+        "quality_reasons": [
+          "Q_HISTORY_BELOW_3",
+          "Q_ROLE_PERIPHERAL_BELOW_2",
+          "Q_MARKET_CAP_COVERAGE_BELOW_075"
+        ]
+      },
+      "metrics": {
+        "equal_weight_return_1w": -0.06308522400639191,
+        "equal_weight_return_4w": -0.1581708531745931,
+        "equal_weight_return_13w": 0.17895654820194848,
+        "equal_weight_rel_spy_1w": -0.06176815859474136,
+        "equal_weight_rel_spy_4w": -0.1552880827057068,
+        "equal_weight_rel_spy_13w": 0.10364436809623565,
+        "market_cap_weight_rel_spy_4w": null,
+        "weighting_divergence_4w": null,
+        "advance_count_4w": 0,
+        "advance_ratio_4w": 0.0,
+        "above_50dma_count": 3,
+        "pct_above_50dma": 0.42857142857142855,
+        "pct_within_5pct_52w_high": 0.0,
+        "volume_ratio_20d_60d": 1.163006840570501,
+        "top1_contribution_ratio": null,
+        "top3_contribution_ratio": null,
+        "single_name_concentrated": null,
+        "market_cap_led": null,
+        "equal_weight_led": null
+      },
+      "trends": {
+        "rel_spy_4w_change_1w": null,
+        "rel_spy_4w_slope_3w": null,
+        "rel_spy_4w_slope_4w": null,
+        "rel_spy_4w_trend_3w": "insufficient",
+        "rel_spy_4w_trend_4w": "insufficient",
+        "advance_count_change_1w": null,
+        "advance_count_change_3w": null,
+        "above_50dma_count_change_1w": null,
+        "above_50dma_count_change_3w": null,
+        "advance_breadth_trend_3w": "insufficient",
+        "above_50dma_breadth_trend_3w": "insufficient",
+        "volume_ratio_change_1w": null
+      },
+      "condition_flags": {
+        "phase_initial": null,
+        "phase_diffusion": null,
+        "phase_price_overheat": null,
+        "direction_improving": null,
+        "direction_worsening": null,
+        "direction_outflow_signal": null,
+        "broad_concentration_pass": null,
+        "overheat_breadth_weak": null,
+        "matched_conditions": [],
+        "unmatched_conditions": [],
+        "contrary_evidence": []
+      },
+      "classifications": {
+        "phase": "unclassifiable",
+        "direction": "unclassifiable",
+        "evidence": {
+          "level": "relative_preference_suggested",
+          "direction": "outflow",
+          "positioning_hypothesis": "not_assessable",
+          "direct_flow_data_available": false,
+          "matched_conditions": [
+            "EV_DIRECTION_OUTFLOW"
+          ]
+        },
+        "research_priority": "watch",
+        "research_priority_rule": "fallback",
+        "timing_status": "unclassifiable",
+        "timing_rule": "fallback"
+      },
+      "relative_strength_rank_4w": 6,
+      "selected_for_deep_dive": false,
+      "shortlist_rank": null,
+      "shortlist_reason_codes": [
+        "SL_PRIORITY_WATCH",
+        "SL_EXCLUDED_TOP5_LIMIT"
+      ],
+      "by_role": {
+        "core": {
+          "valid_count": 4,
+          "equal_weight_rel_spy_4w": -0.10162281354892957,
+          "advance_ratio_4w": 0.0
+        },
+        "beneficiary": {
+          "valid_count": 2,
+          "equal_weight_rel_spy_4w": -0.20532615590286302,
+          "advance_ratio_4w": 0.0
+        },
+        "peripheral": null
+      },
+      "constituents": [
+        {
+          "ticker": "ACLS",
+          "role": "peripheral",
+          "valid": true,
+          "return_4w": -0.2727557834073894,
+          "rel_spy_4w": -0.2698730129385031,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "AMAT",
+          "role": "core",
+          "valid": true,
+          "return_4w": -0.04242213011413487,
+          "rel_spy_4w": -0.03953935964524857,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "ASML",
+          "role": "core",
+          "valid": true,
+          "return_4w": -0.056951611549835524,
+          "rel_spy_4w": -0.054068841080949226,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "KLAC",
+          "role": "core",
+          "valid": true,
+          "return_4w": -0.144489573240696,
+          "rel_spy_4w": -0.1416068027718097,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "LRCX",
+          "role": "core",
+          "valid": true,
+          "return_4w": -0.1741590211665971,
+          "rel_spy_4w": -0.1712762506977108,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "ONTO",
+          "role": "beneficiary",
+          "valid": true,
+          "return_4w": -0.1617752336167173,
+          "rel_spy_4w": -0.158892463147831,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        },
+        {
+          "ticker": "TER",
+          "role": "beneficiary",
+          "valid": true,
+          "return_4w": -0.2546426191267813,
+          "rel_spy_4w": -0.251759848657895,
+          "market_cap": null,
+          "positive_contribution_ratio": null,
+          "overlap_theme_count": 1
+        }
+      ]
+    }
+  },
+  "theme_shortlist": {
+    "selection_version": "1.0",
+    "max_themes": 5,
+    "minimum_preferred_themes": 3,
+    "selected_theme_ids": [
+      "cybersecurity",
+      "ai_software_data",
+      "defense",
+      "dc_power_infra",
+      "nuclear_uranium"
+    ],
+    "quality_reasons": []
+  },
+  "history_weekly": [],
+  "previous_judgments": {
+    "source": "output/judgments/index.json",
+    "available": false,
+    "latest_data_date": null,
+    "records": []
+  }
+}
