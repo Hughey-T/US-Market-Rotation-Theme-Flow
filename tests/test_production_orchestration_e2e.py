@@ -97,11 +97,10 @@ def run_main(master, profile, history, *, reverse=False, omit_spy=False, output=
     config_path, master_path = root / "config.json", root / "themes.json"
     config_path.write_text(json.dumps(config), encoding="utf-8")
     master_path.write_text(json.dumps(master), encoding="utf-8")
-    legacy_history = output / "history"
-    legacy_history.mkdir(parents=True, exist_ok=True)
-    for row in history:
-        (legacy_history / f"{row['data_date']}.json").write_text(json.dumps(row), encoding="utf-8")
     (output / "judgments").mkdir(parents=True, exist_ok=True)
+    judgment_index = output / "judgments" / "index.json"
+    if not judgment_index.exists():
+        judgment_index.write_text('{"index_version":"1.0","records":[]}\n', encoding="utf-8")
 
     def download(tickers, **_kwargs):
         requested = list(tickers) if not isinstance(tickers, str) else [tickers]
@@ -116,6 +115,7 @@ def run_main(master, profile, history, *, reverse=False, omit_spy=False, output=
         stack.enter_context(mock.patch.object(generate_weekly, "OUTPUT", output))
         stack.enter_context(mock.patch.object(generate_weekly, "HISTORY", output / "history"))
         stack.enter_context(mock.patch.object(generate_weekly, "JUDGMENTS", output / "judgments"))
+        stack.enter_context(mock.patch.object(generate_weekly, "load_history", return_value=history))
         stack.enter_context(mock.patch.dict(os.environ, {"GITHUB_SHA": "a" * 40}))
         result = generate_weekly.main([])
     current = load_current_generation(output)
@@ -124,6 +124,111 @@ def run_main(master, profile, history, *, reverse=False, omit_spy=False, output=
 
 
 class ProductionOrchestrationE2E(unittest.TestCase):
+    def test_main_placeholder_shape_bootstraps_publication_remote(self):
+        _, master, _, _, _ = synthetic_inputs()
+        history = history_for(master, (0.00, 0.01, 0.02), (4, 5, 5), (3, 4, 5))
+        with tempfile.TemporaryDirectory() as directory:
+            temporary = Path(directory)
+            checkout = temporary / "checkout"
+            work = temporary / "work"
+            remote = temporary / "publication.git"
+            verified = temporary / "verified"
+            subprocess.run(["git", "clone", "--no-local", str(ROOT), str(checkout)], check=True, capture_output=True)
+            shutil.copytree(checkout, work, ignore=shutil.ignore_patterns(".git"))
+            subprocess.run(["git", "init", "-b", "main"], cwd=work, check=True, capture_output=True)
+            subprocess.run(["git", "add", "."], cwd=work, check=True, capture_output=True)
+            subprocess.run(
+                ["git", "-c", "user.name=test", "-c", "user.email=test@example.com", "commit", "-m", "baseline"],
+                cwd=work, check=True, capture_output=True,
+            )
+            subprocess.run(["git", "init", "--bare", str(remote)], check=True, capture_output=True)
+            subprocess.run(["git", "remote", "add", "origin", str(remote)], cwd=work, check=True, capture_output=True)
+            subprocess.run(["git", "push", "origin", "main:main"], cwd=work, check=True, capture_output=True)
+            main_sha = subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=work, check=True, capture_output=True, text=True,
+            ).stdout.strip()
+            output = work / "output"
+            self.assertFalse((output / "current.json").exists())
+            self.assertFalse((output / "latest.json").exists())
+            self.assertEqual(
+                [path.relative_to(output).as_posix() for path in sorted((output / "archive").iterdir())],
+                ["archive/.gitkeep"],
+            )
+            self.assertEqual(generate_weekly.classify_publication_start_state(output).kind, "clean")
+
+            for relative in ("judgments/secret.txt", "generations/secret.txt"):
+                injected = output / relative
+                injected.parent.mkdir(parents=True, exist_ok=True)
+                injected.write_text("sensitive body", encoding="utf-8")
+                acquisition = mock.Mock(side_effect=AssertionError("acquisition must not start"))
+                with mock.patch.object(generate_weekly, "OUTPUT", output), mock.patch.object(
+                    generate_weekly, "download_observations", acquisition,
+                ):
+                    with self.assertRaises(RuntimeError):
+                        generate_weekly.main([])
+                acquisition.assert_not_called()
+                self.assertFalse((output / "current.json").exists())
+                injected.unlink()
+                if injected.parent.name == "generations":
+                    injected.parent.rmdir()
+
+            result, latest, _, _ = run_main(master, "p1", history, output=output)
+            self.assertEqual(result, 0)
+            validate_schema(latest, LATEST_SCHEMA, "main-shaped bootstrap latest")
+            validate_public_latest(latest, verify_source_hash=True)
+            export_current(output, output / "consumer" / "latest.json")
+            subprocess.run(["git", "switch", "-c", "publication"], cwd=work, check=True, capture_output=True)
+            current = load_current_generation(output)
+            for injected in (output / "judgments/secret.txt", current[1] / "secret.txt"):
+                injected.write_text("sensitive body", encoding="utf-8")
+                with self.assertRaises(ContractError):
+                    commit_weekly_outputs(work, push=True, bootstrap=True)
+                self.assertEqual(
+                    subprocess.run(
+                        ["git", "ls-remote", "--heads", "origin", "refs/heads/publication"],
+                        cwd=work, check=True, capture_output=True, text=True,
+                    ).stdout.strip(),
+                    "",
+                )
+                injected.unlink()
+            self.assertTrue(commit_weekly_outputs(work, push=True, bootstrap=True))
+
+            self.assertEqual(
+                subprocess.run(
+                    ["git", "--git-dir", str(remote), "rev-parse", "refs/heads/main"],
+                    check=True, capture_output=True, text=True,
+                ).stdout.strip(),
+                main_sha,
+            )
+            changed = subprocess.run(
+                ["git", "diff", "--name-only", "main..publication"],
+                cwd=work, check=True, capture_output=True, text=True,
+            ).stdout.splitlines()
+            self.assertTrue(changed)
+            self.assertTrue(all(
+                path in {"output/current.json", "output/consumer/latest.json"}
+                or path.startswith("output/generations/")
+                or path.startswith("output/judgments/")
+                for path in changed
+            ), changed)
+
+            subprocess.run(
+                ["git", "clone", "--branch", "publication", str(remote), str(verified)],
+                check=True, capture_output=True,
+            )
+            with mock.patch.object(repository_validator, "ROOT", verified):
+                self.assertEqual(repository_validator.main(), 0)
+                unknown = verified / "output/generations/secret.txt"
+                unknown.write_text("remote tamper", encoding="utf-8")
+                self.assertEqual(repository_validator.main(), 1)
+                unknown.unlink()
+                self.assertEqual(repository_validator.main(), 0)
+            current = load_current_generation(verified / "output")
+            self.assertIsNotNone(current)
+            regenerated = temporary / "consumer-latest.json"
+            export_current(verified / "output", regenerated)
+            self.assertEqual((verified / "output" / "consumer" / "latest.json").read_bytes(), regenerated.read_bytes())
+
     def test_raw_dataframe_regime_or_and_trend_contrary_evidence(self):
         _, master, _, _, _ = synthetic_inputs()
         history = history_for(master, (0.00, 0.01, 0.02), (4, 5, 5), (4, 5, 5))
@@ -272,9 +377,9 @@ class ProductionOrchestrationE2E(unittest.TestCase):
             self.assertEqual(latest["market_regime"], classify_market_regime(latest["market_regime"]["inputs"]))
             validate_schema(latest, LATEST_SCHEMA, "production-generated latest")
             validate_latest_semantics(latest, verify_source_hash=True)
-            self.assertEqual(validate_public_outputs(output.parent, LATEST_SCHEMA), 1)
             consumer = output / "consumer" / "latest.json"
             export_current(output, consumer)
+            self.assertEqual(validate_public_outputs(output.parent, LATEST_SCHEMA), 2)
             self.assertEqual(load_json(consumer)["market_regime"], latest["market_regime"])
             root = output.parent
             shutil.copytree(ROOT / "schemas", root / "schemas")

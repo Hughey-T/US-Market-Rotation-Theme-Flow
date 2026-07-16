@@ -19,7 +19,10 @@ from rotation.judgments import build_index, project_previous_judgments
 from rotation.membership import member_is_effective
 from rotation.pipeline import build_snapshot
 from rotation.provenance import snapshot_source_hash
-from rotation.publication import committed_history, load_current_generation, publish_generation
+from rotation.publication import (
+    PublicationStartState, classify_publication_start_state, committed_history,
+    enforce_publication_start_state, load_current_generation, publish_generation,
+)
 from rotation.validation import load_json, validate_public_latest, validate_schema, validate_theme_master_semantics
 
 CONFIG = ROOT / "config" / "universe.json"
@@ -30,8 +33,6 @@ OUTPUT = ROOT / "output"
 HISTORY = OUTPUT / "history"
 JUDGMENTS = OUTPUT / "judgments"
 PERIODS = {"1w": 5, "4w": 21, "13w": 63}
-
-
 def source_commit() -> str:
     value = os.environ.get("GITHUB_SHA")
     if value and len(value) == 40:
@@ -200,8 +201,7 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
     if args.fixture:
         return validate_fixture(args.fixture)
-    if not (OUTPUT / "current.json").exists() and ((OUTPUT / "latest.json").exists() or (OUTPUT / "archive").exists()):
-        raise RuntimeError("legacy fixed publication detected; run scripts/migrate_publication_v1.py --explicit before weekly publication")
+    enforce_publication_start_state(OUTPUT)
     config, master = load_json(CONFIG), load_json(MASTER)
     validate_theme_master_semantics(master)
     observations, data_date = download_observations(config, master)

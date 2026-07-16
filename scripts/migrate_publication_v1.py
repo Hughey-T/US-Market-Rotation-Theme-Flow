@@ -12,7 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from rotation.identity import generation_identity
-from rotation.provenance import snapshot_source_hash, stable_hash
+from rotation.provenance import atomic_write_json, snapshot_source_hash, stable_hash
 from rotation.publication import publish_generation
 from rotation.validation import ContractError, load_json, validate_public_latest, validate_schema
 from scripts.generate_weekly import history_item
@@ -36,7 +36,17 @@ def migrate(output: Path, generated_at: dt.datetime, source_commit: str) -> dict
     old_index = output / "judgments" / "index.json"
     index = load_json(old_index) if old_index.is_file() else {"index_version": "1.0", "records": []}
     index = {"index_version": "1.0", "records": index.get("records", [])}
-    return publish_generation(output, snapshot, history_item(snapshot), index)
+    if old_index.is_file() and load_json(old_index) != index:
+        raise ContractError("legacy judgment index is not canonical; refusing to modify it")
+    created_index = not old_index.exists()
+    if created_index:
+        atomic_write_json(old_index, index)
+    try:
+        return publish_generation(output, snapshot, history_item(snapshot), index)
+    except Exception:
+        if created_index:
+            old_index.unlink(missing_ok=True)
+        raise
 
 
 def main(argv=None) -> int:
