@@ -12,6 +12,7 @@ from unittest import mock
 import numpy as np
 import pandas as pd
 
+from rotation.judgments import evaluate_withdrawal
 from rotation.publication import load_current_generation
 from rotation.validation import load_json
 from scripts import generate_weekly
@@ -118,6 +119,44 @@ def run_main(master, profile, history, *, reverse=False, omit_spy=False, output=
 
 
 class ProductionOrchestrationE2E(unittest.TestCase):
+    def test_raw_dataframe_regime_or_and_trend_contrary_evidence(self):
+        _, master, _, _, _ = synthetic_inputs()
+        history = history_for(master, (0.00, 0.01, 0.02), (4, 5, 5), (4, 5, 5))
+
+        def set_return(frame, oldest, middle, current):
+            frame = frame.copy()
+            for denominator in (-32, -27, -22):
+                frame.iloc[denominator, frame.columns.get_loc("Close")] = 100.0
+            for endpoint, value in zip((-11, -6, -1), (oldest, middle, current)):
+                frame.iloc[endpoint, frame.columns.get_loc("Close")] = value
+            return frame
+
+        def regime_profiles(frames, config):
+            frames["SPY"] = set_return(frames["SPY"], 101.0, 101.0, 101.0)
+            frames["QQQ"] = set_return(frames["QQQ"], 104.0, 104.0, 104.0)
+            frames["RSP"] = set_return(frames["RSP"], 94.0, 96.0, 98.0)
+            frames["IWM"] = set_return(frames["IWM"], 94.0, 96.0, 98.0)
+            for ticker in config["sectors"]:
+                frames[ticker] = set_return(frames[ticker], 99.0, 99.0, 99.0)
+            frames["XLE"] = set_return(frames["XLE"], 101.0, 101.0, 101.0)
+            frames["GLD"] = set_return(frames["GLD"], 99.0, 99.0, 99.0)
+            frames["DBC"] = set_return(frames["DBC"], 108.0, 106.0, 104.0)
+
+        result, latest, _, temporary = run_main(master, "p1", history, mutate_frames=regime_profiles)
+        try:
+            self.assertEqual(result, 0)
+            regime = latest["market_regime"]
+            self.assertEqual(regime["inputs"]["rsp_minus_spy_4w_trend_3w"], "improving")
+            self.assertEqual(regime["inputs"]["dbc_rel_spy_4w_trend_3w"], "worsening")
+            self.assertEqual(
+                regime["candidate_flags"]["real_asset_leadership"]["matched_conditions"],
+                ["R_REAL_DBC2", "R_REAL_GLD_OR_XLE_NONNEG"],
+            )
+            self.assertIn("R_LG_RSP_OR_IWM_IMPROVING_CONTRARY", regime["classification"]["contrary_evidence"])
+            self.assertIn("R_REAL_DBC_WORSENING_CONTRARY", regime["classification"]["contrary_evidence"])
+        finally:
+            temporary.cleanup()
+
     def test_main_different_clock_retry_recovers_orphan_after_rename(self):
         _, master, _, _, _ = synthetic_inputs()
         history = history_for(master, (0.00, 0.01, 0.02), (4, 5, 5), (4, 5, 5))
@@ -275,7 +314,7 @@ class ProductionOrchestrationE2E(unittest.TestCase):
     def test_raw_dataframe_reaches_p2_p5_and_overheat_outflow(self):
         cases = (
             ("p2", (0.00, 0.01, 0.02), (4, 5, 5), (4, 5, 5), "P2", "price_overheat", "flat"),
-            ("p5", (0.08, 0.04, 0.00), (3, 2, 1), (3, 2, 1), "P5", "unclassifiable", "outflow_signal"),
+            ("p5", (0.03, -0.01, -0.02), (3, 2, 1), (3, 2, 1), "P5", "unclassifiable", "outflow_signal"),
             ("overheat_outflow", (0.08, 0.04, 0.00), (4, 3, 2), (4, 3, 2), "P4", "price_overheat", "outflow_signal"),
         )
         for profile, rels, advances, above, rule, phase, direction in cases:
@@ -286,6 +325,16 @@ class ProductionOrchestrationE2E(unittest.TestCase):
                     classification = latest["themes"]["fixture_theme"]["classifications"]
                     self.assertEqual(result, 0)
                     self.assertEqual((classification["research_priority_rule"], classification["phase"], classification["direction"]), (rule, phase, direction))
+                    if profile == "p5":
+                        condition = {
+                            "condition_id": "W_PRODUCTION_REL4_NEG_2W",
+                            "field_path": "themes.fixture_theme.metrics.equal_weight_rel_spy_4w",
+                            "operator": "<", "value": 0, "persistence_weeks": 2,
+                        }
+                        self.assertEqual(
+                            evaluate_withdrawal(condition, latest, latest["history_weekly"]),
+                            {"condition_id": "W_PRODUCTION_REL4_NEG_2W", "status": "triggered", "observed_weeks": 2},
+                        )
                 finally:
                     temporary.cleanup()
 

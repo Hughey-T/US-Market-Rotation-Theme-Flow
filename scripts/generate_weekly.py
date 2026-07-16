@@ -75,6 +75,7 @@ def ticker_observation(frame: pd.DataFrame) -> dict:
     close, volume = frame["Close"], frame["Volume"]
     last = close.iloc[-1]
     result = {f"return_{horizon}": ret_n(close, periods) for horizon, periods in PERIODS.items()}
+    result["_return_4w_weekly_3w"] = [ret_n(close.iloc[: len(close) - offset], PERIODS["4w"]) for offset in (10, 5, 0)]
     result["above_50dma"] = bool(last > close.iloc[-50:].mean()) if len(close) >= 50 else None
     result["above_200dma"] = bool(last > close.iloc[-200:].mean()) if len(close) >= 200 else None
     result["within_5pct_52w_high"] = bool(last >= close.iloc[-252:].max() * 0.95) if len(close) >= 252 else None
@@ -210,7 +211,7 @@ def main(argv=None) -> int:
     empty_projection = {"source": "output/judgments/index.json", "available": False, "latest_data_date": None, "records": []}
     generated_at = dt.datetime.now(dt.timezone.utc)
     snapshot = build_snapshot(config=config, theme_master=master, observations=observations, history=history, previous_judgments=empty_projection, generated_at=generated_at, data_date=data_date, source_commit=source_commit())
-    snapshot["previous_judgments"] = project_previous_judgments(index, snapshot, history)
+    snapshot["previous_judgments"] = project_previous_judgments(index, snapshot, snapshot["history_weekly"])
     snapshot["meta"]["source_sha256"] = snapshot_source_hash(snapshot)
     validate_schema(snapshot, load_json(LATEST_SCHEMA), "generated latest")
     validate_public_latest(snapshot, verify_source_hash=True)

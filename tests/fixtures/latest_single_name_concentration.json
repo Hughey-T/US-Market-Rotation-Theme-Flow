@@ -130,9 +130,9 @@
         "direction_outflow_signal": false,
         "broad_concentration_pass": false,
         "overheat_breadth_weak": false,
-        "matched_conditions": ["PH_INITIAL_REL1_POS", "PH_INITIAL_REL4_POS", "DIR_REL_IMPROVING", "CONCENTRATION_TOP1_GT_60", "WEIGHTING_MARKET_CAP_LED"],
+        "matched_conditions": ["PH_INITIAL_REL1_POS", "PH_INITIAL_REL4_POS", "DIR_REL_IMPROVING", "CONCENTRATION_TOP1_GT_60"],
         "unmatched_conditions": ["PH_INITIAL_CONCENTRATION_GATE", "PH_DIFF_ADVANCE_60", "PH_DIFF_ABOVE50_60"],
-        "contrary_evidence": ["CONCENTRATION_SINGLE_NAME", "ROLE_CORE_NOT_ADVANCING"]
+        "contrary_evidence": ["WEIGHTING_MARKET_CAP_LED", "CONCENTRATION_SINGLE_NAME", "ROLE_CORE_NOT_ADVANCING"]
       },
       "classifications": {
         "phase": "unclassifiable",

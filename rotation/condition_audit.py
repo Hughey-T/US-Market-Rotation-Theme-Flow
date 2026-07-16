@@ -60,6 +60,8 @@ def canonical_condition_ids(
             (matched if rel4 > 0 else unmatched).append("PH_INITIAL_REL4_POS")
         if _number(top1) and top1 > 0.60:
             unmatched.append("PH_INITIAL_CONCENTRATION_GATE")
+        if metrics.get("market_cap_led") is True:
+            contrary.append("WEIGHTING_MARKET_CAP_LED")
 
     if flags.get("phase_diffusion") is True:
         matched.extend(("PH_DIFF_REL_POS", "PH_DIFF_ADVANCE_60", "PH_DIFF_ABOVE50_60", "PH_DIFF_CONCENTRATION_PASS"))
@@ -109,8 +111,8 @@ def canonical_condition_ids(
     if _number(top1) and top1 > 0.60:
         matched.append("CONCENTRATION_TOP1_GT_60")
         contrary.append("CONCENTRATION_SINGLE_NAME")
-    if metrics.get("market_cap_led") is True:
-        matched.append("WEIGHTING_MARKET_CAP_LED")
+    if trends.get("rel_spy_4w_trend_4w") == "worsening" and (classification.get("phase") == "price_overheat" or direction == "improving"):
+        contrary.append("REL_4W_TREND_WORSENING")
     core = by_role.get("core") if isinstance(by_role, dict) else None
     if _number(top1) and top1 > 0.60 and isinstance(core, dict) and _number(core.get("advance_ratio_4w")) and core["advance_ratio_4w"] < 0.50:
         contrary.append("ROLE_CORE_NOT_ADVANCING")

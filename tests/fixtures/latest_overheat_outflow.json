@@ -132,7 +132,7 @@
         "overheat_breadth_weak": true,
         "matched_conditions": ["PH_OVERHEAT_REL13_15", "PH_OVERHEAT_HIGH_50", "PH_OVERHEAT_VOLUME_130", "DIR_REL_WORSENING", "DIR_BREADTH_WORSENING", "DIR_OUTFLOW_REL_NEG", "DIR_OUTFLOW_VOLUME_120"],
         "unmatched_conditions": ["PH_DIFF_REL_POS", "PH_DIFF_ADVANCE_60"],
-        "contrary_evidence": ["EVIDENCE_DIRECT_FLOW_UNAVAILABLE"]
+        "contrary_evidence": ["REL_4W_TREND_WORSENING", "EVIDENCE_DIRECT_FLOW_UNAVAILABLE"]
       },
       "classifications": {
         "phase": "price_overheat",

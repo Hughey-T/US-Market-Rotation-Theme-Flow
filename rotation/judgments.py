@@ -34,12 +34,24 @@ def verify_index(directory: Path, index: dict, schema: dict, source_loader=None)
 
 
 def get_path(value, path: str):
+    parts = path.split(".")
     current = value
-    for part in path.split("."):
+    for part in parts:
         if not isinstance(current, dict) or part not in current:
-            return None
+            break
         current = current[part]
-    return current
+    else:
+        return current
+
+    # Published history intentionally stores the five trend inputs directly
+    # below each theme, while current snapshots group them under ``metrics``.
+    # Withdrawal conditions use current-snapshot paths, so resolve only that
+    # explicit shape difference when evaluating compact history records.
+    if len(parts) == 4 and parts[0] == "themes" and parts[2] == "metrics":
+        compact = value.get("themes", {}).get(parts[1], {}) if isinstance(value, dict) else {}
+        if isinstance(compact, dict):
+            return compact.get(parts[3])
+    return None
 
 
 def _compare(observed, operator, expected):

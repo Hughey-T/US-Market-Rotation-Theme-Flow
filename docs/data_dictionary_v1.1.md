@@ -58,6 +58,9 @@ This is versioned independently of data schema 1.1. `output/current.json` and ea
 | `.hyg_minus_lqd_4w` | number/decimal | R | yes | HYG−LQD |
 | `.vix_change_4w` | number/index points | R | yes | current VIX−21 intervals ago |
 | `.uup_r_4w` | number/decimal | R | yes | UUP return |
+| `.rsp_minus_spy_4w_trend_3w` | trend enum | O | no | 5-session-spaced, same-horizon RSP-minus-SPY 4w trend |
+| `.iwm_minus_spy_4w_trend_3w` | trend enum | O | no | 5-session-spaced, same-horizon IWM-minus-SPY 4w trend |
+| `.dbc_rel_spy_4w_trend_3w` | trend enum | O | no | 5-session-spaced, same-horizon DBC-relative-SPY 4w trend |
 | `market_regime.candidate_flags.*.eligible` | boolean | R | no | mandatory input availability |
 | `.full_match` | boolean | R | yes | eligible時condition all match |
 | `.matched_conditions[]` | condition id[] | R | no | code-side truth |
@@ -175,6 +178,8 @@ This is versioned independently of data schema 1.1. `output/current.json` and ea
 | `.overlap_theme_count` | integer | no | active theme所属数 |
 
 ## 8. top-level shortlist・history・previous judgment
+
+Withdrawalの`field_path`はcurrent snapshotの`themes.<id>.metrics.<field>`形式を正本とする。評価時は、同じ5指標を`themes.<id>.<field>`に圧縮して保存する`history_weekly`へ明示的に対応付ける。連続性・schema・methodology・theme masterが適合しない履歴はpersistence判定に使用しない。
 
 | path | 型 | null | 定義 |
 |---|---|---|---|

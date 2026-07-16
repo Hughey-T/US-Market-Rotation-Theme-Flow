@@ -12,7 +12,7 @@ from .provenance import snapshot_source_hash, stable_hash
 from .quality import assess_quality
 from .regime import classify_market_regime
 from .shortlist import apply_shortlist
-from .trends import compute_theme_trends, contiguous_history
+from .trends import compute_theme_trends, contiguous_history, relative_trend
 
 
 def _etf_metric(label, row, spy):
@@ -48,6 +48,13 @@ def regime_inputs(config, observations):
     sector_values = [rel(ticker) for ticker in config.get("sectors", {})]
     sector_values = [value for value in sector_values if value is not None]
     vix = observations.get(config.get("vix", "^VIX"), {})
+    spy_weekly = observations.get("SPY", {}).get("_return_4w_weekly_3w")
+    def relative_state(ticker):
+        asset_weekly = observations.get(ticker, {}).get("_return_4w_weekly_3w")
+        if not isinstance(asset_weekly, list) or not isinstance(spy_weekly, list) or len(asset_weekly) != 3 or len(spy_weekly) != 3:
+            return "insufficient"
+        values = [None if asset is None or spy is None else asset - spy for asset, spy in zip(asset_weekly, spy_weekly)]
+        return relative_trend(values)
     return {
         "spy_r_4w": spy4, "qqq_rel_spy_4w": rel("QQQ"), "rsp_minus_spy_4w": rel("RSP"), "iwm_minus_spy_4w": rel("IWM"),
         "sector_advance_ratio_4w": None if not sector_values else sum(value > 0 for value in sector_values) / len(sector_values),
@@ -56,6 +63,9 @@ def regime_inputs(config, observations):
         "dbc_rel_spy_4w": rel("DBC"), "gld_rel_spy_4w": rel("GLD"), "xle_rel_spy_4w": rel("XLE"),
         "hyg_minus_lqd_4w": None if observations.get("HYG", {}).get("return_4w") is None or observations.get("LQD", {}).get("return_4w") is None else observations["HYG"]["return_4w"] - observations["LQD"]["return_4w"],
         "vix_change_4w": vix.get("change_4w"), "uup_r_4w": observations.get("UUP", {}).get("return_4w"),
+        "rsp_minus_spy_4w_trend_3w": relative_state("RSP"),
+        "iwm_minus_spy_4w_trend_3w": relative_state("IWM"),
+        "dbc_rel_spy_4w_trend_3w": relative_state("DBC"),
     }
 
 

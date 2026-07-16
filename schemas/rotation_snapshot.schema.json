@@ -134,7 +134,10 @@
             "xle_rel_spy_4w": {"$ref": "#/$defs/nullableNumber"},
             "hyg_minus_lqd_4w": {"$ref": "#/$defs/nullableNumber"},
             "vix_change_4w": {"$ref": "#/$defs/nullableNumber"},
-            "uup_r_4w": {"$ref": "#/$defs/nullableNumber"}
+            "uup_r_4w": {"$ref": "#/$defs/nullableNumber"},
+            "rsp_minus_spy_4w_trend_3w": {"$ref": "#/$defs/trendState"},
+            "iwm_minus_spy_4w_trend_3w": {"$ref": "#/$defs/trendState"},
+            "dbc_rel_spy_4w_trend_3w": {"$ref": "#/$defs/trendState"}
           }
         },
         "candidate_flags": {"type": "object", "additionalProperties": {"$ref": "#/$defs/regimeCandidate"}},

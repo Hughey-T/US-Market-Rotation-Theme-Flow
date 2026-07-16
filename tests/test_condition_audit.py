@@ -73,6 +73,16 @@ class CanonicalConditionAuditTests(unittest.TestCase):
         self.assertIn("DIR_OUTFLOW_VOLUME_120", outflow["condition_flags"]["matched_conditions"])
         self.assertIn("EV_DIRECTION_OUTFLOW", outflow["classifications"]["evidence"]["matched_conditions"])
 
+    def test_market_cap_and_worsening_four_week_trend_are_contrary_evidence(self):
+        initial = load_json(FIXTURES / "latest_single_name_concentration.json")["themes"]["fixture_theme"]
+        flags, _ = classify_theme(initial["metrics"], initial["trends"], initial["quality"], initial["by_role"])
+        self.assertIn("WEIGHTING_MARKET_CAP_LED", flags["contrary_evidence"])
+        self.assertNotIn("WEIGHTING_MARKET_CAP_LED", flags["matched_conditions"])
+
+        overheat = load_json(FIXTURES / "latest_overheat_outflow.json")["themes"]["fixture_theme"]
+        flags, _ = classify_theme(overheat["metrics"], overheat["trends"], overheat["quality"], overheat["by_role"])
+        self.assertIn("REL_4W_TREND_WORSENING", flags["contrary_evidence"])
+
     def test_condition_id_delete_add_and_reorder_mutations_fail(self):
         base = build_synthetic()
         mutations = []

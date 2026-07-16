@@ -116,9 +116,15 @@ class PipelineContractTests(unittest.TestCase):
             source = load_json(FIXTURES / "latest_normal.json")
             index = build_index(Path(directory), schema, lambda _: source)
             current = load_json(FIXTURES / "latest_normal.json")
+            current["themes"]["fixture_theme"]["metrics"]["equal_weight_rel_spy_4w"] = -0.02
+            current["history_weekly"][-1]["themes"]["fixture_theme"]["equal_weight_rel_spy_4w"] = -0.01
             projection = project_previous_judgments(index, current, current["history_weekly"])
             self.assertTrue(projection["available"])
             self.assertEqual(projection["records"][0]["research_priority_rule"], "P1")
+            self.assertEqual(
+                projection["records"][0]["withdrawal_evaluations"][0],
+                {"condition_id": "W_FIXTURE_REL4_NEG_2W", "status": "triggered", "observed_weeks": 2},
+            )
 
     def test_judgment_byte_change_breaks_index(self):
         schema = load_json(ROOT / "schemas" / "judgment_record.schema.json")

@@ -131,8 +131,8 @@ class SpecificationCases(unittest.TestCase):
     def test_T14_withdrawal_triggered(self):
         condition = {"condition_id": "W", "field_path": "themes.x.metrics.equal_weight_rel_spy_4w", "operator": "<", "value": 0, "persistence_weeks": 2}
         current = {"themes": {"x": {"metrics": {"equal_weight_rel_spy_4w": -0.02}}}}
-        history = [{"themes": {"x": {"metrics": {"equal_weight_rel_spy_4w": -0.01}}}}]
-        self.assertEqual(evaluate_withdrawal(condition, current, history)["status"], "triggered")
+        history = [{"themes": {"x": {"equal_weight_rel_spy_4w": -0.01}}}]
+        self.assertEqual(evaluate_withdrawal(condition, current, history), {"condition_id": "W", "status": "triggered", "observed_weeks": 2})
 
     def test_T15_peripheral_spike_is_not_diffusion(self):
         theme = fixture_theme("latest_single_name_concentration.json")
@@ -282,6 +282,32 @@ class SpecificationCases(unittest.TestCase):
         for key in list(values)[:4]:
             values[key] = None
         self.assertEqual(classify_market_regime(values)["classification"]["primary_regime"], "unclassifiable")
+
+    def test_real_asset_or_condition_names_the_actual_or_predicate(self):
+        values = normal_regime_inputs()
+        values.update(dbc_rel_spy_4w=0.03, gld_rel_spy_4w=-0.05, xle_rel_spy_4w=0.01)
+        candidate = classify_market_regime(values)["candidate_flags"]["real_asset_leadership"]
+        self.assertTrue(candidate["full_match"])
+        self.assertIn("R_REAL_GLD_OR_XLE_NONNEG", candidate["matched_conditions"])
+        self.assertNotIn("R_REAL_GLD_NONNEG", candidate["matched_conditions"])
+
+    def test_regime_trends_emit_designed_contrary_evidence(self):
+        large = normal_regime_inputs()
+        large.update(
+            spy_r_4w=0.03, qqq_rel_spy_4w=0.04, rsp_minus_spy_4w=-0.02,
+            iwm_minus_spy_4w=-0.01, sector_advance_ratio_4w=4 / 11,
+            rsp_minus_spy_4w_trend_3w="improving",
+        )
+        large_candidate = classify_market_regime(large)["candidate_flags"]["large_growth_concentration"]
+        self.assertEqual(large_candidate["contrary_evidence"], ["R_LG_RSP_OR_IWM_IMPROVING_CONTRARY"])
+
+        real = normal_regime_inputs()
+        real.update(
+            dbc_rel_spy_4w=0.03, gld_rel_spy_4w=0.01,
+            dbc_rel_spy_4w_trend_3w="worsening",
+        )
+        real_candidate = classify_market_regime(real)["candidate_flags"]["real_asset_leadership"]
+        self.assertEqual(real_candidate["contrary_evidence"], ["R_REAL_DBC_WORSENING_CONTRARY"])
 
     def test_T39_price_only(self):
         metrics = copy.deepcopy(fixture_theme()["metrics"])

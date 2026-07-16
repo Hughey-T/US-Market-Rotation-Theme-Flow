@@ -65,6 +65,8 @@ defensive basket=`XLP, XLV, XLU` equal-weight、cyclical basket=`XLY, XLI, XLF, 
 | `R_LIQUIDITY_CONTRACTION` / 流動性縮小を示唆 | `spy_r_4w<0`; HYG−LQD `<=-0.01`; VIX +3以上; UUP 4週>0 | sector advance>=7/11 | `liquidity_contraction` |
 | no full match | 上記full matchなし | — | `directionless` |
 
+レジームのtrend反証は、5営業日間隔で採った同一4週リターン3点から算出する。大型グロース集中ではRSPまたはIWMの改善を`R_LG_RSP_OR_IWM_IMPROVING_CONTRARY`、実物資産相対優位ではDBCの悪化を`R_REAL_DBC_WORSENING_CONTRARY`として記録する。GLDまたはXLEのOR条件は、実際の根拠を偽らない`R_REAL_GLD_OR_XLE_NONNEG`を使用する。
+
 各candidateは`eligible`, `matched_conditions`, `unmatched_conditions`, `contrary_evidence`を保存する。
 
 ### primary/secondary/confidence
