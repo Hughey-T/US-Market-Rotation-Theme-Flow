@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import io
 import subprocess
 import sys
+import tarfile
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -53,6 +56,32 @@ def _validate_staged_allowlist(repo: Path, allowed: set[str]) -> None:
     unexpected = sorted(path for path in staged if path.replace("\\", "/") not in allowed)
     if unexpected:
         raise RuntimeError(f"publication commit contains paths outside the allowlist: {unexpected}")
+
+
+def _validate_committed_publication_tree(repo: Path) -> set[str]:
+    archived = subprocess.run(
+        ["git", "archive", "--format=tar", "HEAD", "output"], cwd=repo,
+        capture_output=True, check=True,
+    ).stdout
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        with tarfile.open(fileobj=io.BytesIO(archived), mode="r:") as archive:
+            for member in archive.getmembers():
+                relative = Path(member.name)
+                if relative.is_absolute() or ".." in relative.parts:
+                    raise RuntimeError(f"unsafe publication commit tree path: {member.name}")
+                target = root / relative
+                if member.isdir():
+                    target.mkdir(parents=True, exist_ok=True)
+                elif member.isfile():
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    extracted = archive.extractfile(member)
+                    if extracted is None:
+                        raise RuntimeError(f"cannot read publication commit tree path: {member.name}")
+                    target.write_bytes(extracted.read())
+                else:
+                    raise RuntimeError(f"unsupported publication commit tree entry: {member.name}")
+        return validate_current_publication_inventory(root / "output", require_consumer=True)
 
 
 def commit_weekly_outputs(
@@ -120,6 +149,13 @@ def commit_weekly_outputs(
     if committed_blobs != expected_blobs:
         changed = sorted(path for path in allowed if committed_blobs[path] != expected_blobs[path])
         raise RuntimeError(f"publication commit bytes differ from validated inventory: {changed}")
+    committed_inventory = _validate_committed_publication_tree(repo)
+    if committed_inventory != full_inventory:
+        raise RuntimeError(
+            "publication commit semantic inventory differs from validated working tree: "
+            f"unexpected={sorted(committed_inventory - full_inventory)}, "
+            f"missing={sorted(full_inventory - committed_inventory)}"
+        )
     if push:
         if not bootstrap:
             validate_immutable_judgments(repo, expected_remote, "HEAD")

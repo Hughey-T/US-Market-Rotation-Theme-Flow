@@ -10,10 +10,11 @@ from typing import Callable, Literal
 
 from . import INSTRUCTION_VERSION, PUBLICATION_CONTRACT_VERSION
 from .identity import safe_generation_path, validate_safe_id
-from .provenance import atomic_write_json, canonical_bytes, file_sha256, stable_hash
+from .judgments import validate_index_records
+from .provenance import atomic_write_json, canonical_bytes, stable_hash
 from .publication_lock import owned_lock
 from .validation import (
-    ContractError, load_json, validate_judgment_semantics, validate_public_latest,
+    ContractError, load_json, validate_public_latest,
     validate_schema,
 )
 
@@ -175,19 +176,10 @@ def validate_generation(directory: Path) -> tuple[dict, dict, dict, dict]:
                       "instruction_version": INSTRUCTION_VERSION}
     if publication != index_expected:
         raise ContractError("generation judgment index publication identity mismatch")
-    seen = set()
-    for entry in index["records"]:
-        validate_schema(entry["content"], JUDGMENT_SCHEMA, f"judgment index {entry['judgment_id']}")
-        if entry["judgment_id"] in seen or entry["judgment_id"] != entry["content"].get("judgment_id") or entry["data_date"] != entry["content"].get("data_date"):
-            raise ContractError("judgment index record identity mismatch")
-        seen.add(entry["judgment_id"])
-        immutable = output / "judgments" / entry["file"]
-        if not immutable.is_file() or file_sha256(immutable) != entry["sha256"]:
-            raise ContractError("judgment index immutable file mismatch")
-        source = output.parent / entry["content"]["source_snapshot"]
-        validate_judgment_semantics(entry["content"], load_json(source) if source.is_file() else None)
-    if index["records"] != sorted(index["records"], key=lambda item: (item["data_date"], item["judgment_id"])):
-        raise ContractError("judgment index record order is not deterministic")
+    def source_loader(record: dict) -> dict | None:
+        source = output.parent / record["source_snapshot"]
+        return load_json(source) if source.is_file() else None
+    validate_index_records(output / "judgments", index, JUDGMENT_SCHEMA, source_loader)
     hashes = {name: stable_hash({"archive.json": archive, "history.json": history, "judgment-index.json": index, "latest.json": latest}[name]) for name in GENERATION_FILES}
     if manifest["files"] != hashes:
         raise ContractError("generation file hash mismatch")

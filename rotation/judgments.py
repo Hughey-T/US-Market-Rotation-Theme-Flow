@@ -1,11 +1,29 @@
 """Immutable judgment indexing, projection, and withdrawal evaluation."""
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
-from .provenance import file_sha256
-from .validation import ContractError, load_json, validate_judgment_semantics, validate_schema
+from .provenance import canonical_bytes
+from .validation import ContractError, validate_judgment_semantics, validate_schema
+
+
+def _validated_record(path: Path, schema: dict, source_loader) -> tuple[dict, bytes]:
+    if path.is_symlink() or not path.is_file():
+        raise ContractError(f"immutable judgment record is not a regular file: {path}")
+    raw = path.read_bytes()
+    try:
+        value = json.loads(raw.decode("utf-8"))
+    except (UnicodeError, json.JSONDecodeError) as error:
+        raise ContractError(f"invalid immutable judgment JSON: {path}") from error
+    validate_schema(value, schema, str(path))
+    if source_loader is None:
+        raise ContractError(f"{path}: judgment source loader is required")
+    validate_judgment_semantics(value, source_loader(value))
+    if path.read_bytes() != raw:
+        raise ContractError(f"immutable judgment record changed during validation: {path}")
+    return value, raw
 
 
 def build_index(directory: Path, schema: dict, source_loader=None) -> dict:
@@ -13,22 +31,79 @@ def build_index(directory: Path, schema: dict, source_loader=None) -> dict:
     for path in sorted(directory.glob("*.json")):
         if path.name == "index.json":
             continue
-        value = load_json(path)
-        validate_schema(value, schema, str(path))
-        if source_loader is None:
-            raise ContractError(f"{path}: judgment source loader is required")
-        validate_judgment_semantics(value, source_loader(value))
+        value, raw = _validated_record(path, schema, source_loader)
         judgment_id = value["judgment_id"]
         if judgment_id in seen_ids:
             raise ContractError(f"duplicate judgment_id: {judgment_id}")
         seen_ids.add(judgment_id)
-        entries.append({"file": path.name, "sha256": file_sha256(path), "judgment_id": judgment_id, "data_date": value["data_date"], "content": value})
+        entries.append({
+            "file": path.name, "sha256": hashlib.sha256(raw).hexdigest(),
+            "judgment_id": judgment_id, "data_date": value["data_date"], "content": value,
+        })
     entries.sort(key=lambda item: (item["data_date"], item["judgment_id"]))
     return {"index_version": "1.0", "records": entries}
 
 
+def validate_index_records(
+    directory: Path, index: dict, schema: dict, source_loader=None,
+    *, require_exact_inventory: bool = False,
+) -> dict:
+    """Validate index content and immutable records through one canonical contract."""
+    records = index.get("records")
+    if not isinstance(records, list):
+        raise ContractError("judgment index records must be an array")
+    expected_files = {entry.get("file") for entry in records if isinstance(entry, dict)}
+    if require_exact_inventory:
+        actual_files = {
+            path.name for path in directory.glob("*.json")
+            if path.name != "index.json"
+        }
+        if expected_files != actual_files:
+            raise ContractError(
+                "judgment index immutable inventory mismatch: "
+                f"unknown={sorted(actual_files - expected_files)} "
+                f"missing={sorted(expected_files - actual_files)}"
+            )
+    rebuilt_records = []
+    seen_ids: set[str] = set()
+    seen_files: set[str] = set()
+    for entry in records:
+        if not isinstance(entry, dict):
+            raise ContractError("judgment index record entry must be an object")
+        filename = entry.get("file")
+        judgment_id = entry.get("judgment_id")
+        if filename in seen_files or judgment_id in seen_ids:
+            raise ContractError("duplicate judgment index record reference")
+        seen_files.add(filename)
+        seen_ids.add(judgment_id)
+        immutable, raw = _validated_record(directory / filename, schema, source_loader)
+        content = entry.get("content")
+        validate_schema(content, schema, f"judgment index {judgment_id}")
+        if source_loader is None:
+            raise ContractError(f"judgment index {judgment_id}: judgment source loader is required")
+        validate_judgment_semantics(content, source_loader(content))
+        if canonical_bytes(immutable) != canonical_bytes(content):
+            raise ContractError(
+                f"judgment index content does not match immutable record: {judgment_id}"
+            )
+        if entry.get("sha256") != hashlib.sha256(raw).hexdigest():
+            raise ContractError(f"judgment index immutable SHA-256 mismatch: {judgment_id}")
+        if judgment_id != immutable.get("judgment_id") or entry.get("data_date") != immutable.get("data_date"):
+            raise ContractError(f"judgment index record identity mismatch: {judgment_id}")
+        rebuilt_records.append({
+            "file": filename, "sha256": hashlib.sha256(raw).hexdigest(),
+            "judgment_id": immutable["judgment_id"], "data_date": immutable["data_date"],
+            "content": immutable,
+        })
+    if records != sorted(records, key=lambda item: (item["data_date"], item["judgment_id"])):
+        raise ContractError("judgment index record order is not deterministic")
+    return {"index_version": "1.0", "records": rebuilt_records}
+
+
 def verify_index(directory: Path, index: dict, schema: dict, source_loader=None) -> None:
-    rebuilt = build_index(directory, schema, source_loader)
+    rebuilt = validate_index_records(
+        directory, index, schema, source_loader, require_exact_inventory=True,
+    )
     if rebuilt != index:
         raise ContractError("output/judgments/index.json does not match immutable judgment files")
 
