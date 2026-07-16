@@ -11,10 +11,129 @@ from rotation.identity import generation_identity
 from rotation.provenance import atomic_write_json, snapshot_source_hash
 from rotation.publication import load_current_generation, publish_generation
 from rotation.validation import ContractError, load_json
+from scripts import generate_weekly
 from scripts.export_current_latest import export_current
 from scripts.generate_weekly import history_item
 from scripts.migrate_publication_v1 import migrate
 from tests.test_publication_contract import generation
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+class AcquisitionStarted(RuntimeError):
+    pass
+
+
+def output_signature(output: Path):
+    if not output.exists():
+        return None
+    values = []
+    for path in sorted(output.rglob("*"), key=lambda item: item.relative_to(output).as_posix()):
+        kind = "symlink" if path.is_symlink() else "directory" if path.is_dir() else "file"
+        content = path.read_bytes() if kind == "file" else None
+        values.append((path.relative_to(output).as_posix(), kind, content))
+    return values
+
+
+class PublicationBootstrapStateTests(unittest.TestCase):
+    def assert_reaches_acquisition(self, output: Path):
+        acquisition = mock.Mock(side_effect=AcquisitionStarted("acquisition reached"))
+        with mock.patch.object(generate_weekly, "OUTPUT", output), mock.patch.object(
+            generate_weekly, "download_observations", acquisition
+        ):
+            with self.assertRaisesRegex(AcquisitionStarted, "acquisition reached"):
+                generate_weekly.main([])
+        acquisition.assert_called_once()
+
+    def assert_rejected_before_acquisition(self, output: Path, message: str):
+        before = output_signature(output)
+        acquisition = mock.Mock(side_effect=AssertionError("network acquisition must not start"))
+        with mock.patch.object(generate_weekly, "OUTPUT", output), mock.patch.object(
+            generate_weekly, "download_observations", acquisition
+        ):
+            with self.assertRaisesRegex(RuntimeError, message):
+                generate_weekly.main([])
+        acquisition.assert_not_called()
+        self.assertEqual(output_signature(output), before)
+
+    def test_clean_bootstrap_shapes_reach_acquisition(self):
+        shapes = ("output-absent", "output-empty", "archive-empty", "empty-placeholder", "main-placeholder-shape")
+        for shape in shapes:
+            with self.subTest(shape=shape), tempfile.TemporaryDirectory() as directory:
+                output = Path(directory) / "output"
+                if shape == "output-empty":
+                    output.mkdir()
+                elif shape == "archive-empty":
+                    (output / "archive").mkdir(parents=True)
+                elif shape == "empty-placeholder":
+                    (output / "archive").mkdir(parents=True)
+                    (output / "archive" / ".gitkeep").write_bytes(b"")
+                elif shape == "main-placeholder-shape":
+                    shutil.copytree(ROOT / "output", output)
+                self.assertEqual(generate_weekly.classify_publication_start_state(output).kind, "clean")
+                self.assert_reaches_acquisition(output)
+
+    def test_fixed_legacy_latest_is_rejected_with_migration_guidance(self):
+        for with_placeholder in (False, True):
+            with self.subTest(with_placeholder=with_placeholder), tempfile.TemporaryDirectory() as directory:
+                output = Path(directory) / "output"
+                output.mkdir()
+                (output / "latest.json").write_text("{}\n", encoding="utf-8")
+                if with_placeholder:
+                    (output / "archive").mkdir()
+                    (output / "archive" / ".gitkeep").write_bytes(b"")
+                state = generate_weekly.classify_publication_start_state(output)
+                self.assertEqual((state.kind, state.path), ("fixed_legacy", "output/latest.json"))
+                self.assert_rejected_before_acquisition(output, "legacy fixed publication detected.*migrate_publication_v1.py --explicit")
+
+    def test_archive_only_legacy_is_distinct_and_rejected(self):
+        archives = {
+            "one": {"2026-07-10.json": b"{}\n"},
+            "multiple": {"2026-07-10.json": b"{}\n", "2026-07-17.json": b"{}\n"},
+            "nested": {"2026/07/2026-07-10.json": b"{}\n"},
+        }
+        for name, files in archives.items():
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as directory:
+                output = Path(directory) / "output"
+                for relative, content in files.items():
+                    path = output / "archive" / relative
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_bytes(content)
+                state = generate_weekly.classify_publication_start_state(output)
+                self.assertEqual(state.kind, "partial_legacy")
+                self.assert_rejected_before_acquisition(
+                    output, "partial legacy publication detected: archive data exists but output/latest.json is absent"
+                )
+
+    def test_ambiguous_entries_fail_closed_and_report_only_path(self):
+        entries = (
+            "unknown.txt", "unknown-directory", "archive/notes.txt", "archive/unknown-directory", "archive/broken.json",
+        )
+        for relative in entries:
+            with self.subTest(relative=relative), tempfile.TemporaryDirectory() as directory:
+                output = Path(directory) / "output"
+                path = output / relative
+                if "directory" in path.name:
+                    path.mkdir(parents=True)
+                else:
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_text("not json" if path.suffix == ".json" else "secret body must not appear", encoding="utf-8")
+                expected = f"output/{relative}"
+                state = generate_weekly.classify_publication_start_state(output)
+                self.assertEqual((state.kind, state.path), ("ambiguous", expected))
+                self.assert_rejected_before_acquisition(output, f"ambiguous output state: unexpected path {expected}")
+
+    def test_current_publication_is_not_rejected_when_legacy_files_remain(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "output"
+            (output / "archive").mkdir(parents=True)
+            (output / "current.json").write_text("{}\n", encoding="utf-8")
+            (output / "latest.json").write_text("{}\n", encoding="utf-8")
+            (output / "archive" / "2026-07-10.json").write_text("{}\n", encoding="utf-8")
+            (output / "unknown.txt").write_text("preserved", encoding="utf-8")
+            self.assertEqual(generate_weekly.classify_publication_start_state(output).kind, "current")
+            self.assert_reaches_acquisition(output)
 
 
 class PublicationHardeningTests(unittest.TestCase):

@@ -2,7 +2,7 @@
 
 ## Publication contract 1.0 migration
 
-A fresh clone with neither current nor a fixed legacy publication starts normally. If a fixed legacy latest or legacy archive directory exists without current, scheduled generation stops. Run `python scripts/migrate_publication_v1.py --explicit`; it validates the legacy latest and creates a fully validated generation/current pointer. Legacy latest, archive, history, and judgments are never deleted or modified. Failure preserves all legacy files and any prior public state. Consumers then use `scripts/export_current_latest.py`.
+A fresh clone with neither current nor a fixed legacy publication starts normally. An empty `output/archive`, or that directory containing only its explicit `.gitkeep` placeholder, is also a clean bootstrap state. If `output/latest.json` is a real file without current, scheduled generation stops and directs the operator to `python scripts/migrate_publication_v1.py --explicit`; that command requires the legacy latest as its migration source, validates it, and creates a fully validated generation/current pointer. Archive JSON without a legacy latest is reported separately as a partial legacy state because the migration command cannot consume it. Unknown output or archive entries fail closed and report only their path. A valid `output/current.json` selects the normal transactional publication path even when preserved legacy files remain. Legacy latest, archive, history, and judgments are never deleted or modified. Failure preserves all legacy files and any prior public state. Consumers then use `scripts/export_current_latest.py`.
 
 ## Compatibility
 

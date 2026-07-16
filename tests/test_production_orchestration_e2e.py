@@ -124,6 +124,71 @@ def run_main(master, profile, history, *, reverse=False, omit_spy=False, output=
 
 
 class ProductionOrchestrationE2E(unittest.TestCase):
+    def test_main_placeholder_shape_bootstraps_publication_remote(self):
+        _, master, _, _, _ = synthetic_inputs()
+        history = history_for(master, (0.00, 0.01, 0.02), (4, 5, 5), (3, 4, 5))
+        with tempfile.TemporaryDirectory() as directory:
+            temporary = Path(directory)
+            work = temporary / "work"
+            remote = temporary / "publication.git"
+            verified = temporary / "verified"
+            subprocess.run(["git", "clone", "--no-local", str(ROOT), str(work)], check=True, capture_output=True)
+            subprocess.run(["git", "branch", "-M", "main"], cwd=work, check=True, capture_output=True)
+            subprocess.run(["git", "remote", "remove", "origin"], cwd=work, check=True, capture_output=True)
+            subprocess.run(["git", "init", "--bare", str(remote)], check=True, capture_output=True)
+            subprocess.run(["git", "remote", "add", "origin", str(remote)], cwd=work, check=True, capture_output=True)
+            subprocess.run(["git", "push", "origin", "main:main"], cwd=work, check=True, capture_output=True)
+            main_sha = subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=work, check=True, capture_output=True, text=True,
+            ).stdout.strip()
+            output = work / "output"
+            self.assertFalse((output / "current.json").exists())
+            self.assertFalse((output / "latest.json").exists())
+            self.assertEqual(
+                [path.relative_to(output).as_posix() for path in sorted((output / "archive").iterdir())],
+                ["archive/.gitkeep"],
+            )
+            self.assertEqual(generate_weekly.classify_publication_start_state(output).kind, "clean")
+
+            result, latest, _, _ = run_main(master, "p1", history, output=output)
+            self.assertEqual(result, 0)
+            validate_schema(latest, LATEST_SCHEMA, "main-shaped bootstrap latest")
+            validate_public_latest(latest, verify_source_hash=True)
+            export_current(output, output / "consumer" / "latest.json")
+            subprocess.run(["git", "switch", "-c", "publication"], cwd=work, check=True, capture_output=True)
+            self.assertTrue(commit_weekly_outputs(work, push=True, bootstrap=True))
+
+            self.assertEqual(
+                subprocess.run(
+                    ["git", "--git-dir", str(remote), "rev-parse", "refs/heads/main"],
+                    check=True, capture_output=True, text=True,
+                ).stdout.strip(),
+                main_sha,
+            )
+            changed = subprocess.run(
+                ["git", "diff", "--name-only", "main..publication"],
+                cwd=work, check=True, capture_output=True, text=True,
+            ).stdout.splitlines()
+            self.assertTrue(changed)
+            self.assertTrue(all(
+                path in {"output/current.json", "output/consumer/latest.json"}
+                or path.startswith("output/generations/")
+                or path.startswith("output/judgments/")
+                for path in changed
+            ), changed)
+
+            subprocess.run(
+                ["git", "clone", "--branch", "publication", str(remote), str(verified)],
+                check=True, capture_output=True,
+            )
+            with mock.patch.object(repository_validator, "ROOT", verified):
+                self.assertEqual(repository_validator.main(), 0)
+            current = load_current_generation(verified / "output")
+            self.assertIsNotNone(current)
+            regenerated = temporary / "consumer-latest.json"
+            export_current(verified / "output", regenerated)
+            self.assertEqual((verified / "output" / "consumer" / "latest.json").read_bytes(), regenerated.read_bytes())
+
     def test_raw_dataframe_regime_or_and_trend_contrary_evidence(self):
         _, master, _, _, _ = synthetic_inputs()
         history = history_for(master, (0.00, 0.01, 0.02), (4, 5, 5), (4, 5, 5))
