@@ -2,7 +2,7 @@
 
 Versions: data schema `1.1`, methodology `1.1.0`, Custom GPT instruction `1.1.1`, publication contract `1.0`.
 
-米国株を市場環境→スタイル→セクター・業種→テーマ→個別DDの順に調べる週次データ基盤です。data schema `1.1`、methodology `1.1.0`、Custom GPT instruction `1.1.1`、publication contract `1.0`を使用します。
+米国株を市場環境→スタイル→セクター・業種→テーマ→個別DDの順に調べる週次データ基盤です。data schema `1.1`、methodology `1.1.0`、Custom GPT instruction `1.1.1`、publication contract `1.0`を使用します。週次preflight、commit、repository validatorは同一の厳密なpublication file inventoryを使用し、unknown file、invalid current、lock/staging残骸を取得・commit前に拒否します。
 
 数値計算、欠損処理、market regime、phase、direction、evidence、research priority、テーマ市場状態、shortlistはコードが決定します。Custom GPTは結果を変更せず、説明、反対証拠、定性補足、個別DD引継ぎを担当します。価格上昇を直接的な資金流入とは扱いません。
 

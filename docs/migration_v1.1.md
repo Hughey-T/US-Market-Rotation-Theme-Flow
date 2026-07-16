@@ -2,7 +2,30 @@
 
 ## Publication contract 1.0 migration
 
-A fresh clone with neither current nor a fixed legacy publication starts normally. An empty `output/archive`, or that directory containing only its explicit `.gitkeep` placeholder, is also a clean bootstrap state. If `output/latest.json` is a real file without current, scheduled generation stops and directs the operator to `python scripts/migrate_publication_v1.py --explicit`; that command requires the legacy latest as its migration source, validates it, and creates a fully validated generation/current pointer. Archive JSON without a legacy latest is reported separately as a partial legacy state because the migration command cannot consume it. Unknown output or archive entries fail closed and report only their path. A valid `output/current.json` selects the normal transactional publication path even when preserved legacy files remain. Legacy latest, archive, history, and judgments are never deleted or modified. Failure preserves all legacy files and any prior public state. Consumers then use `scripts/export_current_latest.py`.
+A fresh clone starts normally only when `output` is absent or matches the exact
+tracked bootstrap inventory: the `archive`, `history`, `judgments`,
+`predictions`, and `verifications` placeholder directories may be empty or
+contain their regular `.gitkeep`; `judgments/index.json`, when present, must be
+the canonical empty index. Data in any known directory is not inferred to be a
+placeholder. Transaction debris (`.publish.lock` or `.staging-*`), symlinks,
+unknown entries, malformed contracts, and invalid `current.json` all stop
+before network acquisition and report paths only.
+
+If `output/latest.json` is a real file without current, scheduled generation
+stops and directs the operator to
+`python scripts/migrate_publication_v1.py --explicit`; that command requires the
+legacy latest as its migration source, validates it, and creates a fully
+validated generation/current pointer. Parseable archive JSON without a legacy
+latest is reported separately as a partial legacy state because the migration
+command cannot consume it. A current state is accepted only after its pointer,
+complete generation chain, exact generation entries, immutable judgment
+inventory, optional preserved legacy contracts, and any consumer export have
+been validated. A valid, complete generation left by an interrupted pointer
+switch remains eligible for the existing deterministic orphan recovery path;
+invalid or extra generation content is rejected. Legacy latest, archive,
+history, and judgments are never deleted or modified. Failure preserves all
+legacy files and any prior public state. Consumers then use
+`scripts/export_current_latest.py`.
 
 ## Compatibility
 

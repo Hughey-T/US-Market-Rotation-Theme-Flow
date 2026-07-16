@@ -3,8 +3,9 @@ from __future__ import annotations
 
 import shutil
 import tempfile
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Literal
 
 from . import INSTRUCTION_VERSION, PUBLICATION_CONTRACT_VERSION
 from .identity import safe_generation_path, validate_safe_id
@@ -19,6 +20,9 @@ from .validation import (
 GENERATION_VERSION = "1.0"
 POINTER_VERSION = "1.0"
 GENERATION_FILES = ("archive.json", "history.json", "judgment-index.json", "latest.json")
+GENERATION_ENTRY_SET = frozenset((*GENERATION_FILES, "manifest.json"))
+PLACEHOLDER_DIRECTORIES = frozenset({"archive", "history", "judgments", "predictions", "verifications"})
+EMPTY_JUDGMENT_INDEX = {"index_version": "1.0", "records": []}
 SCHEMA_ROOT = Path(__file__).resolve().parents[1] / "schemas"
 LATEST_SCHEMA = load_json(SCHEMA_ROOT / "rotation_snapshot.schema.json")
 HISTORY_SCHEMA = load_json(SCHEMA_ROOT / "history_item.schema.json")
@@ -26,6 +30,52 @@ INDEX_SCHEMA = load_json(SCHEMA_ROOT / "judgment_index.schema.json")
 JUDGMENT_SCHEMA = load_json(SCHEMA_ROOT / "judgment_record.schema.json")
 MANIFEST_SCHEMA = load_json(SCHEMA_ROOT / "generation_manifest.schema.json")
 POINTER_SCHEMA = load_json(SCHEMA_ROOT / "publication_pointer.schema.json")
+PREDICTION_SCHEMA = load_json(SCHEMA_ROOT / "prediction_record.schema.json")
+VERIFICATION_SCHEMA = load_json(SCHEMA_ROOT / "verification_record.schema.json")
+
+
+@dataclass(frozen=True)
+class PublicationStartState:
+    kind: Literal[
+        "clean", "fixed_legacy", "partial_legacy", "ambiguous", "current",
+        "invalid_current", "interrupted_transaction",
+    ]
+    path: str | None = None
+
+
+class PublicationInventoryError(ContractError):
+    """A path-only inventory error safe to surface in automation logs."""
+
+    def __init__(self, message: str, path: str):
+        super().__init__(message)
+        self.path = path
+
+
+def output_relative_path(output: Path, path: Path) -> str:
+    if path == output:
+        return "output"
+    return f"output/{path.relative_to(output).as_posix()}"
+
+
+def _inventory_error(output: Path, path: Path, reason: str = "unexpected publication entry") -> PublicationInventoryError:
+    display = output_relative_path(output, path)
+    return PublicationInventoryError(f"{reason}: {display}", display)
+
+
+def _regular_entries(output: Path, directory: Path, expected: set[str] | frozenset[str]) -> None:
+    if directory.is_symlink() or not directory.is_dir():
+        raise _inventory_error(output, directory)
+    entries = {entry.name: entry for entry in directory.iterdir()}
+    unexpected = sorted(set(entries) - set(expected))
+    missing = sorted(set(expected) - set(entries))
+    if unexpected:
+        raise _inventory_error(output, entries[unexpected[0]])
+    if missing:
+        raise _inventory_error(output, directory / missing[0], "missing publication entry")
+    for name in sorted(expected):
+        path = entries[name]
+        if path.is_symlink() or not path.is_file():
+            raise _inventory_error(output, path)
 
 
 def _generation_id(snapshot: dict) -> str:
@@ -85,9 +135,8 @@ def _output_for(directory: Path) -> Path:
 
 
 def validate_generation(directory: Path) -> tuple[dict, dict, dict, dict]:
-    missing = [name for name in (*GENERATION_FILES, "manifest.json") if not (directory / name).is_file()]
-    if missing:
-        raise ContractError(f"generation is incomplete: {missing}")
+    output = _output_for(directory)
+    _regular_entries(output, directory, GENERATION_ENTRY_SET)
     manifest = load_json(directory / "manifest.json")
     latest = load_json(directory / "latest.json")
     archive = load_json(directory / "archive.json")
@@ -125,7 +174,6 @@ def validate_generation(directory: Path) -> tuple[dict, dict, dict, dict]:
                       "instruction_version": INSTRUCTION_VERSION}
     if publication != index_expected:
         raise ContractError("generation judgment index publication identity mismatch")
-    output = _output_for(directory)
     seen = set()
     for entry in index["records"]:
         validate_schema(entry["content"], JUDGMENT_SCHEMA, f"judgment index {entry['judgment_id']}")
@@ -180,6 +228,346 @@ def load_current_generation(output: Path) -> tuple[dict, Path, dict, dict, dict,
     return pointer, safe_generation_path(output, pointer["generation_id"]), manifest, latest, history, index
 
 
+def _add_regular_file(output: Path, path: Path, files: set[str]) -> None:
+    if path.is_symlink() or not path.is_file():
+        raise _inventory_error(output, path)
+    files.add(output_relative_path(output, path))
+
+
+def _validate_placeholder_directory(
+    output: Path, name: str, files: set[str], *, judgment_index: dict | None = None,
+) -> None:
+    directory = output / name
+    if not directory.exists() and not directory.is_symlink():
+        return
+    if directory.is_symlink() or not directory.is_dir():
+        raise _inventory_error(output, directory)
+    expected = {".gitkeep"}
+    if name == "judgments" and judgment_index is not None:
+        expected.add("index.json")
+    for entry in sorted(directory.iterdir(), key=lambda item: item.name):
+        if entry.name not in expected:
+            raise _inventory_error(output, entry)
+        _add_regular_file(output, entry, files)
+        if entry.name == "index.json":
+            try:
+                value = load_json(entry)
+            except (OSError, UnicodeError, ValueError) as error:
+                raise _inventory_error(output, entry, "invalid publication entry") from error
+            if value != judgment_index:
+                raise _inventory_error(output, entry, "invalid publication entry")
+
+
+def _validate_clean_inventory(output: Path) -> set[str]:
+    files: set[str] = set()
+    if not output.exists() and not output.is_symlink():
+        return files
+    if output.is_symlink() or not output.is_dir():
+        raise _inventory_error(output, output)
+    for entry in sorted(output.iterdir(), key=lambda item: item.name):
+        if entry.name not in PLACEHOLDER_DIRECTORIES:
+            raise _inventory_error(output, entry)
+    for name in sorted(PLACEHOLDER_DIRECTORIES):
+        _validate_placeholder_directory(
+            output, name, files,
+            judgment_index=EMPTY_JUDGMENT_INDEX if name == "judgments" else None,
+        )
+    return files
+
+
+def _validate_flat_contract_directory(
+    output: Path, name: str, schema: dict, files: set[str], *, latest: bool = False,
+) -> None:
+    directory = output / name
+    if not directory.exists() and not directory.is_symlink():
+        return
+    if directory.is_symlink() or not directory.is_dir():
+        raise _inventory_error(output, directory)
+    for entry in sorted(directory.iterdir(), key=lambda item: item.name):
+        if entry.name == ".gitkeep":
+            _add_regular_file(output, entry, files)
+            continue
+        if entry.is_symlink() or not entry.is_file() or entry.suffix != ".json":
+            raise _inventory_error(output, entry)
+        try:
+            value = load_json(entry)
+            validate_schema(value, schema, output_relative_path(output, entry))
+            if latest:
+                validate_public_latest(value, verify_source_hash=True)
+        except (ContractError, OSError, UnicodeError, ValueError) as error:
+            raise _inventory_error(output, entry, "invalid publication entry") from error
+        files.add(output_relative_path(output, entry))
+
+
+def _validate_root_judgments(output: Path, index: dict, files: set[str]) -> None:
+    directory = output / "judgments"
+    if directory.is_symlink() or not directory.is_dir():
+        raise _inventory_error(output, directory, "missing publication entry")
+    root_index = {key: value for key, value in index.items() if key != "publication"}
+    expected = {"index.json", *(entry["file"] for entry in index["records"])}
+    if (directory / ".gitkeep").exists():
+        expected.add(".gitkeep")
+    entries = {entry.name: entry for entry in directory.iterdir()}
+    for name in sorted(set(entries) - expected):
+        raise _inventory_error(output, entries[name])
+    for name in sorted(expected - set(entries)):
+        raise _inventory_error(output, directory / name, "missing publication entry")
+    for name in sorted(expected):
+        entry = entries[name]
+        _add_regular_file(output, entry, files)
+        if name == "index.json":
+            try:
+                value = load_json(entry)
+            except (OSError, UnicodeError, ValueError) as error:
+                raise _inventory_error(output, entry, "invalid publication entry") from error
+            if value != root_index:
+                raise _inventory_error(output, entry, "invalid publication entry")
+
+
+def _validate_generation_chain(
+    output: Path, current: tuple, *, allow_recoverable_orphans: bool = False,
+) -> tuple[set[str], set[str]]:
+    files: set[str] = set()
+    generation_ids: set[str] = set()
+    manifest = current[2]
+    while True:
+        generation_id = manifest["generation_id"]
+        if generation_id in generation_ids:
+            raise _inventory_error(output, output / "generations" / generation_id, "generation history cycle")
+        generation_ids.add(generation_id)
+        directory = safe_generation_path(output, generation_id)
+        manifest, *_ = validate_generation(directory)
+        for name in sorted(GENERATION_ENTRY_SET):
+            files.add(output_relative_path(output, directory / name))
+        previous = manifest["previous_generation_id"]
+        if previous is None:
+            break
+        directory = safe_generation_path(output, previous)
+        try:
+            manifest, *_ = validate_generation(directory)
+        except (ContractError, OSError, ValueError) as error:
+            raise _inventory_error(output, directory, "invalid publication generation") from error
+
+    generations = output / "generations"
+    if generations.is_symlink() or not generations.is_dir():
+        raise _inventory_error(output, generations, "missing publication entry")
+    for entry in sorted(generations.iterdir(), key=lambda item: item.name):
+        if entry.name not in generation_ids:
+            if not allow_recoverable_orphans:
+                raise _inventory_error(output, entry)
+            try:
+                orphan_manifest, _, _, orphan_index = validate_generation(entry)
+            except (ContractError, OSError, ValueError) as error:
+                raise _inventory_error(output, entry, "invalid interrupted generation") from error
+            if (
+                orphan_manifest["previous_generation_id"] != current[2]["generation_id"]
+                or orphan_index["records"] != current[5]["records"]
+            ):
+                raise _inventory_error(output, entry, "unrecoverable interrupted generation")
+            for name in GENERATION_ENTRY_SET:
+                files.add(output_relative_path(output, entry / name))
+        if entry.is_symlink() or not entry.is_dir():
+            raise _inventory_error(output, entry)
+    return files, generation_ids
+
+
+def _validate_consumer(output: Path, latest: dict, files: set[str], *, required: bool) -> None:
+    consumer = output / "consumer"
+    expected = consumer / "latest.json"
+    if not consumer.exists() and not consumer.is_symlink():
+        if required:
+            raise _inventory_error(output, expected, "missing publication entry")
+        return
+    if consumer.is_symlink() or not consumer.is_dir():
+        raise _inventory_error(output, consumer)
+    entries = list(consumer.iterdir())
+    if len(entries) != 1 or entries[0].name != "latest.json":
+        culprit = sorted(entries, key=lambda item: item.name)[0] if entries else expected
+        raise _inventory_error(output, culprit)
+    _add_regular_file(output, expected, files)
+    try:
+        value = load_json(expected)
+        validate_schema(value, LATEST_SCHEMA, output_relative_path(output, expected))
+        validate_public_latest(value, verify_source_hash=True)
+    except (ContractError, OSError, UnicodeError, ValueError) as error:
+        raise _inventory_error(output, expected, "invalid publication entry") from error
+    if canonical_bytes(value) != canonical_bytes(latest):
+        raise _inventory_error(output, expected, "consumer export mismatch")
+
+
+def validate_current_publication_inventory(
+    output: Path, *, require_consumer: bool, allow_recoverable_orphans: bool = False,
+) -> set[str]:
+    """Validate the complete current publication tree and return its exact tracked inventory."""
+    if output.is_symlink() or not output.is_dir():
+        raise _inventory_error(output, output)
+    lock = output / ".publish.lock"
+    if lock.exists() or lock.is_symlink():
+        raise _inventory_error(output, lock, "interrupted publication transaction")
+    for entry in sorted(output.iterdir(), key=lambda item: item.name):
+        if entry.name.startswith(".staging-"):
+            raise _inventory_error(output, entry, "interrupted publication transaction")
+
+    current_path = output / "current.json"
+    _add_regular_file(output, current_path, files := set())
+    try:
+        current = load_current_generation(output)
+    except PublicationInventoryError:
+        raise
+    except (ContractError, OSError, UnicodeError, ValueError) as error:
+        raise _inventory_error(output, current_path, "invalid current publication") from error
+    if current is None:
+        raise _inventory_error(output, current_path, "missing publication entry")
+    chain_files, _ = _validate_generation_chain(
+        output, current, allow_recoverable_orphans=allow_recoverable_orphans,
+    )
+    files.update(chain_files)
+    _validate_root_judgments(output, current[5], files)
+    _validate_consumer(output, current[3], files, required=require_consumer)
+
+    latest = output / "latest.json"
+    if latest.exists() or latest.is_symlink():
+        _add_regular_file(output, latest, files)
+        try:
+            value = load_json(latest)
+            validate_schema(value, LATEST_SCHEMA, output_relative_path(output, latest))
+            validate_public_latest(value, verify_source_hash=True)
+        except (ContractError, OSError, UnicodeError, ValueError) as error:
+            raise _inventory_error(output, latest, "invalid publication entry") from error
+
+    for name, schema, is_latest in (
+        ("archive", LATEST_SCHEMA, True), ("history", HISTORY_SCHEMA, False),
+        ("predictions", PREDICTION_SCHEMA, False), ("verifications", VERIFICATION_SCHEMA, False),
+    ):
+        _validate_flat_contract_directory(output, name, schema, files, latest=is_latest)
+
+    allowed = {
+        "current.json", "generations", "judgments", "consumer", "latest.json",
+        "archive", "history", "predictions", "verifications",
+    }
+    for entry in sorted(output.iterdir(), key=lambda item: item.name):
+        if entry.name not in allowed:
+            raise _inventory_error(output, entry)
+    return files
+
+
+def _validate_orphan_inventory(output: Path) -> set[str]:
+    files: set[str] = set()
+    allowed = set(PLACEHOLDER_DIRECTORIES) | {"generations"}
+    for entry in sorted(output.iterdir(), key=lambda item: item.name):
+        if entry.name not in allowed:
+            raise _inventory_error(output, entry)
+    for name in ("archive", "history", "predictions", "verifications"):
+        _validate_placeholder_directory(output, name, files)
+    generations = output / "generations"
+    if generations.is_symlink() or not generations.is_dir():
+        raise _inventory_error(output, generations)
+    entries = sorted(generations.iterdir(), key=lambda item: item.name)
+    if not entries:
+        raise _inventory_error(output, generations, "empty interrupted generation inventory")
+    indexes = []
+    for entry in entries:
+        try:
+            _, _, _, index = validate_generation(entry)
+        except (ContractError, OSError, ValueError) as error:
+            raise _inventory_error(output, entry, "invalid interrupted generation") from error
+        indexes.append(index)
+        for name in GENERATION_ENTRY_SET:
+            files.add(output_relative_path(output, entry / name))
+    root_records = indexes[0]["records"]
+    if any(index["records"] != root_records for index in indexes[1:]):
+        raise _inventory_error(output, generations, "inconsistent interrupted generation inventory")
+    _validate_root_judgments(output, indexes[0], files)
+    return files
+
+
+def classify_publication_start_state(output: Path) -> PublicationStartState:
+    """Classify the exact on-disk state without mutation or network access."""
+    if not output.exists() and not output.is_symlink():
+        return PublicationStartState("clean")
+    if output.is_symlink() or not output.is_dir():
+        return PublicationStartState("ambiguous", "output")
+    current = output / "current.json"
+    if current.exists() or current.is_symlink():
+        try:
+            validate_current_publication_inventory(
+                output, require_consumer=False, allow_recoverable_orphans=True,
+            )
+        except PublicationInventoryError as error:
+            return PublicationStartState("invalid_current", error.path)
+        return PublicationStartState("current")
+    latest = output / "latest.json"
+    if latest.exists() or latest.is_symlink():
+        if latest.is_symlink() or not latest.is_file():
+            return PublicationStartState("ambiguous", output_relative_path(output, latest))
+        return PublicationStartState("fixed_legacy", output_relative_path(output, latest))
+    generations = output / "generations"
+    if generations.exists() or generations.is_symlink():
+        try:
+            _validate_orphan_inventory(output)
+        except PublicationInventoryError as error:
+            return PublicationStartState("ambiguous", error.path)
+        return PublicationStartState("interrupted_transaction", output_relative_path(output, generations))
+    archive = output / "archive"
+    if archive.is_dir() and not archive.is_symlink():
+        json_files = sorted(
+            (path for path in archive.rglob("*.json") if path.is_file() and not path.is_symlink()),
+            key=lambda path: path.relative_to(output).as_posix(),
+        )
+        if json_files:
+            path = json_files[0]
+            try:
+                load_json(path)
+            except (OSError, UnicodeError, ValueError):
+                return PublicationStartState("ambiguous", output_relative_path(output, path))
+            return PublicationStartState("partial_legacy", output_relative_path(output, path))
+    try:
+        _validate_clean_inventory(output)
+    except PublicationInventoryError as error:
+        return PublicationStartState("ambiguous", error.path)
+    return PublicationStartState("clean")
+
+
+def enforce_publication_start_state(output: Path) -> PublicationStartState:
+    state = classify_publication_start_state(output)
+    if state.kind in {"clean", "current", "interrupted_transaction"}:
+        return state
+    if state.kind == "fixed_legacy":
+        raise RuntimeError(
+            "legacy fixed publication detected; "
+            "run scripts/migrate_publication_v1.py --explicit before weekly publication"
+        )
+    if state.kind == "partial_legacy":
+        raise RuntimeError(
+            "partial legacy publication detected: "
+            "archive data exists but output/latest.json is absent"
+        )
+    if state.kind == "invalid_current":
+        raise RuntimeError(f"invalid current publication: {state.path}")
+    raise RuntimeError(f"ambiguous output state: unexpected path {state.path}")
+
+
+def validate_repository_output_inventory(output: Path, *, require_consumer: bool = True) -> set[str]:
+    """Validate either the canonical clean bootstrap tree or an exact current tree."""
+    state = classify_publication_start_state(output)
+    if state.kind == "clean":
+        return _validate_clean_inventory(output)
+    if state.kind == "current":
+        return validate_current_publication_inventory(output, require_consumer=require_consumer)
+    raise ContractError(f"repository publication inventory is {state.kind}: {state.path}")
+
+
+def committable_publication_files(output: Path) -> set[str]:
+    """Return the complete validated publication file allowlist for git staging."""
+    inventory = validate_current_publication_inventory(output, require_consumer=True)
+    return {
+        path for path in inventory
+        if path in {"output/current.json", "output/consumer/latest.json"}
+        or path.startswith("output/generations/")
+        or path.startswith("output/judgments/")
+    }
+
+
 def committed_history(output: Path, limit: int = 12) -> list[dict]:
     current = load_current_generation(output)
     if current is None:
@@ -207,15 +595,27 @@ def _valid_orphans(output: Path, analysis_id: str, current_generation_id: str | 
     generations = output / "generations"
     if not generations.is_dir():
         return candidates
+    chain_ids: set[str] = set()
+    current = load_current_generation(output)
+    manifest = current[2] if current else None
+    while manifest is not None:
+        generation_id = manifest["generation_id"]
+        if generation_id in chain_ids:
+            raise ContractError("generation history chain contains a cycle")
+        chain_ids.add(generation_id)
+        previous = manifest["previous_generation_id"]
+        manifest = validate_generation(safe_generation_path(output, previous))[0] if previous else None
     for path in sorted(generations.iterdir(), key=lambda item: item.name):
-        if not path.is_dir() or path.name == current_generation_id:
+        if path.name in chain_ids:
             continue
         try:
             manifest, *_ = validate_generation(path)
-        except (ContractError, OSError, ValueError):
-            continue
+        except (ContractError, OSError, ValueError) as error:
+            raise ContractError(f"invalid orphan generation: {path.name}") from error
         if manifest["analysis_id"] == analysis_id and manifest["previous_generation_id"] == current_generation_id:
             candidates.append((manifest, path))
+        else:
+            raise ContractError(f"unrelated orphan generation requires explicit recovery: {path.name}")
     return sorted(candidates, key=lambda item: (item[0]["generated_at"], item[0]["generation_id"]))
 
 

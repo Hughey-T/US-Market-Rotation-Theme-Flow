@@ -8,9 +8,7 @@ import json
 import os
 import subprocess
 import sys
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
 
 import pandas as pd
 
@@ -21,7 +19,10 @@ from rotation.judgments import build_index, project_previous_judgments
 from rotation.membership import member_is_effective
 from rotation.pipeline import build_snapshot
 from rotation.provenance import snapshot_source_hash
-from rotation.publication import committed_history, load_current_generation, publish_generation
+from rotation.publication import (
+    PublicationStartState, classify_publication_start_state, committed_history,
+    enforce_publication_start_state, load_current_generation, publish_generation,
+)
 from rotation.validation import load_json, validate_public_latest, validate_schema, validate_theme_master_semantics
 
 CONFIG = ROOT / "config" / "universe.json"
@@ -32,97 +33,6 @@ OUTPUT = ROOT / "output"
 HISTORY = OUTPUT / "history"
 JUDGMENTS = OUTPUT / "judgments"
 PERIODS = {"1w": 5, "4w": 21, "13w": 63}
-KNOWN_OUTPUT_DIRECTORIES = {
-    "archive", "consumer", "generations", "history", "judgments", "predictions", "verifications",
-}
-
-
-@dataclass(frozen=True)
-class PublicationStartState:
-    kind: Literal["clean", "fixed_legacy", "partial_legacy", "ambiguous", "current"]
-    path: str | None = None
-
-
-def _output_path(output: Path, path: Path) -> str:
-    if path == output:
-        return "output"
-    return f"output/{path.relative_to(output).as_posix()}"
-
-
-def classify_publication_start_state(output: Path) -> PublicationStartState:
-    """Classify existing publication state without changing disk or starting acquisition."""
-    if not output.exists():
-        return PublicationStartState("clean")
-    if output.is_symlink() or not output.is_dir():
-        return PublicationStartState("ambiguous", "output")
-
-    current = output / "current.json"
-    if current.is_symlink():
-        return PublicationStartState("ambiguous", _output_path(output, current))
-    if current.is_file():
-        return PublicationStartState("current")
-    if current.exists():
-        return PublicationStartState("ambiguous", _output_path(output, current))
-
-    latest = output / "latest.json"
-    if latest.is_symlink():
-        return PublicationStartState("ambiguous", _output_path(output, latest))
-    if latest.is_file():
-        return PublicationStartState("fixed_legacy", _output_path(output, latest))
-    if latest.exists():
-        return PublicationStartState("ambiguous", _output_path(output, latest))
-
-    archive = output / "archive"
-    if archive.is_symlink() or (archive.exists() and not archive.is_dir()):
-        return PublicationStartState("ambiguous", _output_path(output, archive))
-    if archive.is_dir():
-        entries = sorted(archive.rglob("*"), key=lambda path: path.relative_to(output).as_posix())
-        for entry in entries:
-            if entry.is_symlink():
-                return PublicationStartState("ambiguous", _output_path(output, entry))
-        legacy_json = [entry for entry in entries if entry.is_file() and entry.suffix.lower() == ".json"]
-        for entry in legacy_json:
-            try:
-                load_json(entry)
-            except (OSError, UnicodeError, ValueError, json.JSONDecodeError):
-                return PublicationStartState("ambiguous", _output_path(output, entry))
-        if legacy_json:
-            return PublicationStartState("partial_legacy", _output_path(output, legacy_json[0]))
-        for entry in entries:
-            if entry == archive / ".gitkeep" and entry.is_file():
-                continue
-            return PublicationStartState("ambiguous", _output_path(output, entry))
-
-    for entry in sorted(output.iterdir(), key=lambda path: path.name):
-        if entry.name in {"archive", "current.json", "latest.json"}:
-            continue
-        if entry.name in KNOWN_OUTPUT_DIRECTORIES and entry.is_dir() and not entry.is_symlink():
-            continue
-        if entry.name == ".publish.lock" and entry.is_file() and not entry.is_symlink():
-            continue
-        if entry.name.startswith(".staging-") and entry.is_dir() and not entry.is_symlink():
-            continue
-        return PublicationStartState("ambiguous", _output_path(output, entry))
-    return PublicationStartState("clean")
-
-
-def enforce_publication_start_state(output: Path) -> PublicationStartState:
-    state = classify_publication_start_state(output)
-    if state.kind in {"clean", "current"}:
-        return state
-    if state.kind == "fixed_legacy":
-        raise RuntimeError(
-            "legacy fixed publication detected; "
-            "run scripts/migrate_publication_v1.py --explicit before weekly publication"
-        )
-    if state.kind == "partial_legacy":
-        raise RuntimeError(
-            "partial legacy publication detected: "
-            "archive data exists but output/latest.json is absent"
-        )
-    raise RuntimeError(f"ambiguous output state: unexpected path {state.path}")
-
-
 def source_commit() -> str:
     value = os.environ.get("GITHUB_SHA")
     if value and len(value) == 40:

@@ -12,7 +12,7 @@ sys.path.insert(0, str(ROOT))
 
 from rotation.judgments import build_index, verify_index
 from rotation.provenance import canonical_bytes
-from rotation.publication import load_current_generation
+from rotation.publication import load_current_generation, validate_repository_output_inventory
 from rotation.validation import (
     ContractError,
     load_json,
@@ -64,6 +64,7 @@ def main() -> int:
         }
         for schema in schemas.values():
             Draft202012Validator.check_schema(schema)
+        validate_repository_output_inventory(ROOT / "output", require_consumer=True)
         master = load_json(ROOT / "data" / "themes.json")
         validate_schema(master, schemas["master"], "data/themes.json")
         warnings = validate_theme_master_semantics(master)
