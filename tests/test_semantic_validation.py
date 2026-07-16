@@ -9,6 +9,7 @@ from unittest import mock
 from rotation.classification import classify_theme
 from rotation.metrics import aggregate_theme
 from rotation.provenance import snapshot_source_hash
+from rotation.publication import publish_generation
 from rotation.regime import classify_market_regime
 from rotation.shortlist import apply_shortlist
 from rotation.thresholds import equal_weight_led, market_cap_led, weighting_divergence
@@ -84,6 +85,41 @@ class SemanticValidatorTests(unittest.TestCase):
         }
         for path, operation in cases.items():
             mutate(path, operation)
+
+    def test_candidate_unmatched_conditions_are_semantically_enforced_before_publication(self):
+        candidate_id = "large_growth_concentration"
+
+        def replace_condition(values):
+            values[0] = "R_FAKE"
+
+        operations = {
+            "delete": lambda values: values.pop(),
+            "add": lambda values: values.append("R_FAKE"),
+            "replace": replace_condition,
+            "reorder": lambda values: values.reverse(),
+        }
+        error_path = rf"market_regime\.candidate_flags\.{candidate_id}\.unmatched_conditions"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for label, operation in operations.items():
+                with self.subTest(operation=label):
+                    latest = load_json(FIXTURES / "latest_normal.json")
+                    unmatched = latest["market_regime"]["candidate_flags"][candidate_id]["unmatched_conditions"]
+                    self.assertGreaterEqual(len(unmatched), 2)
+                    operation(unmatched)
+                    latest["meta"]["source_sha256"] = snapshot_source_hash(latest)
+                    validate_schema(latest, LATEST_SCHEMA, f"unmatched conditions {label}")
+                    with self.assertRaisesRegex(ContractError, error_path):
+                        validate_latest_semantics(latest, verify_source_hash=True)
+                    output = root / label / "output"
+                    with self.assertRaisesRegex(ContractError, error_path):
+                        publish_generation(
+                            output,
+                            latest,
+                            generate_weekly.history_item(latest),
+                            {"index_version": "1.0", "records": []},
+                        )
+                    self.assertFalse(output.exists())
 
     def test_regime_schema_closes_candidate_secondary_and_trend_shapes(self):
         cases = []
