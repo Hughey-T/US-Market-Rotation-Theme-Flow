@@ -87,6 +87,16 @@ def main() -> int:
                 for role, lens in lenses.items():
                     if not lens.get("key_check") or not lens.get("counter_evidence"):
                         raise ContractError(f"incomplete research lens: {item_id}/{role}")
+            lens_text = str({
+                "themes": config.get("research_lenses", {}),
+                "tickers": config.get("company_research_overrides", {}),
+                "roles": config.get("role_research_lenses", {}),
+                "global": config.get("global_research_lens", {}),
+            })
+            forbidden_initial_terms = ("初動", "拡散", "失速", "悪化", "反転", "流入継続", "流出継続", "加速", "減速")
+            leaked = [term for term in forbidden_initial_terms if term in lens_text]
+            if leaked:
+                raise ContractError(f"research lenses contain initial-observation trend claims: {leaked}")
         fixture_dir = ROOT / "tests" / "fixtures"
         for path in sorted(fixture_dir.glob("latest_*.json")):
             value = load_json(path)

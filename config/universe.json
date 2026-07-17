@@ -119,8 +119,8 @@
       "breadth_check": {"key_check": "スイッチ、光部品、接続部品の複数階層で需要増が確認できるか", "counter_evidence": "一部の高速規格だけが強く、旧製品の減少を補えないこと"}
     },
     "regional_banks": {
-      "representative": {"key_check": "預金コストの安定と貸出成長が純金利収益の改善へつながるか", "counter_evidence": "商業用不動産の信用費用と預金流出が同時に悪化すること"},
-      "breadth_check": {"key_check": "純金利マージンと資産健全性の改善が複数行に広がっているか", "counter_evidence": "一部行だけの特殊要因で、同業他行の延滞率が悪化すること"}
+      "representative": {"key_check": "預金コストの安定と貸出成長が純金利収益の改善へつながるか", "counter_evidence": "商業用不動産の信用費用と預金流出が同時に増えること"},
+      "breadth_check": {"key_check": "純金利マージンと資産健全性の改善が複数行に広がっているか", "counter_evidence": "一部行だけの特殊要因で、同業他行の延滞率が高いこと"}
     },
     "transportation": {
       "representative": {"key_check": "輸送量と運賃の改善が稼働率・営業利益率の上昇へ結び付くか", "counter_evidence": "荷動き減少や人件費・燃料費上昇で価格改善が相殺されること"},
@@ -131,19 +131,19 @@
       "breadth_check": {"key_check": "上昇が単一の治験結果でなく複数企業・治療領域へ広がっているか", "counter_evidence": "少数の買収観測だけで指数が上がり、臨床進捗が伴わないこと"}
     },
     "homebuilders": {
-      "representative": {"key_check": "受注件数と販売価格が住宅ローン金利環境下でも粗利益率を支えるか", "counter_evidence": "販売奨励金の増加とキャンセル率上昇で採算が悪化すること"},
+      "representative": {"key_check": "受注件数と販売価格が住宅ローン金利環境下でも粗利益率を支えるか", "counter_evidence": "販売奨励金とキャンセル率が高く採算を圧迫すること"},
       "breadth_check": {"key_check": "受注回復が地域・価格帯・複数社へ広がっているか", "counter_evidence": "限られた地域の供給不足だけで、他地域の在庫が増えること"}
     },
     "oil_gas_exploration": {
       "representative": {"key_check": "生産量と実現価格が設備投資後の自由現金収支を維持できるか", "counter_evidence": "商品価格下落やコスト上昇で株主還元の原資が減ること"},
-      "breadth_check": {"key_check": "生産効率と資本規律が複数の開発企業で確認できるか", "counter_evidence": "一社の資産構成だけが有利で、同業の現金収支が悪化すること"}
+      "breadth_check": {"key_check": "生産効率と資本規律が複数の開発企業で確認できるか", "counter_evidence": "一社の資産構成だけが有利で、同業の現金収支が弱いこと"}
     },
     "retail": {
       "representative": {"key_check": "既存店売上と客数の伸びが在庫回転・粗利益率を伴うか", "counter_evidence": "値引き増加と消費者の買い控えで在庫と販促費が増えること"},
-      "breadth_check": {"key_check": "消費の強さが業態・所得層の異なる複数小売へ広がっているか", "counter_evidence": "生活必需品や高所得層だけが強く裁量消費が悪化すること"}
+      "breadth_check": {"key_check": "消費の強さが業態・所得層の異なる複数小売へ広がっているか", "counter_evidence": "生活必需品や高所得層だけが強く裁量消費が弱いこと"}
     },
     "infrastructure_construction": {
-      "representative": {"key_check": "受注残が人員・資材制約を超えて売上と利益へ転換するか", "counter_evidence": "工期遅延や固定価格案件の原価超過で採算が悪化すること"},
+      "representative": {"key_check": "受注残が人員・資材制約を超えて売上と利益へ転換するか", "counter_evidence": "工期遅延や固定価格案件の原価超過が採算を圧迫すること"},
       "breadth_check": {"key_check": "電力・道路・通信など複数分野へ工事需要が広がっているか", "counter_evidence": "一部の大型公共案件だけに依存し民間受注が減ること"}
     }
   },
