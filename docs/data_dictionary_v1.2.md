@@ -20,3 +20,29 @@
 | `effective_contributor_count` | 1/HHI。実質的な寄与企業数。 |
 
 旧 `evidence.direction=inflow/outflow` と `theme_shortlist` は immutable judgment 互換の監査フィールドです。通常表示に使用しません。
+
+## Consumer contract 1.0
+
+| Field | 意味 |
+| --- | --- |
+| `consumer_contract_version` | Custom GPT表示用projectionのversion。現行は1.0。 |
+| `source_identity.analysis_id` | authoritative analysis identity。`meta.run_id`と一致。 |
+| `source_identity.generation_id` | authoritative generation identity。`meta.source_snapshot`のpathと一致。 |
+| `meta.source_commit` | generationを作成したmain commit。 |
+| `meta.source_sha256` | repositoryで検証済みの完全snapshot source hash。consumer単体から再計算しない。 |
+| `meta.generated_at/data_date/valid_until/hard_stop_after` | 生成・観測・有効性identity。 |
+| `meta.status/failure_reason` | 公開成功状態。current consumerはsuccess/nullのみ。 |
+| `meta.global_quality` | `critical_missing`と利用者向けwarningだけを投影。 |
+| `user_view` | authoritative snapshotのpresentation version、analysis mode、6 phasesの完全copy。 |
+
+この軽量consumerは`output/consumer/v1/latest.json`に置きます。旧`output/consumer/latest.json`は完全snapshotです。軽量consumerには`themes`、market/style/sector inputs、condition、reason、history、judgmentを含めません。
+
+## Details contract 1.0
+
+| Field | 意味 |
+| --- | --- |
+| `details_contract_version` | phase detailsのversion。現行は1.0。 |
+| `source_identity` | 軽量consumerと一致するanalysis/generation identity。 |
+| `meta.run_id/source_commit/source_sha256/data_date/status` | 固定consumerとの照合field。 |
+| `phase` | 1〜6の厳密な対象段階。 |
+| `detail_view` | authoritative snapshotから決定的に作る、人間可読な当該phaseだけの説明。 |

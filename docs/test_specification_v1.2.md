@@ -1,5 +1,14 @@
 # Test Specification 1.2
 
+## Consumer contract 1.0
+
+- schema適合、32 KiB canonical/file上限、`user_view`完全一致、大型監査field除外を検証する。
+- 同一authoritative snapshotから同一canonical bytesを生成する。
+- generation/analysis/run/source SHA identity改ざん、failed status、critical missing、unsupported version、phase数・表示field欠損を拒否する。
+- 旧URLがfull snapshotのまま一致すること、新URL 404時だけ旧URLへfallbackできること、存在する無効primaryではfallbackしないことを検証する。
+- details 6件、phase欠落・重複・改ざん、6 identity field、各32 KiB上限、決定的再生成、取得失敗時の通常表示維持を検証する。
+- publication inventoryの旧full＋新軽量＋details 6件、unknown/missing/symlink拒否、publication 1.0 chain読取互換と1.1 transactional publicationを検証する。
+
 `tests/test_user_experience.py` は次を所有します。
 
 - 8表示fixtureの登録

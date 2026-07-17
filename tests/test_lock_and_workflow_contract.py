@@ -3,6 +3,7 @@ import json
 import os
 import socket
 import subprocess
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
@@ -15,6 +16,8 @@ from rotation.publication_lock import acquire, inspect, owned_lock, recover, rel
 from rotation.validation import ContractError, load_json
 from scripts.commit_weekly_outputs import PUBLICATION_BRANCH, _validate_staged_allowlist, commit_weekly_outputs
 from scripts.export_current_latest import export_current
+from scripts.export_consumer_projection import export_consumer_projection
+from scripts.export_consumer_details import export_consumer_details
 from scripts.generate_weekly import history_item
 from scripts.validate_immutable_judgments import validate_immutable_judgments
 from tests.test_publication_contract import generation
@@ -53,6 +56,11 @@ class PublicationLockTests(unittest.TestCase):
 
 
 class WorkflowContractTests(unittest.TestCase):
+    def export_consumers(self, output):
+        export_current(output, output / "consumer/latest.json")
+        export_consumer_projection(output, output / "consumer/v1/latest.json")
+        export_consumer_details(output, output / "consumer/v1/details")
+
     def git(self, repo, *args, check=True):
         return subprocess.run(["git", *args], cwd=repo, text=True, capture_output=True, check=check)
 
@@ -68,14 +76,14 @@ class WorkflowContractTests(unittest.TestCase):
             placeholder.write_bytes(b"\n")
         value = generation("2026-07-10", "workflow-base")
         publish_generation(repo / "output", value, history_item(value), {"index_version": "1.0", "records": []})
-        export_current(repo / "output", repo / "output/consumer/latest.json")
+        self.export_consumers(repo / "output")
         self.git(repo, "add", "."); self.git(repo, "-c", "user.name=test", "-c", "user.email=test@example.com", "commit", "-m", "base")
         return temporary, repo
 
     def advance(self, repo, suffix, data_date="2026-07-17"):
         value = generation(data_date, suffix)
         publish_generation(repo / "output", value, history_item(value), {"index_version": "1.0", "records": []})
-        export_current(repo / "output", repo / "output/consumer/latest.json")
+        self.export_consumers(repo / "output")
 
     def add_judgment_publication(self, repo):
         output = repo / "output"
@@ -83,7 +91,9 @@ class WorkflowContractTests(unittest.TestCase):
         empty = {"index_version": "1.0", "records": []}
         source = load_json(ROOT / "tests/fixtures/latest_normal.json")
         publish_generation(output, source, history_item(source), empty)
+        # A retained schema 1.1 generation supports only the legacy full URL.
         export_current(output, output / "consumer/latest.json")
+        shutil.rmtree(output / "consumer/v1")
         record = load_json(ROOT / "tests/fixtures/judgment_record.json")
         record_path = judgments / "judgment.json"
         atomic_write_json(record_path, record)
@@ -95,7 +105,7 @@ class WorkflowContractTests(unittest.TestCase):
         atomic_write_json(judgments / "index.json", index)
         latest = generation("2026-07-17", "direct-push-judgment")
         publish_generation(output, latest, history_item(latest), index)
-        export_current(output, output / "consumer/latest.json")
+        self.export_consumers(output)
 
     def tamper_judgment_content_with_regenerated_hashes(self, repo):
         output = repo / "output"
@@ -174,6 +184,9 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("--expected-remote", text)
         self.assertIn("--bootstrap", text)
         self.assertIn("git worktree add --detach", text)
+        self.assertIn("export_current_latest.py output/consumer/latest.json", text)
+        self.assertIn("export_consumer_projection.py output/consumer/v1/latest.json", text)
+        self.assertIn("export_consumer_details.py output/consumer/v1/details", text)
         self.assertLess(text.index("- name: Offline preflight"), text.index("- name: Bootstrap or update publication work"))
         self.assertLess(text.index("- name: Bootstrap or update publication work"), text.index("- name: Generate, validate, and publish"))
         self.assertIn("push:\n    branches: [main]", test_workflow)

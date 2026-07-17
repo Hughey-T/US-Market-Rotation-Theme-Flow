@@ -35,7 +35,7 @@ def generate(config, master, observations, history, previous=None):
 def judgment_from_source(source):
     record = load_json(FIXTURES / "judgment_record.json")
     meta = source["meta"]
-    record["instruction_version"] = "1.3.0"
+    record["instruction_version"] = "1.4.0"
     record["data_schema_version"] = meta["schema_version"]
     record["methodology_version"] = meta["methodology_version"]
     for field in ("run_id", "data_date", "source_commit", "source_snapshot", "source_sha256"):

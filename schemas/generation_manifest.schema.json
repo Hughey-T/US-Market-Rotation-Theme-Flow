@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.invalid/us-market-rotation/generation_manifest.schema.1.0.json",
-  "title": "Market Rotation generation manifest 1.0",
+  "$id": "https://example.invalid/us-market-rotation/generation_manifest.schema.1.1.json",
+  "title": "Market Rotation generation manifest 1.1 (reads 1.0)",
   "type": "object",
   "additionalProperties": false,
   "required": ["publication_contract_version", "generation_version", "analysis_id", "generation_id", "run_id", "data_date", "generated_at", "source_commit", "source_sha256", "previous_generation_id", "files"],
   "properties": {
-    "publication_contract_version": {"const": "1.0"},
+    "publication_contract_version": {"enum": ["1.0", "1.1"]},
     "generation_version": {"const": "1.0"},
     "analysis_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
     "generation_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
