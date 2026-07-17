@@ -85,6 +85,10 @@ def main() -> int:
         fixture_master = load_json(fixture_dir / "theme_master.json")
         validate_schema(fixture_master, schemas["master"], "fixture master")
         validate_theme_master_semantics(fixture_master)
+        display_cases = load_json(fixture_dir / "user_display_cases.json")
+        case_ids = [case.get("id") for case in display_cases.get("cases", [])]
+        if len(case_ids) != 8 or len(case_ids) != len(set(case_ids)):
+            raise ContractError("display fixture registry must contain exactly 8 unique cases")
         validate_schema(load_json(ROOT / "docs" / "prediction_example.json"), schemas["prediction_legacy"], "legacy prediction example")
         validate_schema(load_json(ROOT / "docs" / "verification_example.json"), schemas["verification_legacy"], "legacy verification example")
         public_count = validate_public_outputs(ROOT, schemas["latest"])
@@ -114,14 +118,14 @@ def main() -> int:
             generation_index = {key: value for key, value in current_generation[5].items() if key != "publication"}
             if generation_index != rebuilt:
                 raise ContractError("current generation judgment index does not match validated immutable records")
-        instructions = (ROOT / "docs" / "custom_gpt_instructions_v1.1.md").read_text(encoding="utf-8")
+        instructions = (ROOT / "docs" / "custom_gpt_instructions_v1.2.md").read_text(encoding="utf-8")
         if len(instructions) > 8000:
             raise ContractError(f"Custom GPT instructions exceed 8,000 characters: {len(instructions)}")
-        required_terms = ["schema_version=1.1", "methodology_version=1.1.0", "timing_status", "テーマ市場状態", "selected_for_deep_dive", "単一総合score"]
+        required_terms = ["更新", "次", "詳細", "用語", "再評価", "user_view.phases", "candidate_buckets", "initial_observation", "資金流入・流出を断定しない"]
         missing = [term for term in required_terms if term not in instructions]
         if missing:
             raise ContractError(f"Custom GPT instructions missing contract terms: {missing}")
-        print(f"validation passed: 7 current schemas, 7 latest fixtures, 1 sample latest, 1 judgment fixture, 1 sample judgment, 1 master fixture, {public_count} public outputs, {len(warnings)} overlap warnings")
+        print(f"validation passed: 9 schemas, 7 latest fixtures, 8 display fixtures, 1 sample latest, 1 judgment fixture, 1 sample judgment, 1 master fixture, {public_count} public outputs, {len(warnings)} overlap warnings")
         return 0
     except (ContractError, OSError, ValueError) as error:
         print(f"validation failed:\n{error}", file=sys.stderr)

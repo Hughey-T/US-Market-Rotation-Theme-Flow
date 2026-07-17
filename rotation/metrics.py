@@ -8,7 +8,7 @@ from __future__ import annotations
 from .thresholds import equal_weight_led, market_cap_led, weighting_divergence
 
 import math
-from statistics import fmean
+from statistics import fmean, median
 from typing import Iterable
 
 
@@ -24,6 +24,35 @@ def mean(values: Iterable[float | None]) -> float | None:
 def ratio_true(values: Iterable[bool | None]) -> float | None:
     usable = [value for value in values if isinstance(value, bool)]
     return sum(usable) / len(usable) if usable else None
+
+
+def winsorized_mean(values: Iterable[float | None], tail: float = 0.10) -> float | None:
+    """Return a deterministic two-sided winsorized mean.
+
+    For fewer than five observations the median is a more honest robust
+    summary than pretending that a tail estimate is available.
+    """
+    usable = sorted(float(value) for value in values if finite(value) is not None)
+    if not usable:
+        return None
+    if len(usable) < 5:
+        return float(median(usable))
+    cut = max(1, int(len(usable) * tail))
+    lower, upper = usable[cut], usable[-cut - 1]
+    return fmean(min(max(value, lower), upper) for value in usable)
+
+
+def weighted_mean(values: Iterable[float | None], weights: Iterable[float | None], minimum_coverage: float = 0.75) -> tuple[float | None, float]:
+    pairs = list(zip(values, weights))
+    valid_values = [(value, weight) for value, weight in pairs if finite(value) is not None]
+    if not valid_values:
+        return None, 0.0
+    usable = [(float(value), float(weight)) for value, weight in valid_values if finite(weight) is not None and float(weight) > 0]
+    coverage = len(usable) / len(valid_values)
+    denominator = sum(weight for _, weight in usable)
+    if coverage < minimum_coverage or denominator <= 0:
+        return None, coverage
+    return sum(value * weight for value, weight in usable) / denominator, coverage
 
 
 def relative(value: float | None, benchmark: float | None) -> float | None:
@@ -63,8 +92,15 @@ def aggregate_theme(constituents: list[dict], spy_returns: dict[str, float | Non
     relatives = [relative(row.get("return_4w"), spy_returns.get("4w")) for row in constituents]
     top1, top3, shares = positive_concentration(relatives)
     cap_rel, cap_coverage = market_cap_weighted_relative(relatives, [row.get("market_cap") for row in constituents])
+    liquidity_rel, liquidity_coverage = weighted_mean(
+        relatives, [row.get("dollar_volume_20d") for row in constituents]
+    )
+    positive_shares = [value for value in shares if finite(value) is not None and value > 0]
+    contribution_hhi = sum(float(value) ** 2 for value in positive_shares) if positive_shares else None
     valid_4w = [value for value in returns["4w"] if finite(value) is not None]
     eq_rel4 = relative(eq_returns["4w"], spy_returns.get("4w"))
+    previous_3w = mean(row.get("return_previous_3w") for row in constituents)
+    previous_9w = mean(row.get("return_previous_9w") for row in constituents)
     divergence = weighting_divergence(cap_rel, eq_rel4)
     metrics = {
         "equal_weight_return_1w": eq_returns["1w"],
@@ -73,7 +109,12 @@ def aggregate_theme(constituents: list[dict], spy_returns: dict[str, float | Non
         "equal_weight_rel_spy_1w": relative(eq_returns["1w"], spy_returns.get("1w")),
         "equal_weight_rel_spy_4w": eq_rel4,
         "equal_weight_rel_spy_13w": relative(eq_returns["13w"], spy_returns.get("13w")),
+        "equal_weight_rel_spy_previous_3w": relative(previous_3w, spy_returns.get("previous_3w")),
+        "equal_weight_rel_spy_previous_9w": relative(previous_9w, spy_returns.get("previous_9w")),
         "market_cap_weight_rel_spy_4w": cap_rel,
+        "median_rel_spy_4w": float(median(float(value) for value in relatives if finite(value) is not None)) if any(finite(value) is not None for value in relatives) else None,
+        "winsorized_equal_weight_rel_spy_4w": winsorized_mean(relatives),
+        "liquidity_weight_rel_spy_4w": liquidity_rel,
         "weighting_divergence_4w": divergence,
         "advance_count_4w": sum(value > 0 for value in valid_4w) if valid_4w else None,
         "advance_ratio_4w": sum(value > 0 for value in valid_4w) / len(valid_4w) if valid_4w else None,
@@ -83,6 +124,9 @@ def aggregate_theme(constituents: list[dict], spy_returns: dict[str, float | Non
         "volume_ratio_20d_60d": mean(row.get("volume_ratio_20d_60d") for row in constituents),
         "top1_contribution_ratio": top1,
         "top3_contribution_ratio": top3,
+        "contribution_hhi": contribution_hhi,
+        "effective_contributor_count": None if contribution_hhi in (None, 0) else 1 / contribution_hhi,
+        "unique_constituent_count": len({row.get("ticker") for row in constituents if row.get("ticker")}),
         "single_name_concentrated": None if top1 is None else top1 > 0.60,
         "market_cap_led": market_cap_led(divergence),
         "equal_weight_led": equal_weight_led(divergence),
@@ -91,6 +135,7 @@ def aggregate_theme(constituents: list[dict], spy_returns: dict[str, float | Non
     for row, rel4, share in zip(constituents, relatives, shares):
         updated.append({**row, "rel_spy_4w": rel4, "positive_contribution_ratio": share})
     metrics["_market_cap_coverage"] = cap_coverage
+    metrics["_liquidity_coverage"] = liquidity_coverage
     return metrics, updated
 
 

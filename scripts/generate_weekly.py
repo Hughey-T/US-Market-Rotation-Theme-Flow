@@ -72,10 +72,24 @@ def ret_n(close: pd.Series, periods: int):
     return float(current / prior - 1)
 
 
+def ret_window(close: pd.Series, *, end_offset: int, periods: int):
+    """Return a non-overlapping window ending ``end_offset`` sessions ago."""
+    end_index = len(close) - 1 - end_offset
+    start_index = end_index - periods
+    if start_index < 0 or end_index < 0:
+        return None
+    prior, current = close.iloc[start_index], close.iloc[end_index]
+    if pd.isna(prior) or pd.isna(current) or prior == 0:
+        return None
+    return float(current / prior - 1)
+
+
 def ticker_observation(frame: pd.DataFrame) -> dict:
     close, volume = frame["Close"], frame["Volume"]
     last = close.iloc[-1]
     result = {f"return_{horizon}": ret_n(close, periods) for horizon, periods in PERIODS.items()}
+    result["return_previous_3w"] = ret_window(close, end_offset=5, periods=15)
+    result["return_previous_9w"] = ret_window(close, end_offset=20, periods=43)
     result["_return_4w_weekly_3w"] = [ret_n(close.iloc[: len(close) - offset], PERIODS["4w"]) for offset in (10, 5, 0)]
     result["above_50dma"] = bool(last > close.iloc[-50:].mean()) if len(close) >= 50 else None
     result["above_200dma"] = bool(last > close.iloc[-200:].mean()) if len(close) >= 200 else None
@@ -86,6 +100,8 @@ def ticker_observation(frame: pd.DataFrame) -> dict:
     else:
         baseline, recent = volume60.mean(), volume.iloc[-20:].mean()
     result["volume_ratio_20d_60d"] = float(recent / baseline) if baseline is not None and recent is not None and pd.notna(recent) and baseline > 0 else None
+    recent_dollar_volume = (close.iloc[-20:] * volume.iloc[-20:]).dropna()
+    result["dollar_volume_20d"] = float(recent_dollar_volume.mean()) if len(recent_dollar_volume) == 20 else None
     result["change_4w"] = float(last - close.iloc[-22]) if len(close) > 21 else None
     result["market_cap"] = None  # optional until a point-in-time source is implemented
     result["last_date"] = str(close.index[-1].date())
@@ -103,6 +119,8 @@ def configured_tickers(config: dict, master: dict, data_date: str) -> list[str]:
     tickers = set(configured_market_tickers(config))
     for theme in master["themes"]:
         tickers.update(member["ticker"] for member in theme["members"] if member_is_effective(member, data_date))
+    for definition in config.get("dynamic_industries", {}).values():
+        tickers.update(definition.get("members", []))
     return sorted(tickers)
 
 

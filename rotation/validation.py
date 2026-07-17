@@ -10,6 +10,9 @@ from jsonschema import Draft202012Validator, FormatChecker
 
 from . import INSTRUCTION_VERSION
 from .classification import classify_theme, evaluate_priority, evaluate_timing, overheat_breadth_weak, priority_matches
+from .decisions import build_candidate_buckets, build_theme_decision, select_companies
+from .metrics import finite, positive_concentration, ratio_true
+from .presentation import build_user_view, render_phase
 from .provenance import snapshot_source_hash
 from .regime import classify_market_regime
 from .shortlist import apply_shortlist
@@ -272,6 +275,89 @@ def validate_latest_semantics(latest: dict, verify_source_hash: bool = False) ->
         for field in ("relative_strength_rank_4w", "selected_for_deep_dive", "shortlist_rank", "shortlist_reason_codes"):
             if recomputed[theme_id].get(field) != themes[theme_id].get(field):
                 errors.append(f"{theme_id}: {field} mismatch")
+    dynamic = latest.get("dynamic_discovery")
+    buckets = latest.get("candidate_buckets")
+    companies = latest.get("company_candidates")
+    user_view = latest.get("user_view")
+    additive_fields = (dynamic, buckets, companies, user_view)
+    if any(value is not None for value in additive_fields) and not all(value is not None for value in additive_fields):
+        errors.append("decision and presentation contracts must be published together")
+    if all(value is not None for value in additive_fields):
+        expected_buckets = build_candidate_buckets(themes, dynamic)
+        errors.extend(_semantic_differences(buckets, expected_buckets, "candidate_buckets"))
+        expected_companies = select_companies(themes, dynamic, expected_buckets)
+        errors.extend(_semantic_differences(companies, expected_companies, "company_candidates"))
+        dynamic_ids = dynamic.get("candidate_ids", [])
+        expected_thresholds = {"etf_rel_spy_4w_min": 0.03, "minimum_companies": 3, "pct_above_50dma_min": 0.50, "median_rel_spy_4w_min_exclusive": 0.0}
+        if dynamic.get("thresholds") != expected_thresholds:
+            errors.append("dynamic discovery thresholds do not match methodology")
+        if dynamic_ids != list(dynamic.get("candidates", {})):
+            errors.append("dynamic candidate order must match candidates object order")
+        for candidate_id in dynamic_ids:
+            candidate = dynamic.get("candidates", {}).get(candidate_id, {})
+            metrics = candidate.get("metrics", {})
+            if candidate.get("candidate_id") != candidate_id:
+                errors.append(f"dynamic candidate key mismatch: {candidate_id}")
+            if finite(candidate.get("reference_etf_rel_spy_4w")) is None or candidate["reference_etf_rel_spy_4w"] < 0.03:
+                errors.append(f"{candidate_id}: reference ETF threshold failed")
+            if len([row for row in candidate.get("constituents", []) if finite(row.get("rel_spy_4w")) is not None]) < 3:
+                errors.append(f"{candidate_id}: dynamic candidate requires three usable companies")
+            constituent_rels = [row.get("rel_spy_4w") for row in candidate.get("constituents", [])]
+            usable_rels = sorted(float(value) for value in constituent_rels if finite(value) is not None)
+            if usable_rels:
+                middle = len(usable_rels) // 2
+                expected_median = usable_rels[middle] if len(usable_rels) % 2 else (usable_rels[middle - 1] + usable_rels[middle]) / 2
+                if metrics.get("median_rel_spy_4w") != expected_median:
+                    errors.append(f"{candidate_id}: median relative strength does not match constituents")
+            expected_above = ratio_true(row.get("above_50dma") for row in candidate.get("constituents", []))
+            if metrics.get("pct_above_50dma") != expected_above:
+                errors.append(f"{candidate_id}: 50DMA breadth does not match constituents")
+            expected_top1, expected_top3, _ = positive_concentration(constituent_rels)
+            if metrics.get("top1_contribution_ratio") != expected_top1 or metrics.get("top3_contribution_ratio") != expected_top3:
+                errors.append(f"{candidate_id}: contribution concentration does not match constituents")
+            for field, predicate in (
+                ("median_rel_spy_4w", lambda value: value > 0),
+                ("pct_above_50dma", lambda value: value >= 0.50),
+            ):
+                value = metrics.get(field)
+                if finite(value) is None or not predicate(value):
+                    errors.append(f"{candidate_id}: dynamic candidate {field} threshold failed")
+            if metrics.get("single_name_concentrated") is not False:
+                errors.append(f"{candidate_id}: concentrated dynamic candidate cannot advance")
+            if not any(item.get("id") == candidate_id and item.get("source") == "dynamic_industry" for item in buckets.get("research_now", [])):
+                errors.append(f"{candidate_id}: dynamic candidate was lost before research queue")
+        for theme_id, theme in themes.items():
+            decision = theme.get("decision")
+            if not isinstance(decision, dict):
+                errors.append(f"{theme_id}: decision projection is required")
+                continue
+            expected_bucket = next((name for name in ("research_now", "watch_recovery", "avoid_now") if any(item.get("id") == theme_id and item.get("source") == "fixed_theme" for item in buckets.get(name, []))), None)
+            if decision.get("candidate_bucket") != expected_bucket:
+                errors.append(f"{theme_id}: candidate bucket mismatch")
+            expected_decision = build_theme_decision(theme, expected_bucket)
+            errors.extend(_semantic_differences(decision, expected_decision, f"themes.{theme_id}.decision"))
+            if decision.get("direct_flow_confirmation") != "unavailable":
+                errors.append(f"{theme_id}: direct flow cannot be confirmed without direct-flow data")
+            if expected_bucket == "research_now":
+                metrics = theme.get("metrics", {})
+                if not (finite(metrics.get("equal_weight_rel_spy_4w")) is not None and metrics["equal_weight_rel_spy_4w"] > 0 and finite(metrics.get("advance_ratio_4w")) is not None and metrics["advance_ratio_4w"] >= 0.60 and theme.get("condition_flags", {}).get("broad_concentration_pass") is True):
+                    errors.append(f"{theme_id}: weak or concentrated theme cannot enter research queue")
+        history_weeks = min((theme.get("quality", {}).get("history_weeks", 0) for theme in themes.values()), default=0)
+        expected_view = build_user_view(
+            regime=latest.get("market_regime", {}), style_factor=latest.get("style_factor", {}),
+            sectors=latest.get("sectors", {}), industries=latest.get("industries", {}), themes=themes,
+            dynamic=dynamic, buckets=buckets, companies=companies, history_weeks=history_weeks,
+        )
+        errors.extend(_semantic_differences(user_view, expected_view, "user_view"))
+        forbidden = ("classification_eligible", "direction_eligible", "condition_flags", "matched_conditions", "source_sha256", "run_id", "EV_", "SL_", "Q_", "P1", "P2", "P3", "P4", "P5")
+        rendered = "\n".join(render_phase(user_view, phase) for phase in range(1, 7))
+        for token in forbidden:
+            if token in rendered:
+                errors.append(f"user presentation contains internal token: {token}")
+        if user_view.get("analysis_mode") == "initial_observation":
+            for token in ("初動", "拡散", "失速", "悪化", "反転", "流入継続", "流出継続", "加速", "減速"):
+                if token in rendered:
+                    errors.append(f"initial-observation presentation contains forbidden trend claim: {token}")
     if verify_source_hash and latest.get("meta", {}).get("source_sha256") != snapshot_source_hash(latest):
         errors.append("meta.source_sha256 mismatch")
     if errors:
