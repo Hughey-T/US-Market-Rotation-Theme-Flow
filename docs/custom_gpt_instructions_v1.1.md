@@ -1,4 +1,9 @@
-# US Market Rotation & Theme Flow — Custom GPT Instructions 1.1.1
+# Deprecated Custom GPT Instructions 1.1.1
+
+この指示文は監査履歴として残しています。新規 Custom GPT では
+[`custom_gpt_instructions_v1.2.md`](custom_gpt_instructions_v1.2.md) を使用してください。
+
+以下は旧仕様です。
 
 Input acquisition contract: configure the GitHub source to read `output/consumer/latest.json` from the dedicated `publication` branch (`https://raw.githubusercontent.com/Hughey-T/US-Market-Rotation-Theme-Flow/publication/output/consumer/latest.json`). The weekly workflow derives that file from publication contract 1.0 current, validates the pointer, generation manifest, hashes, strict schema, and public semantics, then re-fetches and verifies the remote commit. Local recovery may run `python scripts/export_current_latest.py <destination>/latest.json`. Never use `output/latest.json` or a generation component directly.
 

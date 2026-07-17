@@ -164,9 +164,9 @@ class PipelineContractTests(unittest.TestCase):
             validate_schema(value, load_json(ROOT / "schemas" / "judgment_record.schema.json"))
 
     def test_custom_gpt_instruction_contract(self):
-        text = (ROOT / "docs" / "custom_gpt_instructions_v1.1.md").read_text(encoding="utf-8")
+        text = (ROOT / "docs" / "custom_gpt_instructions_v1.2.md").read_text(encoding="utf-8")
         self.assertLessEqual(len(text), 8000)
-        for required in ("schema_version=1.1", "methodology_version=1.1.0", "テーマ市場状態", "selected_for_deep_dive", "単一総合score"):
+        for required in ("更新", "次", "詳細", "用語", "再評価", "user_view.phases", "candidate_buckets", "initial_observation", "資金流入・流出を断定しない"):
             self.assertIn(required, text)
 
     def test_daily_screen_contract_is_not_present(self):

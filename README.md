@@ -1,14 +1,28 @@
-# US Market Rotation & Theme Flow v1.1
+# US Market Rotation & Theme Flow v1.2 user experience
 
-Versions: data schema `1.1`, methodology `1.1.0`, Custom GPT instruction `1.1.1`, publication contract `1.0`.
+Versions: data schema `1.1`（監査互換を維持するadditive拡張）、decision contract `2.0`、presentation `1.0`、Custom GPT instruction `1.2`、publication contract `1.0`。
 
-米国株を市場環境→スタイル→セクター・業種→テーマ→個別DDの順に調べる週次データ基盤です。data schema `1.1`、methodology `1.1.0`、Custom GPT instruction `1.1.1`、publication contract `1.0`を使用します。週次preflight、commit、repository validatorは同一の厳密なpublication file inventoryを使用し、unknown file、invalid current、lock/staging残骸を取得・commit前に拒否します。
+米国株を市場環境→スタイル→セクター・業種→テーマ→個別企業→最終判断の6段階で調べる週次データ基盤です。内部では再現可能な監査情報を保持し、通常回答では結論・意味・注意点・次の確認だけを平易な日本語で表示します。週次preflight、commit、repository validatorは同一の厳密なpublication file inventoryを使用し、unknown file、invalid current、lock/staging残骸を取得・commit前に拒否します。
 
-数値計算、欠損処理、market regime、phase、direction、evidence、research priority、テーマ市場状態、shortlistはコードが決定します。Custom GPTは結果を変更せず、説明、反対証拠、定性補足、個別DD引継ぎを担当します。価格上昇を直接的な資金流入とは扱いません。
+## 1.2 user experience の主要変更
+
+- データ層、判断層、表示層を分離し、通常表示専用の `user_view` を追加
+- 固定テーマ外の強い業種を、ETF信号＋最低3社の企業breadthで動的発見
+- 候補を「個別企業を調べる」「回復を待つ」「現在は避ける」の3分類へ変更
+- 調査対象は0〜5件。弱い候補で枠を埋めない
+- 価格上の選好と実際の資金フロー確認を別fieldに分離
+- 履歴3週未満は初期観測モードとし、変化・反転・加速を断定しない
+- 中央値、winsorized、流動性加重、寄与HHI、実効寄与企業数を追加
+- 企業候補は1対象最大2社、全体でticker重複なし
+- `更新` と5回の `次` だけで全6段階を完了
+
+通常利用は [Custom GPT Instructions 1.2](docs/custom_gpt_instructions_v1.2.md)、完成形は [6段階の表示サンプル](docs/display_samples_v1.2.md)、方法は [Methodology 1.2](docs/methodology_v1.2.md)、fieldは [Data Dictionary 1.2](docs/data_dictionary_v1.2.md) を参照してください。
+
+数値計算、欠損処理、market regime、theme判定、動的発見、3分類候補、企業候補、表示文はコードが決定します。Custom GPTは `user_view` を順番に提示し、結果を変更しません。価格上昇を直接的な資金流入とは扱いません。
 
 Theme membershipはsnapshotのdata dateに対する`active/valid_from/valid_to`でpoint-in-time選択します。同一tickerの非重複・隣接期間は履歴として許可し、重複期間、逆転期間、異常日付は拒否します。50DMA breadthは実測countをweekly historyへ保存し、旧履歴にcountがなければ推定しません。`equal_weight_led`はmethodologyに既存定義があり、1.1の正式なcode-side fieldとして採用しました。
 
-## 1.1の主要変更
+## 1.1監査基盤（継続）
 
 - `phase=initial|diffusion|price_overheat|unclassifiable`と`direction=improving|flat|worsening|outflow_signal|unclassifiable`を分離
 - `price_overheat + outflow_signal`を同時保持
@@ -96,10 +110,10 @@ Market Rotation 1.0はdefaultで拒否します。`scripts/migrate_1_0_to_1_1.py
 - direct ETF/fund flow、earnings revisions、short/options positioningは未実装
 - market capはpoint-in-time保証がない間は補助fieldで、coverage不足時は`null`
 - `role=core`はtheme中心性だけで、品質、収益性、moat、valuation、投資魅力度を意味しない
-- theme masterは市場全体の自動発見ではなく、四半期review対象
+- 固定theme masterは四半期review対象。別枠の動的業種発見は設定済み企業basketの範囲に限る
 - 閾値は未較正の暫定値で、履歴へ合わせて事後最適化しない
 
-方法論は[Methodology 1.1.0](docs/methodology_v1.1.md)、field定義は[Data Dictionary](docs/data_dictionary_v1.1.md)、Custom GPT契約は[Instructions 1.1.1](docs/custom_gpt_instructions_v1.1.md)が正本です。
+現状監査は[CURRENT_STATE](docs/CURRENT_STATE.md)、schema拡張は[Schema 1.2](docs/schema_v1.2.md)、実装は[Implementation Notes](docs/implementation_notes_v1.2.md)、テストは[Test Specification](docs/test_specification_v1.2.md)、運用は[Operations Guide](docs/operations_guide_v1.2.md)、移行は[Migration 1.2](docs/migration_v1.2.md)、公開契約は[Public Artifact 1.2](docs/public_artifact_v1.2.md)を参照してください。
 ## Publication contract 1.0
 
 `publication`ブランチの`output/current.json`が唯一のauthoritative generation pointerです。Manifests and pointers carry `publication_contract_version=1.0`. `analysis_id` identifies deterministic inputs and logic without the clock; `generation_id` identifies one execution. `output/consumer/latest.json`は同一workflowでcurrentから生成・Schema検証・remote再取得比較まで完了した派生consumer exportであり、authoritative pointerの代替ではありません。ローカルでは次のcommandで同じexportを再生成できます。

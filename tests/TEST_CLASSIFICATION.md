@@ -1,5 +1,7 @@
 # Test classification
 
+`tests.test_user_experience` belongs to `unit-and-rule-contracts`. It owns the additive decision and presentation contracts: dynamic discovery, three candidate buckets, initial observation, robust concentration metrics, company selection, six-stage command flow, and normal-display leakage prevention.
+
 Each Python test method belongs to exactly one CI category.
 
 | CI category | Files | Methods |

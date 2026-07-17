@@ -4,6 +4,8 @@ from pathlib import Path
 
 from rotation.provenance import snapshot_source_hash
 from rotation.judgments import evaluate_withdrawal
+from rotation.decisions import build_candidate_buckets, build_theme_decision, select_companies
+from rotation.presentation import build_user_view
 from rotation.shortlist import apply_shortlist
 from rotation.validation import ContractError, load_json, validate_judgment_semantics, validate_schema
 from tests.test_pipeline_contract import build_synthetic
@@ -18,10 +20,17 @@ def two_theme_source():
     source = build_synthetic()
     second = copy.deepcopy(load_json(ROOT / "tests" / "fixtures" / "latest_p5_low_priority.json")["themes"]["fixture_theme"])
     second["theme_id"] = "second_theme"
+    second["label"] = "架空全面弱化theme"
     for index, constituent in enumerate(second["constituents"]):
         constituent["ticker"] = f"SECOND{index}"
     source["themes"]["second_theme"] = second
     source["themes"], source["theme_shortlist"] = apply_shortlist(source["themes"])
+    source["candidate_buckets"] = build_candidate_buckets(source["themes"], source["dynamic_discovery"])
+    source["company_candidates"] = select_companies(source["themes"], source["dynamic_discovery"], source["candidate_buckets"])
+    for theme_id, theme in source["themes"].items():
+        bucket = next(name for name in ("research_now", "watch_recovery", "avoid_now") if any(item["id"] == theme_id and item["source"] == "fixed_theme" for item in source["candidate_buckets"][name]))
+        theme["decision"] = build_theme_decision(theme, bucket)
+    source["user_view"] = build_user_view(regime=source["market_regime"], style_factor=source["style_factor"], sectors=source["sectors"], industries=source["industries"], themes=source["themes"], dynamic=source["dynamic_discovery"], buckets=source["candidate_buckets"], companies=source["company_candidates"], history_weeks=min(theme["quality"]["history_weeks"] for theme in source["themes"].values()))
     source["meta"]["universe_definition"]["theme_count"] = 2
     source["meta"]["source_sha256"] = snapshot_source_hash(source)
     return source

@@ -6,11 +6,14 @@ import datetime as dt
 from . import DATA_SCHEMA_VERSION, METHODOLOGY_VERSION
 from .identity import analysis_identity, generation_identity
 from .classification import classify_theme
+from .decisions import build_candidate_buckets, build_theme_decision, select_companies
+from .discovery import discover_dynamic_industries
 from .metrics import aggregate_theme, role_aggregates
 from .membership import member_is_effective
 from .provenance import snapshot_source_hash, stable_hash
 from .quality import assess_quality
 from .regime import classify_market_regime
+from .presentation import build_user_view
 from .shortlist import apply_shortlist
 from .trends import compute_theme_trends, contiguous_history, relative_trend
 
@@ -91,8 +94,12 @@ def build_snapshot(
                 continue
             observed = observations.get(member["ticker"], {})
             rows.append({**observed, **member, "valid": observed.get("return_1w") is not None and observed.get("return_4w") is not None, "overlap_theme_count": active_membership[member["ticker"]]})
-        metrics, rows = aggregate_theme(rows, {h: spy.get(f"return_{h}") for h in ("1w", "4w", "13w")})
+        metrics, rows = aggregate_theme(rows, {
+            **{h: spy.get(f"return_{h}") for h in ("1w", "4w", "13w")},
+            "previous_3w": spy.get("return_previous_3w"), "previous_9w": spy.get("return_previous_9w"),
+        })
         cap_coverage = metrics.pop("_market_cap_coverage")
+        metrics.pop("_liquidity_coverage")
         by_role, _ = role_aggregates(rows, spy.get("return_4w"))
         quality = assess_quality(rows, len(compatible) + 1, cap_coverage)
         if quality["metric_valid_counts"]["above_50dma"] < 5:
@@ -101,9 +108,18 @@ def build_snapshot(
         current_history = {"equal_weight_rel_spy_4w": metrics["equal_weight_rel_spy_4w"], "advance_count_4w": metrics["advance_count_4w"], "above_50dma_count": metrics["above_50dma_count"], "pct_above_50dma": metrics["pct_above_50dma"], "volume_ratio_20d_60d": metrics["volume_ratio_20d_60d"]}
         trends = compute_theme_trends(compatible, definition["theme_id"], current_history)
         flags, classifications = classify_theme(metrics, trends, quality, by_role)
-        constituents = [{key: row.get(key) for key in ("ticker", "role", "valid", "return_4w", "rel_spy_4w", "market_cap", "positive_contribution_ratio", "overlap_theme_count")} for row in rows]
+        constituents = [{key: row.get(key) for key in ("ticker", "role", "valid", "return_4w", "rel_spy_4w", "market_cap", "dollar_volume_20d", "positive_contribution_ratio", "overlap_theme_count")} for row in rows]
         themes[definition["theme_id"]] = {"theme_id": definition["theme_id"], "label": definition["label"], "quality": quality, "metrics": metrics, "trends": trends, "condition_flags": flags, "classifications": classifications, "relative_strength_rank_4w": None, "selected_for_deep_dive": False, "shortlist_rank": None, "shortlist_reason_codes": [], "by_role": by_role, "constituents": constituents}
     themes, shortlist = apply_shortlist(themes)
+    dynamic = discover_dynamic_industries(config, observations, spy)
+    candidate_buckets = build_candidate_buckets(themes, dynamic)
+    company_candidates = select_companies(themes, dynamic, candidate_buckets)
+    for theme_id, theme in themes.items():
+        bucket = next(
+            name for name in ("research_now", "watch_recovery", "avoid_now")
+            if any(item["id"] == theme_id and item["source"] == "fixed_theme" for item in candidate_buckets[name])
+        )
+        theme["decision"] = build_theme_decision(theme, bucket)
     now = generated_at.astimezone(dt.timezone.utc)
     universe_hash = stable_hash(theme_master)
     quantitative = {"regime": regime_inputs(config, observations), "themes": themes, "data_date": data_date}
@@ -113,6 +129,15 @@ def build_snapshot(
         config=config, source_commit=source_commit, quantitative=quantitative,
     )
     generation_id = generation_identity(run_id, generated_at_text, source_commit)
+    classified_regime = classify_market_regime(regime_inputs(config, observations))
+    style_factor = _group(config, "style_factor", observations, spy)["etfs"]
+    sectors = _group(config, "sectors", observations, spy)
+    industries = _group(config, "industries", observations, spy)
+    user_view = build_user_view(
+        regime=classified_regime, style_factor=style_factor, sectors=sectors, industries=industries,
+        themes=themes, dynamic=dynamic, buckets=candidate_buckets, companies=company_candidates,
+        history_weeks=len(compatible) + 1,
+    )
     snapshot = {
         "meta": {
             "schema_version": DATA_SCHEMA_VERSION, "methodology_version": METHODOLOGY_VERSION,
@@ -126,10 +151,13 @@ def build_snapshot(
             "global_quality": {"requested_ticker_count": len(observations), "usable_ticker_count": sum(row.get("return_4w") is not None for row in observations.values()), "coverage_ratio": sum(row.get("return_4w") is not None for row in observations.values()) / len(observations), "critical_missing": [] if spy.get("return_4w") is not None else ["SPY"], "missing_tickers": sorted(ticker for ticker, row in observations.items() if row.get("return_4w") is None), "warnings": sorted(f"OVERLAP:{ticker}" for ticker,count in active_membership.items() if count > 1)},
         },
         "not_implemented": ["direct_etf_flow", "earnings_revision", "positioning", "point_in_time_market_cap"],
-        "market_regime": classify_market_regime(regime_inputs(config, observations)),
-        "style_factor": _group(config, "style_factor", observations, spy)["etfs"],
-        "sectors": _group(config, "sectors", observations, spy), "industries": _group(config, "industries", observations, spy),
-        "themes": themes, "theme_shortlist": shortlist, "history_weekly": compatible[-12:], "previous_judgments": previous_judgments,
+        "market_regime": classified_regime,
+        "style_factor": style_factor,
+        "sectors": sectors, "industries": industries,
+        "themes": themes, "theme_shortlist": shortlist,
+        "dynamic_discovery": dynamic, "candidate_buckets": candidate_buckets,
+        "company_candidates": company_candidates, "user_view": user_view,
+        "history_weekly": compatible[-12:], "previous_judgments": previous_judgments,
     }
     snapshot["meta"]["source_sha256"] = snapshot_source_hash(snapshot)
     return snapshot
