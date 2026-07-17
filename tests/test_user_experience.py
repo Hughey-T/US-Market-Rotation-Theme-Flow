@@ -141,11 +141,27 @@ class UserExperienceContracts(unittest.TestCase):
 
     def test_phase_four_and_six_always_name_all_four_buckets(self):
         snapshot = build_synthetic()
+        self.assertEqual(snapshot["user_view"]["presentation_version"], "1.2")
         for phase in (4, 6):
             rendered = render_phase(snapshot["user_view"], phase)
             for label in ("個別企業を調べる", "回復条件を監視する", "長期材料はあるが、現在の株価は弱い", "現在は避ける"):
                 self.assertIn(label, rendered)
             self.assertIn("該当なし", rendered)
+
+    def test_presentation_1_1_remains_read_only_compatible(self):
+        legacy = build_synthetic()
+        legacy["user_view"] = build_user_view(
+            regime=legacy["market_regime"], style_factor=legacy["style_factor"],
+            sectors=legacy["sectors"], industries=legacy["industries"], themes=legacy["themes"],
+            dynamic=legacy["dynamic_discovery"], buckets=legacy["candidate_buckets"],
+            companies=legacy["company_candidates"],
+            history_weeks=min(theme["quality"]["history_weeks"] for theme in legacy["themes"].values()),
+            presentation_version="1.1",
+        )
+        legacy["meta"]["source_sha256"] = snapshot_source_hash(legacy)
+        validate_schema(legacy, load_json(ROOT / "schemas" / "rotation_snapshot.schema.json"), "presentation 1.1")
+        validate_latest_semantics(legacy, verify_source_hash=True)
+        self.assertNotIn("長期材料はあるが、現在の株価は弱い", render_phase(legacy["user_view"], 4))
 
     def test_semantic_validator_rejects_four_bucket_and_display_corruption(self):
         base = build_synthetic()
