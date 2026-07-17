@@ -143,7 +143,7 @@ class UserExperienceContracts(unittest.TestCase):
         snapshot = build_synthetic()
         for phase in (4, 6):
             rendered = render_phase(snapshot["user_view"], phase)
-            for label in ("個別企業を調べる", "回復条件を監視する", "長期材料はあるが現在の株価は弱い", "現在は避ける"):
+            for label in ("個別企業を調べる", "回復条件を監視する", "長期材料はあるが、現在の株価は弱い", "現在は避ける"):
                 self.assertIn(label, rendered)
             self.assertIn("該当なし", rendered)
 
