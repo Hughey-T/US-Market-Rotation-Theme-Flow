@@ -14,6 +14,10 @@
     "industries": {"$ref": "#/$defs/rankedEtfGroup"},
     "themes": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/theme"}},
     "theme_shortlist": {"$ref": "#/$defs/themeShortlist"},
+    "dynamic_discovery": {"$ref": "#/$defs/dynamicDiscovery"},
+    "candidate_buckets": {"$ref": "#/$defs/candidateBuckets"},
+    "company_candidates": {"type": "array", "items": {"$ref": "#/$defs/companyCandidate"}},
+    "user_view": {"$ref": "#/$defs/userView"},
     "history_weekly": {"type": "array", "maxItems": 12, "items": {"$ref": "#/$defs/historyItem"}},
     "previous_judgments": {"$ref": "#/$defs/previousJudgments"}
   },
@@ -198,7 +202,12 @@
         "equal_weight_rel_spy_1w": {"$ref": "#/$defs/nullableNumber"},
         "equal_weight_rel_spy_4w": {"$ref": "#/$defs/nullableNumber"},
         "equal_weight_rel_spy_13w": {"$ref": "#/$defs/nullableNumber"},
+        "equal_weight_rel_spy_previous_3w": {"$ref": "#/$defs/nullableNumber"},
+        "equal_weight_rel_spy_previous_9w": {"$ref": "#/$defs/nullableNumber"},
         "market_cap_weight_rel_spy_4w": {"$ref": "#/$defs/nullableNumber"},
+        "median_rel_spy_4w": {"$ref": "#/$defs/nullableNumber"},
+        "winsorized_equal_weight_rel_spy_4w": {"$ref": "#/$defs/nullableNumber"},
+        "liquidity_weight_rel_spy_4w": {"$ref": "#/$defs/nullableNumber"},
         "weighting_divergence_4w": {"$ref": "#/$defs/nullableNumber"},
         "advance_count_4w": {"$ref": "#/$defs/nullableInteger"},
         "advance_ratio_4w": {"$ref": "#/$defs/nullableNumber"},
@@ -208,6 +217,9 @@
         "volume_ratio_20d_60d": {"$ref": "#/$defs/nullableNumber"},
         "top1_contribution_ratio": {"$ref": "#/$defs/nullableNumber"},
         "top3_contribution_ratio": {"$ref": "#/$defs/nullableNumber"},
+        "contribution_hhi": {"$ref": "#/$defs/nullableNumber"},
+        "effective_contributor_count": {"$ref": "#/$defs/nullableNumber"},
+        "unique_constituent_count": {"type": "integer", "minimum": 0},
         "single_name_concentrated": {"type": ["boolean", "null"]},
         "market_cap_led": {"type": ["boolean", "null"]},
         "equal_weight_led": {"type": ["boolean", "null"]}
@@ -298,6 +310,7 @@
         "return_4w": {"$ref": "#/$defs/nullableNumber"},
         "rel_spy_4w": {"$ref": "#/$defs/nullableNumber"},
         "market_cap": {"$ref": "#/$defs/nullableNumber"},
+        "dollar_volume_20d": {"$ref": "#/$defs/nullableNumber"},
         "positive_contribution_ratio": {"$ref": "#/$defs/nullableNumber"},
         "overlap_theme_count": {"type": "integer", "minimum": 1}
       }
@@ -320,6 +333,7 @@
         "shortlist_reason_codes": {"$ref": "#/$defs/conditionList"},
         "by_role": {"type": "object", "additionalProperties": false, "required": ["core", "beneficiary", "peripheral"], "properties": {"core": {"$ref": "#/$defs/roleMetric"}, "beneficiary": {"$ref": "#/$defs/roleMetric"}, "peripheral": {"$ref": "#/$defs/roleMetric"}}},
         "constituents": {"type": "array", "items": {"$ref": "#/$defs/constituent"}}
+        ,"decision": {"$ref": "#/$defs/themeDecision"}
       }
     },
     "themeShortlist": {
@@ -332,6 +346,89 @@
         "minimum_preferred_themes": {"const": 3},
         "selected_theme_ids": {"type": "array", "maxItems": 5, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
         "quality_reasons": {"$ref": "#/$defs/conditionList"}
+      }
+    },
+    "themeDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_bucket", "price_preference", "direct_flow_confirmation", "analysis_mode", "weeks_until_trend", "time_profile"],
+      "properties": {
+        "candidate_bucket": {"enum": ["research_now", "watch_recovery", "avoid_now"]},
+        "price_preference": {"enum": ["positive", "negative", "mixed", "unavailable"]},
+        "direct_flow_confirmation": {"enum": ["confirmed", "not_confirmed", "unavailable"]},
+        "analysis_mode": {"enum": ["initial_observation", "trend"]},
+        "weeks_until_trend": {"type": "integer", "minimum": 0, "maximum": 2},
+        "time_profile": {"enum": ["strengthening", "weakening", "mixed", "unavailable"]}
+      }
+    },
+    "candidateRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "label", "source"],
+      "properties": {"id": {"type": "string"}, "label": {"type": "string"}, "source": {"enum": ["fixed_theme", "dynamic_industry"]}}
+    },
+    "candidateBuckets": {
+      "type": "object", "additionalProperties": false,
+      "required": ["selection_version", "max_research_items", "research_now", "watch_recovery", "avoid_now"],
+      "properties": {
+        "selection_version": {"const": "2.0"}, "max_research_items": {"const": 5},
+        "research_now": {"type": "array", "maxItems": 5, "items": {"$ref": "#/$defs/candidateRef"}},
+        "watch_recovery": {"type": "array", "items": {"$ref": "#/$defs/candidateRef"}},
+        "avoid_now": {"type": "array", "items": {"$ref": "#/$defs/candidateRef"}}
+      }
+    },
+    "dynamicConstituent": {
+      "type": "object", "additionalProperties": false,
+      "required": ["ticker", "return_4w", "rel_spy_4w", "above_50dma", "positive_contribution_ratio", "dollar_volume_20d"],
+      "properties": {
+        "ticker": {"type": "string"}, "return_4w": {"$ref": "#/$defs/nullableNumber"},
+        "rel_spy_4w": {"$ref": "#/$defs/nullableNumber"}, "above_50dma": {"type": ["boolean", "null"]},
+        "positive_contribution_ratio": {"$ref": "#/$defs/nullableNumber"}, "dollar_volume_20d": {"$ref": "#/$defs/nullableNumber"}
+      }
+    },
+    "dynamicCandidate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["candidate_id", "label", "source", "reference_etf", "reference_etf_rel_spy_4w", "metrics", "constituents"],
+      "properties": {
+        "candidate_id": {"type": "string"}, "label": {"type": "string"}, "source": {"const": "dynamic_industry"},
+        "reference_etf": {"type": "string"}, "reference_etf_rel_spy_4w": {"type": "number", "minimum": 0.03}, "metrics": {"$ref": "#/$defs/themeMetrics"},
+        "constituents": {"type": "array", "items": {"$ref": "#/$defs/dynamicConstituent"}}
+      }
+    },
+    "dynamicDiscovery": {
+      "type": "object", "additionalProperties": false,
+      "required": ["discovery_version", "thresholds", "candidate_ids", "candidates", "rejected"],
+      "properties": {
+        "discovery_version": {"const": "1.0"},
+        "thresholds": {"type": "object", "additionalProperties": {"type": ["number", "integer"]}},
+        "candidate_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "candidates": {"type": "object", "additionalProperties": {"$ref": "#/$defs/dynamicCandidate"}},
+        "rejected": {"type": "object", "additionalProperties": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}}
+      }
+    },
+    "companyCandidate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["theme_id", "theme_label", "source", "ticker", "selection_role", "why", "key_check", "counter_evidence"],
+      "properties": {
+        "theme_id": {"type": "string"}, "theme_label": {"type": "string"}, "source": {"enum": ["fixed_theme", "dynamic_industry"]},
+        "ticker": {"type": "string"}, "selection_role": {"enum": ["representative", "breadth_check"]},
+        "why": {"type": "string"}, "key_check": {"type": "string"}, "counter_evidence": {"type": "string"}
+      }
+    },
+    "userPhase": {
+      "type": "object", "additionalProperties": false,
+      "required": ["conclusion", "investment_meaning", "cautions", "next_checks"],
+      "properties": {
+        "conclusion": {"type": "string", "minLength": 1}, "investment_meaning": {"type": "string", "minLength": 1},
+        "cautions": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "next_checks": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "userView": {
+      "type": "object", "additionalProperties": false,
+      "required": ["presentation_version", "analysis_mode", "phases"],
+      "properties": {
+        "presentation_version": {"const": "1.0"}, "analysis_mode": {"enum": ["initial_observation", "trend"]},
+        "phases": {"type": "array", "minItems": 6, "maxItems": 6, "items": {"$ref": "#/$defs/userPhase"}}
       }
     },
     "historyTheme": {

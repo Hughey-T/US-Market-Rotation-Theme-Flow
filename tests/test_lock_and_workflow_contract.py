@@ -174,6 +174,8 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("--expected-remote", text)
         self.assertIn("--bootstrap", text)
         self.assertIn("git worktree add --detach", text)
+        self.assertLess(text.index("- name: Offline preflight"), text.index("- name: Bootstrap or update publication work"))
+        self.assertLess(text.index("- name: Bootstrap or update publication work"), text.index("- name: Generate, validate, and publish"))
         self.assertIn("push:\n    branches: [main]", test_workflow)
 
     def test_publication_push_is_fast_forward_and_does_not_update_main(self):

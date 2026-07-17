@@ -1,5 +1,5 @@
 {
-  "config_version": "1.1.0",
+  "config_version": "1.2.0",
   "_comment": "分析に使うETF（上場投資信託）の定義。ティッカー: 日本語ラベル。追加・削除はここを編集するだけでよい。",
   "vix": "^VIX",
   "regime_assets": {
@@ -56,5 +56,14 @@
     "XRT": "小売",
     "IYT": "運輸",
     "PAVE": "インフラ建設"
+  },
+  "dynamic_industries": {
+    "regional_banks": {"label": "地方銀行", "etf": "KRE", "members": ["CFG", "FITB", "KEY", "MTB", "RF", "ZION"]},
+    "transportation": {"label": "運輸", "etf": "IYT", "members": ["CSX", "FDX", "NSC", "ODFL", "UNP", "UPS"]},
+    "homebuilders": {"label": "住宅建設", "etf": "XHB", "members": ["DHI", "LEN", "NVR", "PHM", "TOL"]},
+    "oil_gas_exploration": {"label": "石油・ガス開発", "etf": "XOP", "members": ["COP", "DVN", "EOG", "FANG", "OXY"]},
+    "retail": {"label": "小売", "etf": "XRT", "members": ["COST", "LOW", "TGT", "TJX", "WMT"]},
+    "biotechnology": {"label": "バイオテクノロジー", "etf": "XBI", "members": ["ALNY", "AMGN", "BIIB", "GILD", "REGN", "VRTX"]},
+    "infrastructure_construction": {"label": "インフラ建設", "etf": "PAVE", "members": ["EME", "MTZ", "PWR", "VMC", "VUL"]}
   }
 }

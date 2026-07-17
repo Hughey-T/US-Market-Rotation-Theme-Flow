@@ -1,0 +1,13 @@
+{
+  "fixture_version": "1.0",
+  "cases": [
+    {"id": "weak_market", "description": "市場全体の方向感が弱いケース"},
+    {"id": "strong_fixed_theme", "description": "固定テーマが強いケース"},
+    {"id": "strong_dynamic_industry", "description": "固定テーマ外のindustryが強いケース"},
+    {"id": "single_name_concentration", "description": "一社集中でテーマ全体は弱いケース"},
+    {"id": "initial_observation", "description": "履歴不足の初期観測ケース"},
+    {"id": "semantic_stop", "description": "ルール不整合で停止するケース"},
+    {"id": "zero_research_candidates", "description": "調査候補が0件のケース"},
+    {"id": "long_term_but_price_weak", "description": "長期材料はあるが現在の株価が弱いケース"}
+  ]
+}
