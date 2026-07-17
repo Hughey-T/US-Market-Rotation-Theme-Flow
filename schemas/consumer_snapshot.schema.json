@@ -29,14 +29,14 @@
         "data_date": {"type": "string", "format": "date"},
         "valid_until": {"type": "string", "format": "date-time"},
         "hard_stop_after": {"type": "string", "format": "date-time"},
-        "status": {"enum": ["success", "failed"]},
-        "failure_reason": {"anyOf": [{"type": "null"}, {"type": "string"}]},
+        "status": {"const": "success"},
+        "failure_reason": {"const": null},
         "global_quality": {
           "type": "object",
           "additionalProperties": false,
           "required": ["critical_missing", "warnings"],
           "properties": {
-            "critical_missing": {"type": "array", "items": {"type": "string"}},
+            "critical_missing": {"type": "array", "maxItems": 0, "items": {"type": "string"}},
             "warnings": {"type": "array", "items": {"type": "string"}}
           }
         }
@@ -47,7 +47,7 @@
       "additionalProperties": false,
       "required": ["presentation_version", "analysis_mode", "phases"],
       "properties": {
-        "presentation_version": {"enum": ["1.1", "1.2"]},
+        "presentation_version": {"const": "1.2"},
         "analysis_mode": {"enum": ["initial_observation", "trend"]},
         "phases": {
           "type": "array",

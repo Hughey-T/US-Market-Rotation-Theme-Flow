@@ -8,6 +8,8 @@ from rotation.publication import committed_history, instruction_version_for_data
 from rotation.validation import ContractError, load_json, validate_latest_semantics, validate_public_latest
 from scripts.generate_weekly import history_item
 from scripts.export_current_latest import export_current
+from scripts.export_consumer_projection import export_consumer_projection
+from scripts.export_consumer_details import export_consumer_details
 from scripts.validate_repository import validate_public_outputs
 from tests.test_pipeline_contract import build_synthetic
 
@@ -76,12 +78,14 @@ class PublicLatestContractTests(unittest.TestCase):
             publish_generation(output, current, history_item(current), index)
             consumer_path = output / "consumer" / "latest.json"
             export_current(output, consumer_path)
+            export_consumer_projection(output, output / "consumer/v1/latest.json")
+            export_consumer_details(output, output / "consumer/v1/details")
             self.assertEqual(validate_public_outputs(root, SCHEMA), 2)
-            projected = load_json(consumer_path)
+            projected = load_json(output / "consumer/v1/latest.json")
             self.assertEqual(projected["user_view"], current["user_view"])
             self.assertNotIn("themes", projected)
             projected["source_identity"]["generation_id"] = "b" * 64
-            atomic_write_json(consumer_path, projected)
+            atomic_write_json(output / "consumer/v1/latest.json", projected)
             with self.assertRaisesRegex(ContractError, "generation ID mismatch"):
                 validate_public_outputs(root, SCHEMA)
 

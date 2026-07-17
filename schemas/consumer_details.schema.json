@@ -1,0 +1,191 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/us-market-rotation/consumer_details.schema.1.0.json",
+  "title": "Custom GPT phase detail projection 1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["details_contract_version", "source_identity", "meta", "phase", "detail_view"],
+  "properties": {
+    "details_contract_version": {"const": "1.0"},
+    "source_identity": {"$ref": "#/$defs/sourceIdentity"},
+    "meta": {"$ref": "#/$defs/meta"},
+    "phase": {"type": "integer", "minimum": 1, "maximum": 6},
+    "detail_view": {"type": "object"}
+  },
+  "oneOf": [
+    {"properties": {"phase": {"const": 1}, "detail_view": {"$ref": "#/$defs/phase1"}}},
+    {"properties": {"phase": {"const": 2}, "detail_view": {"$ref": "#/$defs/phase2"}}},
+    {"properties": {"phase": {"const": 3}, "detail_view": {"$ref": "#/$defs/phase3"}}},
+    {"properties": {"phase": {"const": 4}, "detail_view": {"$ref": "#/$defs/phase4"}}},
+    {"properties": {"phase": {"const": 5}, "detail_view": {"$ref": "#/$defs/phase5"}}},
+    {"properties": {"phase": {"const": 6}, "detail_view": {"$ref": "#/$defs/phase6"}}}
+  ],
+  "$defs": {
+    "nullableScalar": {"type": ["string", "number", "integer", "boolean", "null"]},
+    "sourceIdentity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["analysis_id", "generation_id"],
+      "properties": {
+        "analysis_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "generation_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "meta": {
+      "type": "object", "additionalProperties": false,
+      "required": ["run_id", "source_commit", "source_sha256", "data_date", "status"],
+      "properties": {
+        "run_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "source_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "source_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "data_date": {"type": "string", "format": "date"},
+        "status": {"const": "success"}
+      }
+    },
+    "metric": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "label", "value", "explanation"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1}, "label": {"type": "string", "minLength": 1},
+        "value": {"$ref": "#/$defs/nullableScalar"}, "explanation": {"type": "string", "minLength": 1}
+      }
+    },
+    "ranked": {
+      "type": "object", "additionalProperties": false,
+      "required": ["ticker", "label", "return_1w", "return_4w", "return_13w", "relative_strength_4w", "above_50dma", "above_200dma"],
+      "properties": {
+        "ticker": {"type": "string", "minLength": 1}, "label": {"type": "string", "minLength": 1},
+        "return_1w": {"type": ["number", "null"]}, "return_4w": {"type": ["number", "null"]},
+        "return_13w": {"type": ["number", "null"]}, "relative_strength_4w": {"type": ["number", "null"]},
+        "above_50dma": {"type": ["boolean", "null"]}, "above_200dma": {"type": ["boolean", "null"]}
+      }
+    },
+    "phase1": {
+      "type": "object", "additionalProperties": false,
+      "required": ["title", "market_environment", "representative_indicators", "breadth", "risk_posture", "global_quality", "warnings", "constraints"],
+      "properties": {
+        "title": {"type": "string", "minLength": 1},
+        "market_environment": {
+          "type": "object", "additionalProperties": false,
+          "required": ["classification", "secondary", "confidence", "explanation"],
+          "properties": {
+            "classification": {"type": "string"}, "secondary": {"type": "array", "items": {"type": "string"}},
+            "confidence": {"type": "string"}, "explanation": {"type": "string", "minLength": 1}
+          }
+        },
+        "representative_indicators": {"type": "array", "minItems": 6, "items": {"$ref": "#/$defs/metric"}},
+        "breadth": {
+          "type": "object", "additionalProperties": false, "required": ["sector_advance_ratio_4w", "explanation"],
+          "properties": {"sector_advance_ratio_4w": {"type": ["number", "null"]}, "explanation": {"type": "string", "minLength": 1}}
+        },
+        "risk_posture": {"$ref": "#/$defs/strings"},
+        "global_quality": {
+          "type": "object", "additionalProperties": false,
+          "required": ["coverage_ratio", "requested_ticker_count", "usable_ticker_count", "critical_missing"],
+          "properties": {
+            "coverage_ratio": {"type": ["number", "null"]}, "requested_ticker_count": {"type": ["integer", "null"]},
+            "usable_ticker_count": {"type": ["integer", "null"]}, "critical_missing": {"$ref": "#/$defs/strings"}
+          }
+        },
+        "warnings": {"$ref": "#/$defs/strings"}, "constraints": {"$ref": "#/$defs/strings"}
+      }
+    },
+    "styleComparison": {
+      "type": "object", "additionalProperties": false,
+      "required": ["ticker", "label", "return_1w", "return_4w", "return_13w", "relative_strength_1w", "relative_strength_4w", "relative_strength_13w"],
+      "properties": {
+        "ticker": {"type": "string"}, "label": {"type": "string"},
+        "return_1w": {"type": ["number", "null"]}, "return_4w": {"type": ["number", "null"]}, "return_13w": {"type": ["number", "null"]},
+        "relative_strength_1w": {"type": ["number", "null"]}, "relative_strength_4w": {"type": ["number", "null"]}, "relative_strength_13w": {"type": ["number", "null"]}
+      }
+    },
+    "movingAverage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["ticker", "above_50dma", "above_200dma", "explanation"],
+      "properties": {
+        "ticker": {"type": "string"}, "above_50dma": {"type": ["boolean", "null"]},
+        "above_200dma": {"type": ["boolean", "null"]}, "explanation": {"type": "string", "minLength": 1}
+      }
+    },
+    "phase2": {
+      "type": "object", "additionalProperties": false,
+      "required": ["title", "comparisons", "moving_average_state", "interpretation_notes"],
+      "properties": {
+        "title": {"type": "string", "minLength": 1},
+        "comparisons": {"type": "array", "items": {"$ref": "#/$defs/styleComparison"}},
+        "moving_average_state": {"type": "array", "items": {"$ref": "#/$defs/movingAverage"}},
+        "interpretation_notes": {"$ref": "#/$defs/strings"}
+      }
+    },
+    "discovery": {
+      "type": "object", "additionalProperties": false, "required": ["id", "label", "explanation"],
+      "properties": {"id": {"type": "string"}, "label": {"type": "string"}, "explanation": {"type": "string", "minLength": 1}}
+    },
+    "phase3": {
+      "type": "object", "additionalProperties": false,
+      "required": ["title", "top_sectors", "bottom_sectors", "top_industries", "dynamic_selected", "dynamic_excluded", "breadth_and_concentration", "data_gaps"],
+      "properties": {
+        "title": {"type": "string", "minLength": 1},
+        "top_sectors": {"type": "array", "items": {"$ref": "#/$defs/ranked"}},
+        "bottom_sectors": {"type": "array", "items": {"$ref": "#/$defs/ranked"}},
+        "top_industries": {"type": "array", "items": {"$ref": "#/$defs/ranked"}},
+        "dynamic_selected": {"type": "array", "items": {"$ref": "#/$defs/discovery"}},
+        "dynamic_excluded": {"type": "array", "items": {"$ref": "#/$defs/discovery"}},
+        "breadth_and_concentration": {"$ref": "#/$defs/strings"}, "data_gaps": {"$ref": "#/$defs/strings"}
+      }
+    },
+    "themeDetail": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "label", "source", "classification_explanation", "relative_strength_4w", "breadth_above_50dma", "concentration_top1", "structural_context_status", "recovery_condition", "largest_counter_evidence"],
+      "properties": {
+        "id": {"type": "string"}, "label": {"type": "string"}, "source": {"type": "string"},
+        "classification_explanation": {"type": "string"}, "relative_strength_4w": {"type": ["number", "null"]},
+        "breadth_above_50dma": {"type": ["number", "null"]}, "concentration_top1": {"type": ["number", "null"]},
+        "structural_context_status": {"type": "string"}, "recovery_condition": {"type": "string", "minLength": 1},
+        "largest_counter_evidence": {"type": "string", "minLength": 1}
+      }
+    },
+    "bucket": {
+      "type": "object", "additionalProperties": false, "required": ["bucket", "label", "explanation", "items"],
+      "properties": {
+        "bucket": {"enum": ["research_now", "watch_recovery", "long_term_context_price_weak", "avoid_now"]},
+        "label": {"type": "string"}, "explanation": {"type": "string", "minLength": 1},
+        "items": {"type": "array", "items": {"$ref": "#/$defs/themeDetail"}}
+      }
+    },
+    "phase4": {
+      "type": "object", "additionalProperties": false, "required": ["title", "buckets"],
+      "properties": {"title": {"type": "string"}, "buckets": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"$ref": "#/$defs/bucket"}}}
+    },
+    "company": {
+      "type": "object", "additionalProperties": false,
+      "required": ["theme_id", "theme_label", "ticker", "role", "role_label", "why", "key_check", "counter_evidence", "research_lens_explanation"],
+      "properties": {
+        "theme_id": {"type": "string"}, "theme_label": {"type": "string"}, "ticker": {"type": "string"},
+        "role": {"type": "string"}, "role_label": {"type": "string"}, "why": {"type": "string"},
+        "key_check": {"type": "string"}, "counter_evidence": {"type": "string"}, "research_lens_explanation": {"type": "string"}
+      }
+    },
+    "phase5": {
+      "type": "object", "additionalProperties": false, "required": ["title", "companies", "caution"],
+      "properties": {"title": {"type": "string"}, "companies": {"type": "array", "items": {"$ref": "#/$defs/company"}}, "caution": {"type": "string", "minLength": 1}}
+    },
+    "bucketCounts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["research_now", "watch_recovery", "long_term_context_price_weak", "avoid_now"],
+      "properties": {
+        "research_now": {"type": "integer", "minimum": 0}, "watch_recovery": {"type": "integer", "minimum": 0},
+        "long_term_context_price_weak": {"type": "integer", "minimum": 0}, "avoid_now": {"type": "integer", "minimum": 0}
+      }
+    },
+    "phase6": {
+      "type": "object", "additionalProperties": false,
+      "required": ["title", "market_basis", "bucket_counts", "company_count", "analysis_mode", "constraints", "change_conditions", "not_implemented"],
+      "properties": {
+        "title": {"type": "string"}, "market_basis": {"$ref": "#/$defs/strings"}, "bucket_counts": {"$ref": "#/$defs/bucketCounts"},
+        "company_count": {"type": "integer", "minimum": 0}, "analysis_mode": {"enum": ["initial_observation", "trend"]},
+        "constraints": {"$ref": "#/$defs/strings"}, "change_conditions": {"$ref": "#/$defs/strings"}, "not_implemented": {"$ref": "#/$defs/strings"}
+      }
+    },
+    "strings": {"type": "array", "items": {"type": "string"}}
+  }
+}

@@ -57,6 +57,8 @@ jobs:
       - name: Validate published repository
         run: |
           python scripts/export_current_latest.py output/consumer/latest.json
+          python scripts/export_consumer_projection.py output/consumer/v1/latest.json
+          python scripts/export_consumer_details.py output/consumer/v1/details
           python scripts/validate_repository.py
       - name: Commit validated outputs
         id: publish
@@ -82,10 +84,18 @@ jobs:
           VERIFY_ROOT="$RUNNER_TEMP/publication-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
           git worktree add --detach "$VERIFY_ROOT" origin/publication
           python "$VERIFY_ROOT/scripts/validate_repository.py"
-          python "$VERIFY_ROOT/scripts/export_current_latest.py" "$RUNNER_TEMP/consumer-latest.json"
-          cmp "$VERIFY_ROOT/output/consumer/latest.json" "$RUNNER_TEMP/consumer-latest.json"
+          VERIFY_EXPORT="$RUNNER_TEMP/consumer-export-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          mkdir -p "$VERIFY_EXPORT/v1/details"
+          python "$VERIFY_ROOT/scripts/export_current_latest.py" "$VERIFY_EXPORT/latest.json" --output "$VERIFY_ROOT/output"
+          python "$VERIFY_ROOT/scripts/export_consumer_projection.py" "$VERIFY_EXPORT/v1/latest.json" --output "$VERIFY_ROOT/output"
+          python "$VERIFY_ROOT/scripts/export_consumer_details.py" "$VERIFY_EXPORT/v1/details" --output "$VERIFY_ROOT/output"
+          cmp "$VERIFY_ROOT/output/consumer/latest.json" "$VERIFY_EXPORT/latest.json"
+          cmp "$VERIFY_ROOT/output/consumer/v1/latest.json" "$VERIFY_EXPORT/v1/latest.json"
+          for phase in 1 2 3 4 5 6; do
+            cmp "$VERIFY_ROOT/output/consumer/v1/details/phase-$phase.json" "$VERIFY_EXPORT/v1/details/phase-$phase.json"
+          done
           echo "Verified publication commit: $REMOTE_SHA" >> "$GITHUB_STEP_SUMMARY"
-          echo "Validated current pointer, manifest, generation, schemas, and deterministic lightweight consumer projection." >> "$GITHUB_STEP_SUMMARY"
+          echo "Validated current pointer, manifest, generation, legacy full consumer, lightweight consumer, and six detail projections." >> "$GITHUB_STEP_SUMMARY"
       - name: Failure summary
         if: failure()
         run: |

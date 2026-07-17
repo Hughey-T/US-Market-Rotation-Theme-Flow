@@ -11,8 +11,8 @@
 
 空の `output/archive/.gitkeep` は repository placeholder であり legacy publication ではありません。JSONを含む archive や固定 `output/latest.json` がある場合だけ明示migrationを要求します。
 
-## Full consumer → lightweight consumer
+## Full consumerとlightweight consumerの無停止併存
 
-publication contract 1.1は新generation/pointerを1.1で作成し、既存1.0 chainを読み取り互換で保持します。旧`output/consumer/latest.json`は完全snapshotとのbyte-equivalent copyでした。更新workflowは既存full consumerを移行入力として検証した後、current generationからconsumer contract 1.0 projectionを再生成して置換します。authoritative generationやimmutable recordは書き換えません。
+publication contract 1.1は既存1.0 chainを読み取り互換で保持します。`output/consumer/latest.json`は完全snapshotとのbyte-equivalent copyのまま維持し、既存Custom GPTを止めません。軽量projectionは`output/consumer/v1/latest.json`へ追加し、phase details 6件も別pathへ追加します。新指示は新URLを先に取得し、HTTP 404の場合だけ旧URLへfallbackします。新URLが存在して無効な場合は旧結果で隠さずfail-closedです。authoritative generationやimmutable recordは書き換えません。
 
-旧schema 1.1 generationへ明示rollbackした場合は`user_view`が存在しないため、互換exportは旧full consumerを生成します。Custom GPT instruction 1.4.0はpresentation 1.2を要求するため、そのrollback consumerを通常表示には使用せずfail-closedになります。現行運用へ戻すにはdata schema 1.2 generationを再度currentにしてconsumerを再生成します。
+旧schema 1.1 generationへ明示rollbackした場合、旧full consumerは再生成できますが、軽量consumer/detailsはpresentation 1.2不足のため公開しません。Custom GPT instruction 1.4.0はfail-closedになります。現行運用へ戻すにはdata schema 1.2 generationを再度currentにし、3 exporterを実行します。

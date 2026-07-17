@@ -11,7 +11,11 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from rotation.judgments import StableJsonSnapshot, build_index, verify_index
-from rotation.consumer import validate_consumer_artifact
+from rotation.consumer import (
+    validate_consumer_detail,
+    validate_consumer_snapshot,
+    validate_legacy_full_consumer,
+)
 from rotation.publication import load_current_generation, validate_repository_output_inventory
 from rotation.validation import (
     ContractError,
@@ -39,14 +43,24 @@ def validate_public_outputs(root: Path, latest_schema: dict) -> int:
         validate_schema(current_latest, latest_schema, "output/current generation latest.json")
         validate_public_latest(current_latest, verify_source_hash=True)
         count += 1
-    consumer_path = root / "output" / "consumer" / "latest.json"
-    if consumer_path.exists():
-        consumer = load_json(consumer_path)
+    legacy_path = root / "output" / "consumer" / "latest.json"
+    if legacy_path.exists():
         if current is None:
             raise ContractError("consumer export exists without an authoritative current generation")
-        validate_consumer_artifact(
-            consumer, current[3], pointer=current[0], manifest=current[2],
+        validate_legacy_full_consumer(
+            load_json(legacy_path), current[3], pointer=current[0], manifest=current[2],
         )
+        if current[3].get("meta", {}).get("schema_version") == "1.2":
+            projection_path = root / "output" / "consumer" / "v1" / "latest.json"
+            projection = load_json(projection_path)
+            validate_consumer_snapshot(
+                projection, current[3], pointer=current[0], manifest=current[2],
+            )
+            for phase in range(1, 7):
+                validate_consumer_detail(
+                    load_json(root / "output" / "consumer" / "v1" / "details" / f"phase-{phase}.json"),
+                    current[3], phase=phase,
+                )
         count += 1
     return count
 
@@ -55,6 +69,7 @@ def main() -> int:
         schemas = {
             "latest": load_json(ROOT / "schemas" / "rotation_snapshot.schema.json"),
             "consumer": load_json(ROOT / "schemas" / "consumer_snapshot.schema.json"),
+            "consumer_details": load_json(ROOT / "schemas" / "consumer_details.schema.json"),
             "judgment": load_json(ROOT / "schemas" / "judgment_record.schema.json"),
             "master": load_json(ROOT / "schemas" / "theme_master.schema.json"),
             "generation_manifest": load_json(ROOT / "schemas" / "generation_manifest.schema.json"),
@@ -154,9 +169,10 @@ def main() -> int:
             raise ContractError(f"Custom GPT instructions exceed 8,000 characters: {len(instructions)}")
         required_terms = [
             "更新", "次", "詳細", "用語", "再評価", "user_view.phases",
-            "consumer_contract_version=\"1.0\"", "source_identity.analysis_id",
+            "consumer_contract_version=\"1.0\"", "source_identity.analysis_id", "404の場合だけ",
             "source_identity.generation_id", "critical_missing=[]", "presentation_version=\"1.2\"",
             "initial_observation", "資金流入・流出と断定しない", "不完全JSON", "前回キャッシュ",
+            "details/phase-", "details_contract_version=\"1.0\"", "表示を停止",
         ]
         missing = [term for term in required_terms if term not in instructions]
         if missing:
@@ -165,7 +181,7 @@ def main() -> int:
             old_text = (ROOT / "docs" / old_name).read_text(encoding="utf-8")
             if "Deprecated" not in old_text or "custom_gpt_instructions_current.md" not in old_text:
                 raise ContractError(f"historical Custom GPT instructions are not clearly deprecated: {old_name}")
-        print(f"validation passed: 10 schemas, 7 latest fixtures, 8 display fixtures, 1 sample latest, 1 judgment fixture, 1 sample judgment, 1 master fixture, {public_count} public outputs, {len(warnings)} overlap warnings")
+        print(f"validation passed: 11 schemas, 7 latest fixtures, 8 display fixtures, 1 sample latest, 1 judgment fixture, 1 sample judgment, 1 master fixture, {public_count} public outputs, {len(warnings)} overlap warnings")
         return 0
     except (ContractError, OSError, ValueError) as error:
         print(f"validation failed:\n{error}", file=sys.stderr)

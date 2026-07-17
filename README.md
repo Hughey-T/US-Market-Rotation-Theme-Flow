@@ -47,6 +47,9 @@ config/universe.json               ETF・指数定義 1.1.0
 data/themes.json                   theme master schema 1.0 / content 2026-Q3-r1
 data/legacy/                       移行前の暫定master（read-only）
 scripts/generate_weekly.py         週次生成・検証・atomic publish
+scripts/export_current_latest.py   旧互換URL用の完全snapshot export
+scripts/export_consumer_projection.py 新v1軽量consumer export
+scripts/export_consumer_details.py phase別details 6件のexport
 scripts/validate_repository.py     strict schema＋semantic検証
 scripts/migrate_1_0_to_1_1.py      明示的なread-only migration report
 scripts/migrate_theme_master.py    暫定masterからmaster 1.0への明示migration
@@ -118,12 +121,14 @@ Market Rotation 1.0はdefaultで拒否します。`scripts/migrate_1_0_to_1_1.py
 現状監査は[CURRENT_STATE](docs/CURRENT_STATE.md)、schema拡張は[Schema 1.2](docs/schema_v1.2.md)、実装は[Implementation Notes](docs/implementation_notes_v1.2.md)、テストは[Test Specification](docs/test_specification_v1.2.md)、運用は[Operations Guide](docs/operations_guide_v1.2.md)、移行は[Migration 1.2](docs/migration_v1.2.md)、公開契約は[Public Artifact 1.2](docs/public_artifact_v1.2.md)を参照してください。
 ## Publication contract 1.1 / consumer contract 1.0
 
-`publication`ブランチの`output/current.json`が唯一のauthoritative generation pointerです。新しいmanifestsとpointersは`publication_contract_version=1.1`を使用し、履歴上の1.0 generationも読み取れます。完全なlatest/archive、history、judgment index、manifestは縮小しません。`output/consumer/latest.json`だけをcurrent generationから生成する決定的な表示用projectionへ変更し、`consumer_contract_version=1.0`、source identity、validity、quality、完全な`user_view`だけを含めます。repository validatorはprojectionを再生成して公開consumerと完全一致することを確認します。UTF-8 canonical JSONと配信fileはいずれも32 KiB上限です。
+`publication`ブランチの`output/current.json`が唯一のauthoritative generation pointerです。完全なlatest/archive、history、judgment index、manifestは縮小しません。既存Custom GPT 1.3.0の無停止互換のため`output/consumer/latest.json`はauthoritative currentと完全一致するfull snapshotのまま維持します。新しい通常利用は`output/consumer/v1/latest.json`の軽量consumerを使い、`consumer_contract_version=1.0`、source identity、validity、quality、完全な`user_view`だけを含めます。`output/consumer/v1/details/phase-1.json`〜`phase-6.json`は現在phaseだけを説明する決定的な監査projectionです。新consumerと各detailsのcanonical JSON・配信fileにはそれぞれ32 KiB上限を適用します。
 
 ```bash
 python scripts/export_current_latest.py exported/latest.json
+python scripts/export_consumer_projection.py exported/v1/latest.json
+python scripts/export_consumer_details.py exported/v1/details
 ```
 
-Custom GPTのGitHub sourceは`publication`ブランチの`output/consumer/latest.json`へ固定します。公開URLは`https://raw.githubusercontent.com/Hughey-T/US-Market-Rotation-Theme-Flow/publication/output/consumer/latest.json`です。Custom GPTは軽量schema、source identity、status、critical missing、validity、presentation identity、6 phasesだけをfail-closedで検証します。重いsemantic・source hash・TOCTOU検証はpublication workflowが担当します。初期設定後の日常操作は「更新」「次」だけです。
+新Custom GPTの主URLは`https://raw.githubusercontent.com/Hughey-T/US-Market-Rotation-Theme-Flow/publication/output/consumer/v1/latest.json`です。主URLのHTTP statusが404の場合だけ旧full URLへfallbackし、存在する主payloadが無効ならfail-closedとします。「詳細」だけ現在phaseのdetails 1件を取得して固定consumerとの6 identity field一致を確認します。旧URLの廃止は今回行わず、別PRと利用者移行確認を必須とします。
 
 This public repository protects `main` with pull requests, strict up-to-date required checks, resolved review conversations, and blocked force pushes and branch deletion. The eight required checks and the supplementary human release procedure are documented in the [Manual merge gate](docs/manual_merge_gate.md). No approving review is required by configuration, and repository administrators retain an emergency bypass path. A Draft PR remains Draft until final independent review is complete and must never be merged directly.

@@ -35,4 +35,14 @@
 | `meta.global_quality` | `critical_missing`と利用者向けwarningだけを投影。 |
 | `user_view` | authoritative snapshotのpresentation version、analysis mode、6 phasesの完全copy。 |
 
-consumerには`themes`、market/style/sector inputs、condition、reason、history、judgmentを含めません。これらはauthoritative generationだけで保持・検証します。
+この軽量consumerは`output/consumer/v1/latest.json`に置きます。旧`output/consumer/latest.json`は完全snapshotです。軽量consumerには`themes`、market/style/sector inputs、condition、reason、history、judgmentを含めません。
+
+## Details contract 1.0
+
+| Field | 意味 |
+| --- | --- |
+| `details_contract_version` | phase detailsのversion。現行は1.0。 |
+| `source_identity` | 軽量consumerと一致するanalysis/generation identity。 |
+| `meta.run_id/source_commit/source_sha256/data_date/status` | 固定consumerとの照合field。 |
+| `phase` | 1〜6の厳密な対象段階。 |
+| `detail_view` | authoritative snapshotから決定的に作る、人間可読な当該phaseだけの説明。 |

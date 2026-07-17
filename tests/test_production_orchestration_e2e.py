@@ -13,7 +13,7 @@ from unittest import mock
 import numpy as np
 import pandas as pd
 
-from rotation.consumer import build_consumer_snapshot
+from rotation.consumer import build_consumer_details, build_consumer_snapshot
 from rotation.judgments import evaluate_withdrawal
 from rotation.provenance import canonical_bytes, snapshot_source_hash
 from rotation.publication import load_current_generation, publish_generation
@@ -23,6 +23,8 @@ from scripts import generate_weekly
 from scripts import validate_repository as repository_validator
 from scripts.commit_weekly_outputs import commit_weekly_outputs
 from scripts.export_current_latest import export_current
+from scripts.export_consumer_projection import export_consumer_projection
+from scripts.export_consumer_details import export_consumer_details
 from scripts.validate_repository import validate_public_outputs
 from tests.test_pipeline_contract import synthetic_inputs
 
@@ -30,6 +32,12 @@ from tests.test_pipeline_contract import synthetic_inputs
 ROOT = Path(__file__).resolve().parents[1]
 LATEST_SCHEMA = load_json(ROOT / "schemas" / "rotation_snapshot.schema.json")
 DATES = pd.bdate_range(end="2026-07-10", periods=253)
+
+
+def export_consumers(output):
+    export_current(output, output / "consumer/latest.json")
+    export_consumer_projection(output, output / "consumer/v1/latest.json")
+    export_consumer_details(output, output / "consumer/v1/details")
 
 
 def raw_frame(profile="market", volume_tail=130.0):
@@ -177,7 +185,7 @@ class ProductionOrchestrationE2E(unittest.TestCase):
             self.assertEqual(result, 0)
             validate_schema(latest, LATEST_SCHEMA, "main-shaped bootstrap latest")
             validate_public_latest(latest, verify_source_hash=True)
-            export_current(output, output / "consumer" / "latest.json")
+            export_consumers(output)
             subprocess.run(["git", "switch", "-c", "publication"], cwd=work, check=True, capture_output=True)
             current = load_current_generation(output)
             for injected in (output / "judgments/secret.txt", current[1] / "secret.txt"):
@@ -207,7 +215,7 @@ class ProductionOrchestrationE2E(unittest.TestCase):
             ).stdout.splitlines()
             self.assertTrue(changed)
             self.assertTrue(all(
-                path in {"output/current.json", "output/consumer/latest.json"}
+                path == "output/current.json" or path.startswith("output/consumer/")
                 or path.startswith("output/generations/")
                 or path.startswith("output/judgments/")
                 for path in changed
@@ -229,6 +237,9 @@ class ProductionOrchestrationE2E(unittest.TestCase):
             regenerated = temporary / "consumer-latest.json"
             export_current(verified / "output", regenerated)
             self.assertEqual((verified / "output" / "consumer" / "latest.json").read_bytes(), regenerated.read_bytes())
+            regenerated_projection = temporary / "consumer-v1-latest.json"
+            export_consumer_projection(verified / "output", regenerated_projection)
+            self.assertEqual((verified / "output/consumer/v1/latest.json").read_bytes(), regenerated_projection.read_bytes())
 
     def test_raw_dataframe_regime_or_and_trend_contrary_evidence(self):
         _, master, _, _, _ = synthetic_inputs()
@@ -378,8 +389,8 @@ class ProductionOrchestrationE2E(unittest.TestCase):
             self.assertEqual(latest["market_regime"], classify_market_regime(latest["market_regime"]["inputs"]))
             validate_schema(latest, LATEST_SCHEMA, "production-generated latest")
             validate_latest_semantics(latest, verify_source_hash=True)
-            consumer = output / "consumer" / "latest.json"
-            export_current(output, consumer)
+            export_consumers(output)
+            consumer = output / "consumer" / "v1" / "latest.json"
             self.assertEqual(validate_public_outputs(output.parent, LATEST_SCHEMA), 2)
             projected = load_json(consumer)
             self.assertNotIn("market_regime", projected)
@@ -429,7 +440,15 @@ class ProductionOrchestrationE2E(unittest.TestCase):
                 validate_public_latest(remote_current[3], verify_source_hash=True)
                 self.assertEqual(
                     canonical_bytes(load_json(remote_clone / "output" / "consumer" / "latest.json")),
+                    canonical_bytes(remote_current[3]),
+                )
+                self.assertEqual(
+                    canonical_bytes(load_json(remote_clone / "output/consumer/v1/latest.json")),
                     canonical_bytes(build_consumer_snapshot(remote_current[3])),
+                )
+                self.assertEqual(
+                    [canonical_bytes(load_json(remote_clone / f"output/consumer/v1/details/phase-{phase}.json")) for phase in range(1, 7)],
+                    [canonical_bytes(item) for item in build_consumer_details(remote_current[3])],
                 )
         finally:
             temporary.cleanup()
@@ -440,7 +459,7 @@ class ProductionOrchestrationE2E(unittest.TestCase):
         _, latest, output, temporary = run_main(master, "p1", history)
         try:
             consumer = output / "consumer" / "latest.json"
-            export_current(output, consumer)
+            export_consumers(output)
             pointer_before = (output / "current.json").read_bytes()
             consumer_before = consumer.read_bytes()
             generations_before = sorted(path.name for path in (output / "generations").iterdir())

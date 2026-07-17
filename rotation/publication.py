@@ -9,7 +9,11 @@ from pathlib import Path
 from typing import Callable, Literal
 
 from . import INSTRUCTION_VERSION, PUBLICATION_CONTRACT_VERSION
-from .consumer import validate_consumer_artifact
+from .consumer import (
+    validate_consumer_detail,
+    validate_consumer_snapshot,
+    validate_legacy_full_consumer,
+)
 from .identity import safe_generation_path, validate_safe_id
 from .judgments import StableJsonChangedError, StableJsonSnapshot, validate_index_records
 from .provenance import atomic_write_json, canonical_bytes, stable_hash
@@ -434,25 +438,69 @@ def _validate_generation_chain(
 
 def _validate_consumer(output: Path, current: tuple, files: set[str], *, required: bool) -> None:
     consumer = output / "consumer"
-    expected = consumer / "latest.json"
+    legacy = consumer / "latest.json"
     if not consumer.exists() and not consumer.is_symlink():
         if required:
-            raise _inventory_error(output, expected, "missing publication entry")
+            raise _inventory_error(output, legacy, "missing publication entry")
         return
     if consumer.is_symlink() or not consumer.is_dir():
         raise _inventory_error(output, consumer)
-    entries = list(consumer.iterdir())
-    if len(entries) != 1 or entries[0].name != "latest.json":
-        culprit = sorted(entries, key=lambda item: item.name)[0] if entries else expected
+    entries = {entry.name: entry for entry in consumer.iterdir()}
+    allowed = {"latest.json", "v1"}
+    if "latest.json" not in entries or set(entries) - allowed:
+        culprit = sorted((entries[name] for name in set(entries) - allowed), key=lambda item: item.name)[0] if set(entries) - allowed else legacy
         raise _inventory_error(output, culprit)
-    _add_regular_file(output, expected, files)
+    _add_regular_file(output, legacy, files)
     try:
-        value = load_json(expected)
-        validate_consumer_artifact(
-            value, current[3], pointer=current[0], manifest=current[2],
+        validate_legacy_full_consumer(
+            load_json(legacy), current[3], pointer=current[0], manifest=current[2],
         )
     except (ContractError, OSError, UnicodeError, ValueError) as error:
-        raise _inventory_error(output, expected, "invalid publication entry") from error
+        raise _inventory_error(output, legacy, "invalid publication entry") from error
+
+    v1 = consumer / "v1"
+    expects_v1 = current[3].get("meta", {}).get("schema_version") == "1.2"
+    if "v1" not in entries:
+        if required and expects_v1:
+            raise _inventory_error(output, v1 / "latest.json", "missing publication entry")
+        return
+    if not expects_v1:
+        raise _inventory_error(output, v1, "unexpected v1 consumer for legacy generation")
+    if v1.is_symlink() or not v1.is_dir():
+        raise _inventory_error(output, v1)
+    v1_entries = {entry.name: entry for entry in v1.iterdir()}
+    if set(v1_entries) != {"latest.json", "details"}:
+        unexpected = set(v1_entries) - {"latest.json", "details"}
+        culprit = sorted((v1_entries[name] for name in unexpected), key=lambda item: item.name)[0] if unexpected else v1 / "latest.json"
+        raise _inventory_error(output, culprit, "missing or unknown publication entry")
+    projection = v1 / "latest.json"
+    details = v1 / "details"
+    _add_regular_file(output, projection, files)
+    if details.is_symlink() or not details.is_dir():
+        raise _inventory_error(output, details)
+    expected_names = {f"phase-{phase}.json" for phase in range(1, 7)}
+    detail_entries = {entry.name: entry for entry in details.iterdir()}
+    if set(detail_entries) != expected_names:
+        unexpected = set(detail_entries) - expected_names
+        missing = expected_names - set(detail_entries)
+        culprit = sorted((detail_entries[name] for name in unexpected), key=lambda item: item.name)[0] if unexpected else details / sorted(missing)[0]
+        raise _inventory_error(output, culprit, "missing or unknown consumer detail")
+    try:
+        value = load_json(projection)
+        validate_consumer_snapshot(
+            value, current[3], pointer=current[0], manifest=current[2],
+        )
+        phases = []
+        for phase in range(1, 7):
+            path = details / f"phase-{phase}.json"
+            _add_regular_file(output, path, files)
+            detail = load_json(path)
+            validate_consumer_detail(detail, current[3], phase=phase)
+            phases.append(detail.get("phase"))
+        if phases != list(range(1, 7)):
+            raise ContractError("consumer detail phases are missing or duplicated")
+    except (ContractError, OSError, UnicodeError, ValueError) as error:
+        raise _inventory_error(output, projection, "invalid publication entry") from error
 
 
 def _validate_current_publication_inventory(
@@ -679,7 +727,7 @@ def committable_publication_files(output: Path) -> set[str]:
     inventory = validate_current_publication_inventory(output, require_consumer=True)
     return {
         path for path in inventory
-        if path in {"output/current.json", "output/consumer/latest.json"}
+        if path == "output/current.json" or path.startswith("output/consumer/")
         or path.startswith("output/generations/")
         or path.startswith("output/judgments/")
     }
