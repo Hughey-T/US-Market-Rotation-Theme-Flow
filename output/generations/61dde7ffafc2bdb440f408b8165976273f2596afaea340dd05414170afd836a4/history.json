@@ -1,0 +1,64 @@
+{
+  "data_date": "2026-07-17",
+  "schema_version": "1.2",
+  "methodology_version": "1.2.0",
+  "theme_master_version": "2026-Q3-r1",
+  "themes": {
+    "ai_semis": {
+      "equal_weight_rel_spy_4w": -0.13539610442188046,
+      "advance_count_4w": 0,
+      "above_50dma_count": 0,
+      "pct_above_50dma": 0.0,
+      "volume_ratio_20d_60d": 0.9344982109569355
+    },
+    "ai_software_data": {
+      "equal_weight_rel_spy_4w": 0.0014471119316856584,
+      "advance_count_4w": 3,
+      "above_50dma_count": 2,
+      "pct_above_50dma": 0.2857142857142857,
+      "volume_ratio_20d_60d": 0.8927958775683367
+    },
+    "cybersecurity": {
+      "equal_weight_rel_spy_4w": 0.2273157873932899,
+      "advance_count_4w": 7,
+      "above_50dma_count": 7,
+      "pct_above_50dma": 1.0,
+      "volume_ratio_20d_60d": 0.8896589340837072
+    },
+    "dc_power_infra": {
+      "equal_weight_rel_spy_4w": -0.04271375571742572,
+      "advance_count_4w": 1,
+      "above_50dma_count": 2,
+      "pct_above_50dma": 0.25,
+      "volume_ratio_20d_60d": 1.0443328362625204
+    },
+    "defense": {
+      "equal_weight_rel_spy_4w": -0.0531473923740851,
+      "advance_count_4w": 2,
+      "above_50dma_count": 2,
+      "pct_above_50dma": 0.25,
+      "volume_ratio_20d_60d": 1.0978779510598138
+    },
+    "networking_optical": {
+      "equal_weight_rel_spy_4w": -0.17568868239694393,
+      "advance_count_4w": 1,
+      "above_50dma_count": 1,
+      "pct_above_50dma": 0.14285714285714285,
+      "volume_ratio_20d_60d": 0.9514691991135785
+    },
+    "nuclear_uranium": {
+      "equal_weight_rel_spy_4w": -0.1324153092443544,
+      "advance_count_4w": 0,
+      "above_50dma_count": 1,
+      "pct_above_50dma": 0.14285714285714285,
+      "volume_ratio_20d_60d": 0.9430460619131107
+    },
+    "semi_equipment": {
+      "equal_weight_rel_spy_4w": -0.12313307913807633,
+      "advance_count_4w": 0,
+      "above_50dma_count": 2,
+      "pct_above_50dma": 0.2857142857142857,
+      "volume_ratio_20d_60d": 1.164810164008717
+    }
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "details_contract_version": "1.0",
+  "source_identity": {
+    "analysis_id": "95df2bdeed754c4118240ebc5a8330bca3a23d167a74e989ee032ada89463b9e",
+    "generation_id": "61dde7ffafc2bdb440f408b8165976273f2596afaea340dd05414170afd836a4"
+  },
+  "meta": {
+    "run_id": "95df2bdeed754c4118240ebc5a8330bca3a23d167a74e989ee032ada89463b9e",
+    "source_commit": "c3ce840a4291de100282ae63cadc6a763f5ff8fe",
+    "source_sha256": "1923d3a6411949684d771c5d5441c0d34361355a37ac73a39d8ee55de2b44be4",
+    "data_date": "2026-07-17",
+    "status": "success"
+  },
+  "phase": 6,
+  "detail_view": {
+    "title": "最終判断要約の監査説明",
+    "market_basis": [
+      "市場分類: real_asset_leadership",
+      "信頼度: medium",
+      "市場、スタイル、セクター、テーマ、企業の順に同一snapshotを確認しています。"
+    ],
+    "bucket_counts": {
+      "research_now": 5,
+      "watch_recovery": 2,
+      "long_term_context_price_weak": 0,
+      "avoid_now": 8
+    },
+    "company_count": 10,
+    "analysis_mode": "initial_observation",
+    "constraints": [
+      "OVERLAP:CEG",
+      "OVERLAP:PLTR",
+      "OVERLAP:VST"
+    ],
+    "change_conditions": [
+      "次週に相対強度、上昇銘柄の広がり、移動平均位置、集中度が変化した場合は分類が変わり得ます。",
+      "新しい公開データは「更新」でのみ取得し、会話途中に別generationを混ぜません。"
+    ],
+    "not_implemented": [
+      "ETF・fundの直接的な資金フローデータは現在の分析に直接使用していません。",
+      "業績予想の上方・下方修正データは現在の分析に直接使用していません。",
+      "投資家ポジショニングデータは現在の分析に直接使用していません。",
+      "時点整合した時価総額データは現在の分析に直接使用していません。"
+    ]
+  }
+}

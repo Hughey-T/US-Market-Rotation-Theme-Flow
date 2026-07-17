@@ -1,0 +1,180 @@
+{
+  "details_contract_version": "1.0",
+  "source_identity": {
+    "analysis_id": "95df2bdeed754c4118240ebc5a8330bca3a23d167a74e989ee032ada89463b9e",
+    "generation_id": "61dde7ffafc2bdb440f408b8165976273f2596afaea340dd05414170afd836a4"
+  },
+  "meta": {
+    "run_id": "95df2bdeed754c4118240ebc5a8330bca3a23d167a74e989ee032ada89463b9e",
+    "source_commit": "c3ce840a4291de100282ae63cadc6a763f5ff8fe",
+    "source_sha256": "1923d3a6411949684d771c5d5441c0d34361355a37ac73a39d8ee55de2b44be4",
+    "data_date": "2026-07-17",
+    "status": "success"
+  },
+  "phase": 3,
+  "detail_view": {
+    "title": "セクター・業種の監査説明",
+    "top_sectors": [
+      {
+        "ticker": "XLV",
+        "label": "ヘルスケア",
+        "return_1w": 0.0015543397518786861,
+        "return_4w": 0.05793407920140026,
+        "return_13w": 0.10361127337486642,
+        "relative_strength_4w": 0.06476463238690666,
+        "above_50dma": true,
+        "above_200dma": true
+      },
+      {
+        "ticker": "XLE",
+        "label": "エネルギー",
+        "return_1w": 0.04720403753972269,
+        "return_4w": 0.04942151034030062,
+        "return_13w": 0.02679345816909895,
+        "relative_strength_4w": 0.05625206352580703,
+        "above_50dma": true,
+        "above_200dma": true
+      },
+      {
+        "ticker": "XLF",
+        "label": "金融",
+        "return_1w": 0.009872540766453497,
+        "return_4w": 0.038768633883353054,
+        "return_13w": 0.08508704551440793,
+        "relative_strength_4w": 0.04559918706885946,
+        "above_50dma": true,
+        "above_200dma": true
+      }
+    ],
+    "bottom_sectors": [
+      {
+        "ticker": "XLK",
+        "label": "情報技術",
+        "return_1w": -0.05484983587233083,
+        "return_4w": -0.05707269267894577,
+        "return_13w": 0.15642255317549592,
+        "relative_strength_4w": -0.050242139493439364,
+        "above_50dma": false,
+        "above_200dma": true
+      },
+      {
+        "ticker": "XLB",
+        "label": "素材",
+        "return_1w": -0.007074093430325168,
+        "return_4w": -0.03795646213029236,
+        "return_13w": -0.01992398754696212,
+        "relative_strength_4w": -0.03112590894478595,
+        "above_50dma": false,
+        "above_200dma": true
+      },
+      {
+        "ticker": "XLY",
+        "label": "一般消費財",
+        "return_1w": -0.015353083036173665,
+        "return_4w": -0.023551955093185528,
+        "return_13w": -0.016662077395198427,
+        "relative_strength_4w": -0.016721401907679123,
+        "above_50dma": false,
+        "above_200dma": false
+      }
+    ],
+    "top_industries": [
+      {
+        "ticker": "XBI",
+        "label": "バイオテクノロジー",
+        "return_1w": -0.029994367786424947,
+        "return_4w": 0.14091489574925653,
+        "return_13w": 0.13990414262311224,
+        "relative_strength_4w": 0.14774544893476294,
+        "above_50dma": true,
+        "above_200dma": true
+      },
+      {
+        "ticker": "XOP",
+        "label": "石油・ガス開発",
+        "return_1w": 0.07321678006752097,
+        "return_4w": 0.08808363351061366,
+        "return_13w": 0.019032840734648504,
+        "relative_strength_4w": 0.09491418669612006,
+        "above_50dma": true,
+        "above_200dma": true
+      },
+      {
+        "ticker": "KRE",
+        "label": "地方銀行",
+        "return_1w": 0.022260808758569617,
+        "return_4w": 0.06412623535582962,
+        "return_13w": 0.1207104465577431,
+        "relative_strength_4w": 0.07095678854133602,
+        "above_50dma": true,
+        "above_200dma": true
+      },
+      {
+        "ticker": "IYT",
+        "label": "運輸",
+        "return_1w": 0.012369454197876717,
+        "return_4w": 0.036120797508333524,
+        "return_13w": 0.11238607562061564,
+        "relative_strength_4w": 0.04295135069383993,
+        "above_50dma": true,
+        "above_200dma": true
+      },
+      {
+        "ticker": "XRT",
+        "label": "小売",
+        "return_1w": 0.01521340043181274,
+        "return_4w": 0.029087442322429657,
+        "return_13w": 0.06050813003348443,
+        "relative_strength_4w": 0.03591799550793606,
+        "above_50dma": true,
+        "above_200dma": true
+      }
+    ],
+    "dynamic_selected": [
+      {
+        "id": "biotechnology",
+        "label": "バイオテクノロジー",
+        "explanation": "ETF相対強度と複数企業の広がりが設定済み基準を満たしました。"
+      },
+      {
+        "id": "oil_gas_exploration",
+        "label": "石油・ガス開発",
+        "explanation": "ETF相対強度と複数企業の広がりが設定済み基準を満たしました。"
+      },
+      {
+        "id": "regional_banks",
+        "label": "地方銀行",
+        "explanation": "ETF相対強度と複数企業の広がりが設定済み基準を満たしました。"
+      },
+      {
+        "id": "transportation",
+        "label": "運輸",
+        "explanation": "ETF相対強度と複数企業の広がりが設定済み基準を満たしました。"
+      }
+    ],
+    "dynamic_excluded": [
+      {
+        "id": "homebuilders",
+        "label": "住宅建設",
+        "explanation": "業種ETFの4週相対強度が採用基準に届きませんでした。 構成企業の中央値が市場平均を上回りませんでした。"
+      },
+      {
+        "id": "infrastructure_construction",
+        "label": "インフラ建設",
+        "explanation": "業種ETFの4週相対強度が採用基準に届きませんでした。 構成企業の直近の強さが採用基準に届きませんでした。 50日線を上回る企業が半数未満でした。 構成企業の中央値が市場平均を上回りませんでした。 一社集中を否定できないため除外しました。"
+      },
+      {
+        "id": "retail",
+        "label": "小売",
+        "explanation": "50日線を上回る企業が半数未満でした。 構成企業の中央値が市場平均を上回りませんでした。 一社集中を否定できないため除外しました。"
+      }
+    ],
+    "breadth_and_concentration": [
+      "順位はS&P 500に対する4週相対強度を基準にしています。",
+      "単一銘柄だけの上昇か、複数銘柄へ広がっているかはテーマ段階でも別に確認します。"
+    ],
+    "data_gaps": [
+      "VUL"
+    ]
+  }
+}

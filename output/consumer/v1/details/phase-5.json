@@ -1,0 +1,131 @@
+{
+  "details_contract_version": "1.0",
+  "source_identity": {
+    "analysis_id": "95df2bdeed754c4118240ebc5a8330bca3a23d167a74e989ee032ada89463b9e",
+    "generation_id": "61dde7ffafc2bdb440f408b8165976273f2596afaea340dd05414170afd836a4"
+  },
+  "meta": {
+    "run_id": "95df2bdeed754c4118240ebc5a8330bca3a23d167a74e989ee032ada89463b9e",
+    "source_commit": "c3ce840a4291de100282ae63cadc6a763f5ff8fe",
+    "source_sha256": "1923d3a6411949684d771c5d5441c0d34361355a37ac73a39d8ee55de2b44be4",
+    "data_date": "2026-07-17",
+    "status": "success"
+  },
+  "phase": 5,
+  "detail_view": {
+    "title": "企業候補の監査説明",
+    "companies": [
+      {
+        "theme_id": "cybersecurity",
+        "theme_label": "サイバーセキュリティ",
+        "ticker": "PANW",
+        "role": "representative",
+        "role_label": "代表企業",
+        "why": "サイバーセキュリティの代表企業として中心的な強さを確認するためです。",
+        "key_check": "統合セキュリティ基盤への集約が新規契約と既存顧客単価を押し上げるか",
+        "counter_evidence": "値引き競争や販売期間の長期化で残存契約価値の伸びが鈍ること",
+        "research_lens_explanation": "テーマを代表する企業として業績の裏付けを確認します。"
+      },
+      {
+        "theme_id": "cybersecurity",
+        "theme_label": "サイバーセキュリティ",
+        "ticker": "NET",
+        "role": "breadth_check",
+        "role_label": "広がり確認用企業",
+        "why": "サイバーセキュリティの別企業にも及ぶ上昇の広がりを確認するためです。",
+        "key_check": "需要が単一製品でなくクラウド・端末・ID管理へ広がっているか",
+        "counter_evidence": "大型案件が少数企業に集中し、同業他社の請求額が伸びないこと",
+        "research_lens_explanation": "同じテーマの別企業にも改善が広がっているかを確認します。"
+      },
+      {
+        "theme_id": "regional_banks",
+        "theme_label": "地方銀行",
+        "ticker": "FITB",
+        "role": "representative",
+        "role_label": "代表企業",
+        "why": "地方銀行の代表企業として中心的な強さを確認するためです。",
+        "key_check": "預金コストの安定と貸出成長が純金利収益の改善へつながるか",
+        "counter_evidence": "商業用不動産の信用費用と預金流出が同時に増えること",
+        "research_lens_explanation": "テーマを代表する企業として業績の裏付けを確認します。"
+      },
+      {
+        "theme_id": "regional_banks",
+        "theme_label": "地方銀行",
+        "ticker": "RF",
+        "role": "breadth_check",
+        "role_label": "広がり確認用企業",
+        "why": "地方銀行の別企業にも及ぶ上昇の広がりを確認するためです。",
+        "key_check": "預金残高・預金コスト・商業用不動産引当が同時に安定するか",
+        "counter_evidence": "無保険預金流出と商業用不動産の信用損失が同時に増えること",
+        "research_lens_explanation": "同じテーマの別企業にも改善が広がっているかを確認します。"
+      },
+      {
+        "theme_id": "transportation",
+        "theme_label": "運輸",
+        "ticker": "UNP",
+        "role": "representative",
+        "role_label": "代表企業",
+        "why": "運輸の代表企業として中心的な強さを確認するためです。",
+        "key_check": "輸送量と運賃の改善が稼働率・営業利益率の上昇へ結び付くか",
+        "counter_evidence": "荷動き減少や人件費・燃料費上昇で価格改善が相殺されること",
+        "research_lens_explanation": "テーマを代表する企業として業績の裏付けを確認します。"
+      },
+      {
+        "theme_id": "transportation",
+        "theme_label": "運輸",
+        "ticker": "CSX",
+        "role": "breadth_check",
+        "role_label": "広がり確認用企業",
+        "why": "運輸の別企業にも及ぶ上昇の広がりを確認するためです。",
+        "key_check": "鉄道・物流・小口配送の複数経路で荷動きが回復しているか",
+        "counter_evidence": "一つの輸送形態だけが強く、業界全体の取扱量が増えないこと",
+        "research_lens_explanation": "同じテーマの別企業にも改善が広がっているかを確認します。"
+      },
+      {
+        "theme_id": "biotechnology",
+        "theme_label": "バイオテクノロジー",
+        "ticker": "REGN",
+        "role": "representative",
+        "role_label": "代表企業",
+        "why": "バイオテクノロジーの代表企業として中心的な強さを確認するためです。",
+        "key_check": "主要パイプラインの臨床・承認節目と資金余力が企業価値を支えるか",
+        "counter_evidence": "試験失敗、安全性問題、資金調達による希薄化が重なること",
+        "research_lens_explanation": "テーマを代表する企業として業績の裏付けを確認します。"
+      },
+      {
+        "theme_id": "biotechnology",
+        "theme_label": "バイオテクノロジー",
+        "ticker": "BIIB",
+        "role": "breadth_check",
+        "role_label": "広がり確認用企業",
+        "why": "バイオテクノロジーの別企業にも及ぶ上昇の広がりを確認するためです。",
+        "key_check": "上昇が単一の治験結果でなく複数企業・治療領域へ広がっているか",
+        "counter_evidence": "少数の買収観測だけで指数が上がり、臨床進捗が伴わないこと",
+        "research_lens_explanation": "同じテーマの別企業にも改善が広がっているかを確認します。"
+      },
+      {
+        "theme_id": "oil_gas_exploration",
+        "theme_label": "石油・ガス開発",
+        "ticker": "EOG",
+        "role": "representative",
+        "role_label": "代表企業",
+        "why": "石油・ガス開発の代表企業として中心的な強さを確認するためです。",
+        "key_check": "生産量と実現価格が設備投資後の自由現金収支を維持できるか",
+        "counter_evidence": "商品価格下落やコスト上昇で株主還元の原資が減ること",
+        "research_lens_explanation": "テーマを代表する企業として業績の裏付けを確認します。"
+      },
+      {
+        "theme_id": "oil_gas_exploration",
+        "theme_label": "石油・ガス開発",
+        "ticker": "COP",
+        "role": "breadth_check",
+        "role_label": "広がり確認用企業",
+        "why": "石油・ガス開発の別企業にも及ぶ上昇の広がりを確認するためです。",
+        "key_check": "生産効率と資本規律が複数の開発企業で確認できるか",
+        "counter_evidence": "一社の資産構成だけが有利で、同業の現金収支が弱いこと",
+        "research_lens_explanation": "同じテーマの別企業にも改善が広がっているかを確認します。"
+      }
+    ],
+    "caution": "企業候補はテーマ検証の観測対象であり、売買推奨ではありません。"
+  }
+}

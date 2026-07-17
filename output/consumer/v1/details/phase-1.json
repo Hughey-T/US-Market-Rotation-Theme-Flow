@@ -1,0 +1,87 @@
+{
+  "details_contract_version": "1.0",
+  "source_identity": {
+    "analysis_id": "95df2bdeed754c4118240ebc5a8330bca3a23d167a74e989ee032ada89463b9e",
+    "generation_id": "61dde7ffafc2bdb440f408b8165976273f2596afaea340dd05414170afd836a4"
+  },
+  "meta": {
+    "run_id": "95df2bdeed754c4118240ebc5a8330bca3a23d167a74e989ee032ada89463b9e",
+    "source_commit": "c3ce840a4291de100282ae63cadc6a763f5ff8fe",
+    "source_sha256": "1923d3a6411949684d771c5d5441c0d34361355a37ac73a39d8ee55de2b44be4",
+    "data_date": "2026-07-17",
+    "status": "success"
+  },
+  "phase": 1,
+  "detail_view": {
+    "title": "市場環境の監査説明",
+    "market_environment": {
+      "classification": "real_asset_leadership",
+      "secondary": [],
+      "confidence": "medium",
+      "explanation": "複数の市場指標を同時に照合した分類です。単一指標だけで判断していません。"
+    },
+    "representative_indicators": [
+      {
+        "name": "spy_r_4w",
+        "label": "S&P 500の4週騰落率",
+        "value": -0.006830553185506405,
+        "explanation": "市場平均そのものの中期的な方向を示します。"
+      },
+      {
+        "name": "qqq_rel_spy_4w",
+        "label": "大型成長株の相対強度",
+        "value": -0.039432876919679116,
+        "explanation": "NASDAQ 100がS&P 500を4週間でどれだけ上回ったかを示します。"
+      },
+      {
+        "name": "rsp_minus_spy_4w",
+        "label": "均等加重の広がり",
+        "value": 0.016381109710497554,
+        "explanation": "大型株だけでなく幅広い銘柄へ上昇が及んでいるかを見る目安です。"
+      },
+      {
+        "name": "iwm_minus_spy_4w",
+        "label": "小型株の相対強度",
+        "value": 0.013541118998858792,
+        "explanation": "小型株が市場平均を上回っているかを見る目安です。"
+      },
+      {
+        "name": "hyg_minus_lqd_4w",
+        "label": "信用リスク選好",
+        "value": 0.010697303543496961,
+        "explanation": "低格付け債と高格付け債の差からリスク選好を確認します。"
+      },
+      {
+        "name": "vix_change_4w",
+        "label": "VIXの4週変化",
+        "value": 2.3600006103515625,
+        "explanation": "市場の不安感が拡大したか低下したかを見る補助指標です。"
+      }
+    ],
+    "breadth": {
+      "sector_advance_ratio_4w": 0.6363636363636364,
+      "explanation": "主要11セクターのうち4週間で上昇した割合です。上昇の広がりを確認します。"
+    },
+    "risk_posture": [
+      "景気敏感株・防御株・実物資産・信用市場を横断し、偏りを確認しています。",
+      "価格変化だけを資金流入または流出の直接証拠とは扱いません。"
+    ],
+    "global_quality": {
+      "coverage_ratio": 0.9929078014184397,
+      "requested_ticker_count": 141,
+      "usable_ticker_count": 140,
+      "critical_missing": []
+    },
+    "warnings": [
+      "OVERLAP:CEG",
+      "OVERLAP:PLTR",
+      "OVERLAP:VST"
+    ],
+    "constraints": [
+      "未実装: ETF・fundの直接的な資金フローデータ",
+      "未実装: 業績予想の上方・下方修正データ",
+      "未実装: 投資家ポジショニングデータ",
+      "未実装: 時点整合した時価総額データ"
+    ]
+  }
+}

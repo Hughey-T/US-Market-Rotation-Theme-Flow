@@ -1,0 +1,170 @@
+{
+  "details_contract_version": "1.0",
+  "source_identity": {
+    "analysis_id": "95df2bdeed754c4118240ebc5a8330bca3a23d167a74e989ee032ada89463b9e",
+    "generation_id": "61dde7ffafc2bdb440f408b8165976273f2596afaea340dd05414170afd836a4"
+  },
+  "meta": {
+    "run_id": "95df2bdeed754c4118240ebc5a8330bca3a23d167a74e989ee032ada89463b9e",
+    "source_commit": "c3ce840a4291de100282ae63cadc6a763f5ff8fe",
+    "source_sha256": "1923d3a6411949684d771c5d5441c0d34361355a37ac73a39d8ee55de2b44be4",
+    "data_date": "2026-07-17",
+    "status": "success"
+  },
+  "phase": 2,
+  "detail_view": {
+    "title": "スタイル・factorの監査説明",
+    "comparisons": [
+      {
+        "ticker": "ARKK",
+        "label": "赤字成長・投機的グロースの代理指標",
+        "return_1w": -0.06287003085129472,
+        "return_4w": -0.0490642993547431,
+        "return_13w": -0.02767002186422396,
+        "relative_strength_1w": -0.04742525438775058,
+        "relative_strength_4w": -0.0422337461692367,
+        "relative_strength_13w": -0.08972981941110347
+      },
+      {
+        "ticker": "IJR",
+        "label": "小型株（S&P600・黒字基準あり）",
+        "return_1w": 0.0031602550259868245,
+        "return_4w": 0.023839638701990795,
+        "return_13w": 0.10378633143877969,
+        "relative_strength_1w": 0.018605031489530965,
+        "relative_strength_4w": 0.0306701918874972,
+        "relative_strength_13w": 0.041726533891900175
+      },
+      {
+        "ticker": "IWD",
+        "label": "大型バリュー",
+        "return_1w": 0.004820946601284515,
+        "return_4w": 0.020867599297528017,
+        "return_13w": 0.10612605251081031,
+        "relative_strength_1w": 0.020265723064828656,
+        "relative_strength_4w": 0.02769815248303442,
+        "relative_strength_13w": 0.044066254963930795
+      },
+      {
+        "ticker": "IWF",
+        "label": "大型グロース",
+        "return_1w": -0.036869703972098655,
+        "return_4w": -0.03218485018089423,
+        "return_13w": 0.018563421905716693,
+        "relative_strength_1w": -0.021424927508554514,
+        "relative_strength_4w": -0.025354296995387826,
+        "relative_strength_13w": -0.04349637564116282
+      },
+      {
+        "ticker": "MTUM",
+        "label": "モメンタム（直近の勝ち組銘柄）",
+        "return_1w": -0.06116167867645683,
+        "return_4w": -0.0734856382521687,
+        "return_13w": 0.11669641286863452,
+        "relative_strength_1w": -0.04571690221291269,
+        "relative_strength_4w": -0.06665508506666229,
+        "relative_strength_13w": 0.05463661532175501
+      },
+      {
+        "ticker": "QUAL",
+        "label": "クオリティ（財務・収益性の高い企業）",
+        "return_1w": -0.008284433993322793,
+        "return_4w": 0.0005051460926084328,
+        "return_13w": 0.06821844812328015,
+        "relative_strength_1w": 0.007160342470221348,
+        "relative_strength_4w": 0.007335699278114838,
+        "relative_strength_13w": 0.006158650576400637
+      },
+      {
+        "ticker": "SPHB",
+        "label": "高ベータ（市場より値動きの大きい銘柄）",
+        "return_1w": -0.05694208551762725,
+        "return_4w": -0.07100820364462046,
+        "return_13w": 0.08926169692451258,
+        "relative_strength_1w": -0.04149730905408311,
+        "relative_strength_4w": -0.06417765045911406,
+        "relative_strength_13w": 0.027201899377633065
+      },
+      {
+        "ticker": "USMV",
+        "label": "低ボラティリティ（値動きの小さい銘柄）",
+        "return_1w": -0.0118658309816001,
+        "return_4w": 0.007194190237366449,
+        "return_13w": 0.026620003625972277,
+        "relative_strength_1w": 0.0035789454819440403,
+        "relative_strength_4w": 0.014024743422872854,
+        "relative_strength_13w": -0.03543979392090724
+      },
+      {
+        "ticker": "VYM",
+        "label": "高配当",
+        "return_1w": -0.005587941823710474,
+        "return_4w": 0.004567824396931375,
+        "return_13w": 0.0476030404129153,
+        "relative_strength_1w": 0.009856834639833667,
+        "relative_strength_4w": 0.01139837758243778,
+        "relative_strength_13w": -0.014456757133964215
+      }
+    ],
+    "moving_average_state": [
+      {
+        "ticker": "ARKK",
+        "above_50dma": false,
+        "above_200dma": false,
+        "explanation": "50日線は中期、200日線は長期の価格位置を確認する目安です。"
+      },
+      {
+        "ticker": "IJR",
+        "above_50dma": true,
+        "above_200dma": true,
+        "explanation": "50日線は中期、200日線は長期の価格位置を確認する目安です。"
+      },
+      {
+        "ticker": "IWD",
+        "above_50dma": true,
+        "above_200dma": true,
+        "explanation": "50日線は中期、200日線は長期の価格位置を確認する目安です。"
+      },
+      {
+        "ticker": "IWF",
+        "above_50dma": false,
+        "above_200dma": true,
+        "explanation": "50日線は中期、200日線は長期の価格位置を確認する目安です。"
+      },
+      {
+        "ticker": "MTUM",
+        "above_50dma": false,
+        "above_200dma": true,
+        "explanation": "50日線は中期、200日線は長期の価格位置を確認する目安です。"
+      },
+      {
+        "ticker": "QUAL",
+        "above_50dma": true,
+        "above_200dma": true,
+        "explanation": "50日線は中期、200日線は長期の価格位置を確認する目安です。"
+      },
+      {
+        "ticker": "SPHB",
+        "above_50dma": false,
+        "above_200dma": true,
+        "explanation": "50日線は中期、200日線は長期の価格位置を確認する目安です。"
+      },
+      {
+        "ticker": "USMV",
+        "above_50dma": true,
+        "above_200dma": true,
+        "explanation": "50日線は中期、200日線は長期の価格位置を確認する目安です。"
+      },
+      {
+        "ticker": "VYM",
+        "above_50dma": true,
+        "above_200dma": true,
+        "explanation": "50日線は中期、200日線は長期の価格位置を確認する目安です。"
+      }
+    ],
+    "interpretation_notes": [
+      "1週・4週・13週を併記し、短期だけの変化を長期傾向と混同しません。",
+      "相対強度はS&P 500との差であり、直接的な資金フローではありません。"
+    ]
+  }
+}

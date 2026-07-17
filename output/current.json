@@ -1,11 +1,11 @@
 {
-  "publication_contract_version": "1.0",
+  "publication_contract_version": "1.1",
   "pointer_version": "1.0",
-  "analysis_id": "36f01491f8af3d144c366ae49f2461970d2879bb1a347f6611539e5bb280f47d",
-  "generation_id": "1e12d362a00d76b6a91526d4941dd2609a3b147ddc2e1a302657179ca94f7ad7",
-  "run_id": "36f01491f8af3d144c366ae49f2461970d2879bb1a347f6611539e5bb280f47d",
-  "data_date": "2026-07-16",
-  "generation": "generations/1e12d362a00d76b6a91526d4941dd2609a3b147ddc2e1a302657179ca94f7ad7",
-  "previous_generation_id": "443d2bbe5559153dd1484d0fa03359b27062cc1a8684cf821f4a7fd5812824fd",
-  "manifest_sha256": "ef1a9a5f829bcc481298db9cb1618c1e02a647160cc19c79c837f143d0467051"
+  "analysis_id": "95df2bdeed754c4118240ebc5a8330bca3a23d167a74e989ee032ada89463b9e",
+  "generation_id": "61dde7ffafc2bdb440f408b8165976273f2596afaea340dd05414170afd836a4",
+  "run_id": "95df2bdeed754c4118240ebc5a8330bca3a23d167a74e989ee032ada89463b9e",
+  "data_date": "2026-07-17",
+  "generation": "generations/61dde7ffafc2bdb440f408b8165976273f2596afaea340dd05414170afd836a4",
+  "previous_generation_id": "1e12d362a00d76b6a91526d4941dd2609a3b147ddc2e1a302657179ca94f7ad7",
+  "manifest_sha256": "47e357b2a384a970d5ffcab33621dea4054414eda458a1ebb35a6ff71696b3d4"
 }
