@@ -1,4 +1,4 @@
-"""Publication contract 1.0: validated generations and one atomic current pointer."""
+"""Publication contract 1.1: validated generations and one atomic current pointer."""
 from __future__ import annotations
 
 import copy
@@ -9,6 +9,11 @@ from pathlib import Path
 from typing import Callable, Literal
 
 from . import INSTRUCTION_VERSION, PUBLICATION_CONTRACT_VERSION
+from .consumer import (
+    validate_consumer_detail,
+    validate_consumer_snapshot,
+    validate_legacy_full_consumer,
+)
 from .identity import safe_generation_path, validate_safe_id
 from .judgments import StableJsonChangedError, StableJsonSnapshot, validate_index_records
 from .provenance import atomic_write_json, canonical_bytes, stable_hash
@@ -39,6 +44,11 @@ VERIFICATION_SCHEMA = load_json(SCHEMA_ROOT / "verification_record.schema.json")
 def instruction_version_for_data_schema(schema_version: str) -> str:
     """Return the instruction identity valid when a snapshot was created."""
     return "1.1.1" if schema_version == "1.1" else INSTRUCTION_VERSION
+
+
+def instruction_versions_for_data_schema(schema_version: str) -> set[str]:
+    """Return read-compatible instruction identities for immutable generations."""
+    return {"1.1.1"} if schema_version == "1.1" else {"1.3.0", INSTRUCTION_VERSION}
 
 
 @dataclass(frozen=True)
@@ -182,9 +192,11 @@ def validate_generation(directory: Path) -> tuple[dict, dict, dict, dict]:
         raise ContractError("generation history semantic mismatch")
     publication = index["publication"]
     index_expected = {"analysis_id": meta["run_id"], "generation_id": generation_id, "run_id": meta["run_id"],
-                      "data_date": meta["data_date"], "source_sha256": meta["source_sha256"],
-                      "instruction_version": instruction_version_for_data_schema(meta["schema_version"])}
-    if publication != index_expected:
+                      "data_date": meta["data_date"], "source_sha256": meta["source_sha256"]}
+    if (
+        {key: value for key, value in publication.items() if key != "instruction_version"} != index_expected
+        or publication.get("instruction_version") not in instruction_versions_for_data_schema(meta["schema_version"])
+    ):
         raise ContractError("generation judgment index publication identity mismatch")
     def source_loader(record: dict) -> dict | None:
         source = output.parent / record["source_snapshot"]
@@ -245,6 +257,8 @@ def validate_pointer_candidate(output: Path, pointer: dict) -> tuple[dict, dict,
     comparisons = ("analysis_id", "generation_id", "run_id", "data_date", "previous_generation_id")
     if any(pointer[field] != manifest[field] for field in comparisons) or pointer["manifest_sha256"] != stable_hash(manifest):
         raise ContractError("publication pointer and generation manifest mismatch")
+    if pointer["publication_contract_version"] != manifest["publication_contract_version"]:
+        raise ContractError("publication pointer and generation manifest contract version mismatch")
     previous = pointer["previous_generation_id"]
     if previous == generation_id:
         raise ContractError("publication pointer cannot reference itself as previous generation")
@@ -422,28 +436,71 @@ def _validate_generation_chain(
     return files, generation_ids
 
 
-def _validate_consumer(output: Path, latest: dict, files: set[str], *, required: bool) -> None:
+def _validate_consumer(output: Path, current: tuple, files: set[str], *, required: bool) -> None:
     consumer = output / "consumer"
-    expected = consumer / "latest.json"
+    legacy = consumer / "latest.json"
     if not consumer.exists() and not consumer.is_symlink():
         if required:
-            raise _inventory_error(output, expected, "missing publication entry")
+            raise _inventory_error(output, legacy, "missing publication entry")
         return
     if consumer.is_symlink() or not consumer.is_dir():
         raise _inventory_error(output, consumer)
-    entries = list(consumer.iterdir())
-    if len(entries) != 1 or entries[0].name != "latest.json":
-        culprit = sorted(entries, key=lambda item: item.name)[0] if entries else expected
+    entries = {entry.name: entry for entry in consumer.iterdir()}
+    allowed = {"latest.json", "v1"}
+    if "latest.json" not in entries or set(entries) - allowed:
+        culprit = sorted((entries[name] for name in set(entries) - allowed), key=lambda item: item.name)[0] if set(entries) - allowed else legacy
         raise _inventory_error(output, culprit)
-    _add_regular_file(output, expected, files)
+    _add_regular_file(output, legacy, files)
     try:
-        value = load_json(expected)
-        validate_schema(value, LATEST_SCHEMA, output_relative_path(output, expected))
-        validate_public_latest(value, verify_source_hash=True)
+        validate_legacy_full_consumer(
+            load_json(legacy), current[3], pointer=current[0], manifest=current[2],
+        )
     except (ContractError, OSError, UnicodeError, ValueError) as error:
-        raise _inventory_error(output, expected, "invalid publication entry") from error
-    if canonical_bytes(value) != canonical_bytes(latest):
-        raise _inventory_error(output, expected, "consumer export mismatch")
+        raise _inventory_error(output, legacy, "invalid publication entry") from error
+
+    v1 = consumer / "v1"
+    expects_v1 = current[3].get("meta", {}).get("schema_version") == "1.2"
+    if "v1" not in entries:
+        if required and expects_v1:
+            raise _inventory_error(output, v1 / "latest.json", "missing publication entry")
+        return
+    if not expects_v1:
+        raise _inventory_error(output, v1, "unexpected v1 consumer for legacy generation")
+    if v1.is_symlink() or not v1.is_dir():
+        raise _inventory_error(output, v1)
+    v1_entries = {entry.name: entry for entry in v1.iterdir()}
+    if set(v1_entries) != {"latest.json", "details"}:
+        unexpected = set(v1_entries) - {"latest.json", "details"}
+        culprit = sorted((v1_entries[name] for name in unexpected), key=lambda item: item.name)[0] if unexpected else v1 / "latest.json"
+        raise _inventory_error(output, culprit, "missing or unknown publication entry")
+    projection = v1 / "latest.json"
+    details = v1 / "details"
+    _add_regular_file(output, projection, files)
+    if details.is_symlink() or not details.is_dir():
+        raise _inventory_error(output, details)
+    expected_names = {f"phase-{phase}.json" for phase in range(1, 7)}
+    detail_entries = {entry.name: entry for entry in details.iterdir()}
+    if set(detail_entries) != expected_names:
+        unexpected = set(detail_entries) - expected_names
+        missing = expected_names - set(detail_entries)
+        culprit = sorted((detail_entries[name] for name in unexpected), key=lambda item: item.name)[0] if unexpected else details / sorted(missing)[0]
+        raise _inventory_error(output, culprit, "missing or unknown consumer detail")
+    try:
+        value = load_json(projection)
+        validate_consumer_snapshot(
+            value, current[3], pointer=current[0], manifest=current[2],
+        )
+        phases = []
+        for phase in range(1, 7):
+            path = details / f"phase-{phase}.json"
+            _add_regular_file(output, path, files)
+            detail = load_json(path)
+            validate_consumer_detail(detail, current[3], phase=phase)
+            phases.append(detail.get("phase"))
+        if phases != list(range(1, 7)):
+            raise ContractError("consumer detail phases are missing or duplicated")
+    except (ContractError, OSError, UnicodeError, ValueError) as error:
+        raise _inventory_error(output, projection, "invalid publication entry") from error
 
 
 def _validate_current_publication_inventory(
@@ -487,7 +544,7 @@ def _validate_current_publication_inventory(
         and not effective_index["records"]
     ):
         _validate_root_judgments(output, effective_index, files)
-    _validate_consumer(output, current[3], files, required=require_consumer)
+    _validate_consumer(output, current, files, required=require_consumer)
 
     latest = output / "latest.json"
     if latest.exists() or latest.is_symlink():
@@ -670,7 +727,7 @@ def committable_publication_files(output: Path) -> set[str]:
     inventory = validate_current_publication_inventory(output, require_consumer=True)
     return {
         path for path in inventory
-        if path in {"output/current.json", "output/consumer/latest.json"}
+        if path == "output/current.json" or path.startswith("output/consumer/")
         or path.startswith("output/generations/")
         or path.startswith("output/judgments/")
     }
