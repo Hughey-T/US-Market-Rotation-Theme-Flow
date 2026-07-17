@@ -11,6 +11,6 @@
 - 価格上の選好と実フロー確認の分離
 - 1対象最大2社、全体ticker重複なし
 - robust metricが一社急騰を見抜くこと
-- 3分類改ざんをsemantic validationが拒否すること
+- 4分類の欠落・重複・未知候補・不正な長期材料bucketをsemantic validationが拒否すること
 
 既存165テストはデータ層、rule、schema、publication、immutable judgment、production orchestration を継続検証します。

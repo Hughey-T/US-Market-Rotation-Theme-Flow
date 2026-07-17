@@ -36,6 +36,11 @@ PREDICTION_SCHEMA = load_json(SCHEMA_ROOT / "prediction_record.schema.json")
 VERIFICATION_SCHEMA = load_json(SCHEMA_ROOT / "verification_record.schema.json")
 
 
+def instruction_version_for_data_schema(schema_version: str) -> str:
+    """Return the instruction identity valid when a snapshot was created."""
+    return "1.1.1" if schema_version == "1.1" else INSTRUCTION_VERSION
+
+
 @dataclass(frozen=True)
 class PublicationStartState:
     kind: Literal[
@@ -178,7 +183,7 @@ def validate_generation(directory: Path) -> tuple[dict, dict, dict, dict]:
     publication = index["publication"]
     index_expected = {"analysis_id": meta["run_id"], "generation_id": generation_id, "run_id": meta["run_id"],
                       "data_date": meta["data_date"], "source_sha256": meta["source_sha256"],
-                      "instruction_version": INSTRUCTION_VERSION}
+                      "instruction_version": instruction_version_for_data_schema(meta["schema_version"])}
     if publication != index_expected:
         raise ContractError("generation judgment index publication identity mismatch")
     def source_loader(record: dict) -> dict | None:
@@ -865,7 +870,7 @@ def publish_generation(output: Path, snapshot: dict, history: dict, index: dict,
         index = {**index, "publication": {
             "analysis_id": analysis_id, "generation_id": generation_id, "run_id": analysis_id,
             "data_date": snapshot["meta"]["data_date"], "source_sha256": snapshot["meta"]["source_sha256"],
-            "instruction_version": INSTRUCTION_VERSION,
+            "instruction_version": instruction_version_for_data_schema(snapshot["meta"]["schema_version"]),
         }}
         manifest = generation_manifest(snapshot, history, index, previous_generation_id)
         if target.exists():

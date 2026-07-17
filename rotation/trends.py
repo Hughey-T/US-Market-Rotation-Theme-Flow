@@ -47,7 +47,12 @@ def contiguous_history(
     current = dt.date.fromisoformat(current_date)
     compatible = []
     for item in sorted(history, key=lambda row: row.get("data_date", ""), reverse=True):
-        if item.get("schema_version") != schema_version or item.get("methodology_version") != methodology_version:
+        version_pair = (item.get("schema_version"), item.get("methodology_version"))
+        accepted_pairs = {(schema_version, methodology_version)}
+        if (schema_version, methodology_version) == ("1.2", "1.2.0"):
+            # 1.2 changes the decision/presentation contract, not history metrics.
+            accepted_pairs.add(("1.1", "1.1.0"))
+        if version_pair not in accepted_pairs:
             continue
         if item.get("theme_master_version") != theme_master_version:
             continue

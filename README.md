@@ -1,6 +1,6 @@
 # US Market Rotation & Theme Flow v1.2 user experience
 
-Versions: data schema `1.1`（監査互換を維持するadditive拡張）、decision contract `2.0`、presentation `1.0`、Custom GPT instruction `1.2`、publication contract `1.0`。
+Versions: data schema `1.2`（旧1.1は読み取り互換）、decision contract `3.0`、presentation `1.1`、Custom GPT instruction `1.3.0`、publication contract `1.0`。
 
 米国株を市場環境→スタイル→セクター・業種→テーマ→個別企業→最終判断の6段階で調べる週次データ基盤です。内部では再現可能な監査情報を保持し、通常回答では結論・意味・注意点・次の確認だけを平易な日本語で表示します。週次preflight、commit、repository validatorは同一の厳密なpublication file inventoryを使用し、unknown file、invalid current、lock/staging残骸を取得・commit前に拒否します。
 
@@ -8,7 +8,9 @@ Versions: data schema `1.1`（監査互換を維持するadditive拡張）、dec
 
 - データ層、判断層、表示層を分離し、通常表示専用の `user_view` を追加
 - 固定テーマ外の強い業種を、ETF信号＋最低3社の企業breadthで動的発見
-- 候補を「個別企業を調べる」「回復を待つ」「現在は避ける」の3分類へ変更
+- 候補を「個別企業を調べる」「回復条件を監視する」「長期材料はあるが現在の株価は弱い」「現在は避ける」の相互排他的な4分類へ変更
+- 固定テーマと動的業種へ、株価から推測しないversion付き構造的背景を追加
+- 企業調査観点をティッカー上書き、テーマ別役割、構成上の役割、全体既定値の順で具体化
 - 調査対象は0〜5件。弱い候補で枠を埋めない
 - 価格上の選好と実際の資金フロー確認を別fieldに分離
 - 履歴3週未満は初期観測モードとし、変化・反転・加速を断定しない
@@ -16,9 +18,9 @@ Versions: data schema `1.1`（監査互換を維持するadditive拡張）、dec
 - 企業候補は1対象最大2社、全体でticker重複なし
 - `更新` と5回の `次` だけで全6段階を完了
 
-通常利用は [Custom GPT Instructions 1.2](docs/custom_gpt_instructions_v1.2.md)、完成形は [6段階の表示サンプル](docs/display_samples_v1.2.md)、方法は [Methodology 1.2](docs/methodology_v1.2.md)、fieldは [Data Dictionary 1.2](docs/data_dictionary_v1.2.md) を参照してください。
+通常利用は [Custom GPT正本指示 1.3.0](docs/custom_gpt_instructions_current.md)（[GitHub raw正本](https://raw.githubusercontent.com/Hughey-T/US-Market-Rotation-Theme-Flow/main/docs/custom_gpt_instructions_current.md)）、完成形は [6段階の表示サンプル](docs/display_samples_v1.2.md)、方法は [Methodology 1.2](docs/methodology_v1.2.md)、fieldは [Data Dictionary 1.2](docs/data_dictionary_v1.2.md) を参照してください。
 
-数値計算、欠損処理、market regime、theme判定、動的発見、3分類候補、企業候補、表示文はコードが決定します。Custom GPTは `user_view` を順番に提示し、結果を変更しません。価格上昇を直接的な資金流入とは扱いません。
+数値計算、欠損処理、market regime、theme判定、動的発見、4分類候補、企業候補、表示文はコードが決定します。Custom GPTは `user_view` を順番に提示し、結果を変更しません。価格上昇を直接的な資金流入とは扱いません。
 
 Theme membershipはsnapshotのdata dateに対する`active/valid_from/valid_to`でpoint-in-time選択します。同一tickerの非重複・隣接期間は履歴として許可し、重複期間、逆転期間、異常日付は拒否します。50DMA breadthは実測countをweekly historyへ保存し、旧履歴にcountがなければ推定しません。`equal_weight_led`はmethodologyに既存定義があり、1.1の正式なcode-side fieldとして採用しました。
 

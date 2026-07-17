@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.invalid/us-market-rotation/latest.schema.1.1.json",
-  "title": "US Market Rotation latest.json 1.1",
+  "$id": "https://example.invalid/us-market-rotation/latest.schema.1.2.json",
+  "title": "US Market Rotation latest.json 1.2 (reads 1.1 legacy snapshots)",
   "type": "object",
   "additionalProperties": false,
   "required": ["meta", "not_implemented", "market_regime", "style_factor", "sectors", "industries", "themes", "theme_shortlist", "history_weekly", "previous_judgments"],
@@ -25,13 +25,24 @@
     "nullableNumber": {"type": ["number", "null"]},
     "nullableInteger": {"type": ["integer", "null"]},
     "conditionList": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "structuralContext": {
+      "type": "object", "additionalProperties": false,
+      "required": ["version", "status", "as_of", "summary", "source_category"],
+      "properties": {
+        "version": {"type": "string", "minLength": 1},
+        "status": {"enum": ["supported", "uncertain", "unsupported", "not_assessed"]},
+        "as_of": {"type": ["string", "null"], "format": "date"},
+        "summary": {"type": "string", "minLength": 1},
+        "source_category": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+      }
+    },
     "meta": {
       "type": "object",
       "additionalProperties": false,
       "required": ["schema_version", "methodology_version", "generated_at", "data_date", "valid_until", "hard_stop_after", "run_id", "source_commit", "source_snapshot", "source_sha256", "status", "failure_reason", "universe_definition", "periods", "global_quality"],
       "properties": {
-        "schema_version": {"const": "1.1"},
-        "methodology_version": {"const": "1.1.0"},
+        "schema_version": {"enum": ["1.1", "1.2"]},
+        "methodology_version": {"enum": ["1.1.0", "1.2.0"]},
         "generated_at": {"type": "string", "format": "date-time"},
         "data_date": {"type": "string", "format": "date"},
         "valid_until": {"type": "string", "format": "date-time"},
@@ -322,6 +333,7 @@
       "properties": {
         "theme_id": {"type": "string", "minLength": 1},
         "label": {"type": "string", "minLength": 1},
+        "structural_context": {"$ref": "#/$defs/structuralContext"},
         "quality": {"$ref": "#/$defs/themeQuality"},
         "metrics": {"$ref": "#/$defs/themeMetrics"},
         "trends": {"$ref": "#/$defs/themeTrends"},
@@ -353,7 +365,7 @@
       "additionalProperties": false,
       "required": ["candidate_bucket", "price_preference", "direct_flow_confirmation", "analysis_mode", "weeks_until_trend", "time_profile"],
       "properties": {
-        "candidate_bucket": {"enum": ["research_now", "watch_recovery", "avoid_now"]},
+        "candidate_bucket": {"enum": ["research_now", "watch_recovery", "long_term_context_price_weak", "avoid_now"]},
         "price_preference": {"enum": ["positive", "negative", "mixed", "unavailable"]},
         "direct_flow_confirmation": {"enum": ["confirmed", "not_confirmed", "unavailable"]},
         "analysis_mode": {"enum": ["initial_observation", "trend"]},
@@ -364,15 +376,16 @@
     "candidateRef": {
       "type": "object", "additionalProperties": false,
       "required": ["id", "label", "source"],
-      "properties": {"id": {"type": "string"}, "label": {"type": "string"}, "source": {"enum": ["fixed_theme", "dynamic_industry"]}}
+      "properties": {"id": {"type": "string"}, "label": {"type": "string"}, "source": {"enum": ["fixed_theme", "dynamic_industry"]}, "classification_reason": {"enum": ["research_now", "watch_recovery", "long_term_context_price_weak", "avoid_now", "research_capacity_limit"]}}
     },
     "candidateBuckets": {
       "type": "object", "additionalProperties": false,
       "required": ["selection_version", "max_research_items", "research_now", "watch_recovery", "avoid_now"],
       "properties": {
-        "selection_version": {"const": "2.0"}, "max_research_items": {"const": 5},
+        "selection_version": {"enum": ["2.0", "3.0"]}, "max_research_items": {"const": 5},
         "research_now": {"type": "array", "maxItems": 5, "items": {"$ref": "#/$defs/candidateRef"}},
         "watch_recovery": {"type": "array", "items": {"$ref": "#/$defs/candidateRef"}},
+        "long_term_context_price_weak": {"type": "array", "items": {"$ref": "#/$defs/candidateRef"}},
         "avoid_now": {"type": "array", "items": {"$ref": "#/$defs/candidateRef"}}
       }
     },
@@ -390,7 +403,7 @@
       "required": ["candidate_id", "label", "source", "reference_etf", "reference_etf_rel_spy_4w", "metrics", "constituents"],
       "properties": {
         "candidate_id": {"type": "string"}, "label": {"type": "string"}, "source": {"const": "dynamic_industry"},
-        "reference_etf": {"type": "string"}, "reference_etf_rel_spy_4w": {"type": "number", "minimum": 0.03}, "metrics": {"$ref": "#/$defs/themeMetrics"},
+        "reference_etf": {"type": "string"}, "reference_etf_rel_spy_4w": {"$ref": "#/$defs/nullableNumber"}, "eligible": {"type": "boolean"}, "rejection_reasons": {"$ref": "#/$defs/conditionList"}, "structural_context": {"$ref": "#/$defs/structuralContext"}, "metrics": {"$ref": "#/$defs/themeMetrics"},
         "constituents": {"type": "array", "items": {"$ref": "#/$defs/dynamicConstituent"}}
       }
     },
@@ -398,7 +411,7 @@
       "type": "object", "additionalProperties": false,
       "required": ["discovery_version", "thresholds", "candidate_ids", "candidates", "rejected"],
       "properties": {
-        "discovery_version": {"const": "1.0"},
+        "discovery_version": {"enum": ["1.0", "2.0"]},
         "thresholds": {"type": "object", "additionalProperties": {"type": ["number", "integer"]}},
         "candidate_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
         "candidates": {"type": "object", "additionalProperties": {"$ref": "#/$defs/dynamicCandidate"}},
@@ -411,7 +424,7 @@
       "properties": {
         "theme_id": {"type": "string"}, "theme_label": {"type": "string"}, "source": {"enum": ["fixed_theme", "dynamic_industry"]},
         "ticker": {"type": "string"}, "selection_role": {"enum": ["representative", "breadth_check"]},
-        "why": {"type": "string"}, "key_check": {"type": "string"}, "counter_evidence": {"type": "string"}
+        "why": {"type": "string"}, "key_check": {"type": "string"}, "counter_evidence": {"type": "string"}, "research_lens_source": {"type": "string", "minLength": 1}
       }
     },
     "userPhase": {
@@ -427,7 +440,7 @@
       "type": "object", "additionalProperties": false,
       "required": ["presentation_version", "analysis_mode", "phases"],
       "properties": {
-        "presentation_version": {"const": "1.0"}, "analysis_mode": {"enum": ["initial_observation", "trend"]},
+        "presentation_version": {"enum": ["1.0", "1.1"]}, "analysis_mode": {"enum": ["initial_observation", "trend"]},
         "phases": {"type": "array", "minItems": 6, "maxItems": 6, "items": {"$ref": "#/$defs/userPhase"}}
       }
     },
@@ -449,8 +462,8 @@
       "required": ["data_date", "schema_version", "methodology_version", "theme_master_version", "themes"],
       "properties": {
         "data_date": {"type": "string", "format": "date"},
-        "schema_version": {"const": "1.1"},
-        "methodology_version": {"const": "1.1.0"},
+        "schema_version": {"enum": ["1.1", "1.2"]},
+        "methodology_version": {"enum": ["1.1.0", "1.2.0"]},
         "theme_master_version": {"type": "string"},
         "themes": {"type": "object", "additionalProperties": {"$ref": "#/$defs/historyTheme"}}
       }

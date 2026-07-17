@@ -1,5 +1,5 @@
 {
-  "config_version": "1.2.0",
+  "config_version": "1.3.0",
   "_comment": "分析に使うETF（上場投資信託）の定義。ティッカー: 日本語ラベル。追加・削除はここを編集するだけでよい。",
   "vix": "^VIX",
   "regime_assets": {
@@ -65,5 +65,95 @@
     "retail": {"label": "小売", "etf": "XRT", "members": ["COST", "LOW", "TGT", "TJX", "WMT"]},
     "biotechnology": {"label": "バイオテクノロジー", "etf": "XBI", "members": ["ALNY", "AMGN", "BIIB", "GILD", "REGN", "VRTX"]},
     "infrastructure_construction": {"label": "インフラ建設", "etf": "PAVE", "members": ["EME", "MTZ", "PWR", "VMC", "VUL"]}
-  }
+  },
+  "structural_context_version": "1.0",
+  "structural_contexts": {
+    "ai_semis": {"version": "1.0", "status": "not_assessed", "as_of": "2026-07-15", "summary": "固定テーマとしての構成管理はありますが、長期材料を裏付ける根拠は未評価です。", "source_category": ["repository_theme_master"]},
+    "ai_software_data": {"version": "1.0", "status": "not_assessed", "as_of": "2026-07-15", "summary": "固定テーマとしての構成管理はありますが、長期材料を裏付ける根拠は未評価です。", "source_category": ["repository_theme_master"]},
+    "cybersecurity": {"version": "1.0", "status": "not_assessed", "as_of": "2026-07-15", "summary": "固定テーマとしての構成管理はありますが、長期材料を裏付ける根拠は未評価です。", "source_category": ["repository_theme_master"]},
+    "dc_power_infra": {"version": "1.0", "status": "not_assessed", "as_of": "2026-07-15", "summary": "固定テーマとしての構成管理はありますが、長期材料を裏付ける根拠は未評価です。", "source_category": ["repository_theme_master"]},
+    "defense": {"version": "1.0", "status": "not_assessed", "as_of": "2026-07-15", "summary": "固定テーマとしての構成管理はありますが、長期材料を裏付ける根拠は未評価です。", "source_category": ["repository_theme_master"]},
+    "networking_optical": {"version": "1.0", "status": "not_assessed", "as_of": "2026-07-15", "summary": "固定テーマとしての構成管理はありますが、長期材料を裏付ける根拠は未評価です。", "source_category": ["repository_theme_master"]},
+    "nuclear_uranium": {"version": "1.0", "status": "not_assessed", "as_of": "2026-07-15", "summary": "固定テーマとしての構成管理はありますが、長期材料を裏付ける根拠は未評価です。", "source_category": ["repository_theme_master"]},
+    "semi_equipment": {"version": "1.0", "status": "not_assessed", "as_of": "2026-07-15", "summary": "固定テーマとしての構成管理はありますが、長期材料を裏付ける根拠は未評価です。", "source_category": ["repository_theme_master"]},
+    "regional_banks": {"version": "1.0", "status": "not_assessed", "as_of": "2026-07-17", "summary": "構造的背景は未評価です。価格条件だけから長期材料を推測しません。", "source_category": []},
+    "transportation": {"version": "1.0", "status": "not_assessed", "as_of": "2026-07-17", "summary": "構造的背景は未評価です。価格条件だけから長期材料を推測しません。", "source_category": []},
+    "homebuilders": {"version": "1.0", "status": "not_assessed", "as_of": "2026-07-17", "summary": "構造的背景は未評価です。価格条件だけから長期材料を推測しません。", "source_category": []},
+    "oil_gas_exploration": {"version": "1.0", "status": "not_assessed", "as_of": "2026-07-17", "summary": "構造的背景は未評価です。価格条件だけから長期材料を推測しません。", "source_category": []},
+    "retail": {"version": "1.0", "status": "not_assessed", "as_of": "2026-07-17", "summary": "構造的背景は未評価です。価格条件だけから長期材料を推測しません。", "source_category": []},
+    "biotechnology": {"version": "1.0", "status": "not_assessed", "as_of": "2026-07-17", "summary": "構造的背景は未評価です。価格条件だけから長期材料を推測しません。", "source_category": []},
+    "infrastructure_construction": {"version": "1.0", "status": "not_assessed", "as_of": "2026-07-17", "summary": "構造的背景は未評価です。価格条件だけから長期材料を推測しません。", "source_category": []}
+  },
+  "research_lens_version": "1.0",
+  "research_lenses": {
+    "ai_semis": {
+      "representative": {"key_check": "AI向け計算需要が売上成長と供給能力の両方に結び付くか", "counter_evidence": "顧客集中や供給制約の反動で成長率と利益率が同時に鈍化すること"},
+      "breadth_check": {"key_check": "AI半導体需要が中心企業以外の製品群にも広がっているか", "counter_evidence": "一部の先端製品だけが強く、周辺製品の受注が回復しないこと"}
+    },
+    "semi_equipment": {
+      "representative": {"key_check": "先端ロジック・メモリ投資が装置受注と受注残へ持続的に反映されるか", "counter_evidence": "顧客の設備投資延期や輸出規制で受注残の消化が遅れること"},
+      "breadth_check": {"key_check": "成膜・検査・洗浄など複数工程へ設備投資の広がりが確認できるか", "counter_evidence": "特定工程だけの更新需要にとどまり装置業界全体へ波及しないこと"}
+    },
+    "ai_software_data": {
+      "representative": {"key_check": "AI機能の利用増が契約単価・継続率・利益率の改善に結び付くか", "counter_evidence": "計算コストが先行し、AI売上を増やしても利益率が改善しないこと"},
+      "breadth_check": {"key_check": "AI導入が試験利用から本番データ基盤と継続課金へ移っているか", "counter_evidence": "顧客の実証実験にとどまり契約拡大や利用継続が確認できないこと"}
+    },
+    "cybersecurity": {
+      "representative": {"key_check": "統合セキュリティ基盤への集約が新規契約と既存顧客単価を押し上げるか", "counter_evidence": "値引き競争や販売期間の長期化で残存契約価値の伸びが鈍ること"},
+      "breadth_check": {"key_check": "需要が単一製品でなくクラウド・端末・ID管理へ広がっているか", "counter_evidence": "大型案件が少数企業に集中し、同業他社の請求額が伸びないこと"}
+    },
+    "dc_power_infra": {
+      "representative": {"key_check": "データセンター向け電力・冷却案件が受注残と利益率を伴って増えるか", "counter_evidence": "案件延期や部材不足で受注残が売上と現金収入へ転換しないこと"},
+      "breadth_check": {"key_check": "電力設備から冷却・配電・建設まで案件の広がりが確認できるか", "counter_evidence": "一部の大型案件だけが強く、関連企業の受注が追随しないこと"}
+    },
+    "defense": {
+      "representative": {"key_check": "予算措置が受注残と量産契約へ転換し、採算も維持できるか", "counter_evidence": "固定価格契約のコスト超過や調達遅延で利益率が低下すること"},
+      "breadth_check": {"key_check": "航空・ミサイル・電子戦など複数領域で受注が拡大しているか", "counter_evidence": "特定プログラムだけに依存し、他領域の受注残が増えないこと"}
+    },
+    "nuclear_uranium": {
+      "representative": {"key_check": "契約価格と供給量が長期契約の収益性へ具体的に反映されるか", "counter_evidence": "許認可・建設遅延・供給再開で想定した需給逼迫が緩むこと"},
+      "breadth_check": {"key_check": "ウラン採掘だけでなく燃料・機器・運営企業にも需要が波及するか", "counter_evidence": "商品価格だけが上がり、設備・サービス企業の受注が伴わないこと"}
+    },
+    "networking_optical": {
+      "representative": {"key_check": "高速ネットワーク更新が受注・出荷・製品構成の改善へつながるか", "counter_evidence": "顧客在庫調整や内製化で光部品とスイッチ需要が先送りされること"},
+      "breadth_check": {"key_check": "スイッチ、光部品、接続部品の複数階層で需要増が確認できるか", "counter_evidence": "一部の高速規格だけが強く、旧製品の減少を補えないこと"}
+    },
+    "regional_banks": {
+      "representative": {"key_check": "預金コストの安定と貸出成長が純金利収益の改善へつながるか", "counter_evidence": "商業用不動産の信用費用と預金流出が同時に増えること"},
+      "breadth_check": {"key_check": "純金利マージンと資産健全性の改善が複数行に広がっているか", "counter_evidence": "一部行だけの特殊要因で、同業他行の延滞率が高いこと"}
+    },
+    "transportation": {
+      "representative": {"key_check": "輸送量と運賃の改善が稼働率・営業利益率の上昇へ結び付くか", "counter_evidence": "荷動き減少や人件費・燃料費上昇で価格改善が相殺されること"},
+      "breadth_check": {"key_check": "鉄道・物流・小口配送の複数経路で荷動きが回復しているか", "counter_evidence": "一つの輸送形態だけが強く、業界全体の取扱量が増えないこと"}
+    },
+    "biotechnology": {
+      "representative": {"key_check": "主要パイプラインの臨床・承認節目と資金余力が企業価値を支えるか", "counter_evidence": "試験失敗、安全性問題、資金調達による希薄化が重なること"},
+      "breadth_check": {"key_check": "上昇が単一の治験結果でなく複数企業・治療領域へ広がっているか", "counter_evidence": "少数の買収観測だけで指数が上がり、臨床進捗が伴わないこと"}
+    },
+    "homebuilders": {
+      "representative": {"key_check": "受注件数と販売価格が住宅ローン金利環境下でも粗利益率を支えるか", "counter_evidence": "販売奨励金とキャンセル率が高く採算を圧迫すること"},
+      "breadth_check": {"key_check": "受注回復が地域・価格帯・複数社へ広がっているか", "counter_evidence": "限られた地域の供給不足だけで、他地域の在庫が増えること"}
+    },
+    "oil_gas_exploration": {
+      "representative": {"key_check": "生産量と実現価格が設備投資後の自由現金収支を維持できるか", "counter_evidence": "商品価格下落やコスト上昇で株主還元の原資が減ること"},
+      "breadth_check": {"key_check": "生産効率と資本規律が複数の開発企業で確認できるか", "counter_evidence": "一社の資産構成だけが有利で、同業の現金収支が弱いこと"}
+    },
+    "retail": {
+      "representative": {"key_check": "既存店売上と客数の伸びが在庫回転・粗利益率を伴うか", "counter_evidence": "値引き増加と消費者の買い控えで在庫と販促費が増えること"},
+      "breadth_check": {"key_check": "消費の強さが業態・所得層の異なる複数小売へ広がっているか", "counter_evidence": "生活必需品や高所得層だけが強く裁量消費が弱いこと"}
+    },
+    "infrastructure_construction": {
+      "representative": {"key_check": "受注残が人員・資材制約を超えて売上と利益へ転換するか", "counter_evidence": "工期遅延や固定価格案件の原価超過が採算を圧迫すること"},
+      "breadth_check": {"key_check": "電力・道路・通信など複数分野へ工事需要が広がっているか", "counter_evidence": "一部の大型公共案件だけに依存し民間受注が減ること"}
+    }
+  },
+  "company_research_overrides": {
+    "RF": {"key_check": "預金残高・預金コスト・商業用不動産引当が同時に安定するか", "counter_evidence": "無保険預金流出と商業用不動産の信用損失が同時に増えること"}
+  },
+  "role_research_lenses": {
+    "core": {"key_check": "中核事業の需要が受注・売上・利益率へ一貫して反映されるか", "counter_evidence": "中核事業の成長鈍化と利益率低下が同時に起きること"},
+    "beneficiary": {"key_check": "テーマ需要の波及が実際の受注と利益へ転換するか", "counter_evidence": "期待だけが先行し、関連売上の寄与が確認できないこと"},
+    "peripheral": {"key_check": "周辺事業のテーマ寄与が全社業績を動かす規模へ達するか", "counter_evidence": "テーマ関連売上が小さく、既存事業の弱さを補えないこと"}
+  },
+  "global_research_lens": {"key_check": "次回決算と会社見通しが現在の株価の強さを裏付けるか", "counter_evidence": "業績の裏付けがないまま相対的な株価の強さが失われること"}
 }

@@ -1,4 +1,6 @@
-# US Market Rotation & Theme Flow — Custom GPT Instructions 1.2
+# Deprecated / historical — Custom GPT Instructions 1.2
+
+この文書は監査履歴です。現在の正本は [`custom_gpt_instructions_current.md`](custom_gpt_instructions_current.md) です。新規設定や更新にこの旧版を使用しないでください。
 
 公開データは `publication` branch の `output/consumer/latest.json` だけを使用する。
 URL: `https://raw.githubusercontent.com/Hughey-T/US-Market-Rotation-Theme-Flow/publication/output/consumer/latest.json`

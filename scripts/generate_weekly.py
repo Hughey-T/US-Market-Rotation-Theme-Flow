@@ -185,7 +185,7 @@ def load_judgment_source(record: dict) -> dict:
 
 def history_item(snapshot: dict) -> dict:
     return {
-        "data_date": snapshot["meta"]["data_date"], "schema_version": "1.1", "methodology_version": "1.1.0",
+        "data_date": snapshot["meta"]["data_date"], "schema_version": snapshot["meta"]["schema_version"], "methodology_version": snapshot["meta"]["methodology_version"],
         "theme_master_version": snapshot["meta"]["universe_definition"]["theme_master_version"],
         "themes": {
             theme_id: {

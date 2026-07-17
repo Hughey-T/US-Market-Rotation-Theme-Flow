@@ -68,6 +68,35 @@ def main() -> int:
         master = load_json(ROOT / "data" / "themes.json")
         validate_schema(master, schemas["master"], "data/themes.json")
         warnings = validate_theme_master_semantics(master)
+        config_path = ROOT / "config" / "universe.json"
+        if config_path.exists():
+            config = load_json(config_path)
+            fixed_ids = {theme["theme_id"] for theme in master["themes"]}
+            dynamic_ids = set(config.get("dynamic_industries", {}))
+            configured_ids = fixed_ids | dynamic_ids
+            if set(config.get("structural_contexts", {})) != configured_ids:
+                raise ContractError("structural contexts must cover exactly all fixed themes and configured dynamic industries")
+            if set(config.get("research_lenses", {})) != configured_ids:
+                raise ContractError("research lenses must cover exactly all fixed themes and configured dynamic industries")
+            for item_id, context in config["structural_contexts"].items():
+                if context.get("version") != config.get("structural_context_version") or context.get("status") not in {"supported", "uncertain", "unsupported", "not_assessed"}:
+                    raise ContractError(f"invalid versioned structural context: {item_id}")
+            for item_id, lenses in config["research_lenses"].items():
+                if set(lenses) != {"representative", "breadth_check"}:
+                    raise ContractError(f"research lenses require representative and breadth_check: {item_id}")
+                for role, lens in lenses.items():
+                    if not lens.get("key_check") or not lens.get("counter_evidence"):
+                        raise ContractError(f"incomplete research lens: {item_id}/{role}")
+            lens_text = str({
+                "themes": config.get("research_lenses", {}),
+                "tickers": config.get("company_research_overrides", {}),
+                "roles": config.get("role_research_lenses", {}),
+                "global": config.get("global_research_lens", {}),
+            })
+            forbidden_initial_terms = ("初動", "拡散", "失速", "悪化", "反転", "流入継続", "流出継続", "加速", "減速")
+            leaked = [term for term in forbidden_initial_terms if term in lens_text]
+            if leaked:
+                raise ContractError(f"research lenses contain initial-observation trend claims: {leaked}")
         fixture_dir = ROOT / "tests" / "fixtures"
         for path in sorted(fixture_dir.glob("latest_*.json")):
             value = load_json(path)
@@ -118,13 +147,21 @@ def main() -> int:
             generation_index = {key: value for key, value in current_generation[5].items() if key != "publication"}
             if generation_index != rebuilt:
                 raise ContractError("current generation judgment index does not match validated immutable records")
-        instructions = (ROOT / "docs" / "custom_gpt_instructions_v1.2.md").read_text(encoding="utf-8")
+        instructions = (ROOT / "docs" / "custom_gpt_instructions_current.md").read_text(encoding="utf-8")
         if len(instructions) > 8000:
             raise ContractError(f"Custom GPT instructions exceed 8,000 characters: {len(instructions)}")
-        required_terms = ["更新", "次", "詳細", "用語", "再評価", "user_view.phases", "candidate_buckets", "initial_observation", "資金流入・流出を断定しない"]
+        required_terms = [
+            "更新", "次", "詳細", "用語", "再評価", "user_view.phases", "candidate_buckets",
+            "initial_observation", "資金流入・流出と断定しない", "research_now", "watch_recovery",
+            "long_term_context_price_weak", "avoid_now", "structural_context.status=\"supported\"",
+        ]
         missing = [term for term in required_terms if term not in instructions]
         if missing:
             raise ContractError(f"Custom GPT instructions missing contract terms: {missing}")
+        for old_name in ("custom_gpt_instructions_v1.1.md", "custom_gpt_instructions_v1.2.md", "custom_gpt_instructions_v2.md"):
+            old_text = (ROOT / "docs" / old_name).read_text(encoding="utf-8")
+            if "Deprecated" not in old_text or "custom_gpt_instructions_current.md" not in old_text:
+                raise ContractError(f"historical Custom GPT instructions are not clearly deprecated: {old_name}")
         print(f"validation passed: 9 schemas, 7 latest fixtures, 8 display fixtures, 1 sample latest, 1 judgment fixture, 1 sample judgment, 1 master fixture, {public_count} public outputs, {len(warnings)} overlap warnings")
         return 0
     except (ContractError, OSError, ValueError) as error:

@@ -6,13 +6,15 @@ from pathlib import Path
 
 import pandas as pd
 
-from rotation.decisions import build_candidate_buckets, select_companies
+from rotation.decisions import BUCKET_NAMES, _research_lens, build_candidate_buckets, select_companies
 from rotation.discovery import discover_dynamic_industries
 from rotation.interaction import ConversationSession
+from rotation.legacy import migrate_candidate_buckets_2_to_3
 from rotation.metrics import aggregate_theme
-from rotation.presentation import render_phase
+from rotation.presentation import build_user_view, render_phase
 from rotation.provenance import snapshot_source_hash
 from rotation.validation import ContractError, validate_latest_semantics
+from rotation.validation import load_json, validate_schema
 from tests.test_pipeline_contract import build_synthetic, synthetic_inputs
 from scripts.generate_weekly import classify_publication_start_state, ticker_observation
 
@@ -25,6 +27,146 @@ FORBIDDEN = (
 
 
 class UserExperienceContracts(unittest.TestCase):
+    def test_four_bucket_contract_is_complete_exclusive_and_total(self):
+        snapshot = build_synthetic()
+        buckets = snapshot["candidate_buckets"]
+        self.assertEqual(buckets["selection_version"], "3.0")
+        self.assertEqual(tuple(name for name in buckets if name in BUCKET_NAMES), BUCKET_NAMES)
+        memberships = [
+            (item["id"], item["source"])
+            for name in BUCKET_NAMES for item in buckets[name]
+        ]
+        known = {(key, "fixed_theme") for key in snapshot["themes"]} | {(key, "dynamic_industry") for key in snapshot["dynamic_discovery"]["candidates"]}
+        self.assertEqual(set(memberships), known)
+        self.assertEqual(len(memberships), len(set(memberships)))
+
+    def test_long_term_bucket_requires_supported_context_and_weak_price(self):
+        snapshot = build_synthetic()
+        theme = snapshot["themes"]["fixture_theme"]
+        theme["metrics"].update(equal_weight_rel_spy_4w=-0.02, equal_weight_rel_spy_13w=-0.01, advance_ratio_4w=0.30, pct_above_50dma=0.30)
+        theme["structural_context"] = {"version": "1.0", "status": "supported", "as_of": "2026-07-10", "summary": "test context", "source_category": ["test"]}
+        buckets = build_candidate_buckets(snapshot["themes"], {"candidate_ids": [], "candidates": {}})
+        self.assertEqual(buckets["long_term_context_price_weak"][0]["id"], "fixture_theme")
+        theme["structural_context"]["status"] = "not_assessed"
+        buckets = build_candidate_buckets(snapshot["themes"], {"candidate_ids": [], "candidates": {}})
+        self.assertFalse(buckets["long_term_context_price_weak"])
+        self.assertEqual(buckets["avoid_now"][0]["id"], "fixture_theme")
+
+    def test_missing_price_metrics_are_not_claimed_as_price_weakness(self):
+        snapshot = build_synthetic()
+        theme = snapshot["themes"]["fixture_theme"]
+        theme["metrics"].update(equal_weight_rel_spy_4w=None, equal_weight_rel_spy_13w=None, advance_ratio_4w=None, pct_above_50dma=None)
+        theme["structural_context"] = {"version": "1.0", "status": "supported", "as_of": "2026-07-10", "summary": "test context", "source_category": ["test"]}
+        buckets = build_candidate_buckets(snapshot["themes"], {"candidate_ids": [], "candidates": {}})
+        self.assertFalse(buckets["long_term_context_price_weak"])
+        self.assertEqual(buckets["avoid_now"][0]["id"], "fixture_theme")
+
+    def test_weak_dynamic_definition_is_preserved_and_classified(self):
+        config, _, observations, _, _ = synthetic_inputs()
+        members = ["BANK1", "BANK2", "BANK3", "BANK4"]
+        config["dynamic_industries"] = {"regional_banks": {"label": "地方銀行", "etf": "KRE", "members": members}}
+        observations["KRE"] = {**observations["SPY"], "return_4w": -0.02}
+        for ticker in members:
+            observations[ticker] = {**observations["SPY"], "return_1w": -0.01, "return_4w": -0.02, "return_13w": -0.03, "above_50dma": False}
+        dynamic = discover_dynamic_industries(config, observations, observations["SPY"])
+        self.assertEqual(dynamic["candidate_ids"], [])
+        self.assertIn("regional_banks", dynamic["candidates"])
+        self.assertFalse(dynamic["candidates"]["regional_banks"]["eligible"])
+        buckets = build_candidate_buckets({}, dynamic)
+        self.assertEqual(buckets["avoid_now"][0]["id"], "regional_banks")
+
+    def test_research_lens_priority_ticker_then_theme_then_role_then_global(self):
+        config = json.loads((ROOT / "config" / "universe.json").read_text(encoding="utf-8"))
+        _, source = _research_lens(config, "regional_banks", "RF", "core", "representative")
+        self.assertEqual(source, "ticker:RF")
+        _, source = _research_lens(config, "regional_banks", "CFG", "core", "representative")
+        self.assertEqual(source, "theme:regional_banks:representative")
+        role_config = {"role_research_lenses": config["role_research_lenses"]}
+        _, source = _research_lens(role_config, "unknown", "XYZ", "beneficiary", "representative")
+        self.assertEqual(source, "role:beneficiary")
+        _, source = _research_lens({}, "unknown", "XYZ", "core", "breadth_check")
+        self.assertEqual(source, "global_fallback")
+
+    def test_known_configured_theme_cannot_downgrade_to_global_lens(self):
+        snapshot = build_synthetic()
+        theme = snapshot["themes"].pop("fixture_theme")
+        theme["theme_id"] = "ai_semis"
+        snapshot["themes"]["ai_semis"] = theme
+        snapshot["theme_shortlist"]["selected_theme_ids"] = ["ai_semis" if value == "fixture_theme" else value for value in snapshot["theme_shortlist"]["selected_theme_ids"]]
+        for name in BUCKET_NAMES:
+            for item in snapshot["candidate_buckets"][name]:
+                if item["id"] == "fixture_theme":
+                    item["id"] = "ai_semis"
+        config = load_json(ROOT / "config" / "universe.json")
+        snapshot["company_candidates"] = select_companies(snapshot["themes"], snapshot["dynamic_discovery"], snapshot["candidate_buckets"], config)
+        snapshot["user_view"] = build_user_view(
+            regime=snapshot["market_regime"], style_factor=snapshot["style_factor"], sectors=snapshot["sectors"], industries=snapshot["industries"],
+            themes=snapshot["themes"], dynamic=snapshot["dynamic_discovery"], buckets=snapshot["candidate_buckets"], companies=snapshot["company_candidates"], history_weeks=theme["quality"]["history_weeks"],
+        )
+        snapshot["meta"]["source_sha256"] = snapshot_source_hash(snapshot)
+        validate_latest_semantics(snapshot, verify_source_hash=True)
+        for item in snapshot["company_candidates"]:
+            lens, _ = _research_lens({}, item["theme_id"], item["ticker"], "core", item["selection_role"])
+            item.update(lens, research_lens_source="global_fallback")
+        snapshot["user_view"] = build_user_view(
+            regime=snapshot["market_regime"], style_factor=snapshot["style_factor"], sectors=snapshot["sectors"], industries=snapshot["industries"],
+            themes=snapshot["themes"], dynamic=snapshot["dynamic_discovery"], buckets=snapshot["candidate_buckets"], companies=snapshot["company_candidates"], history_weeks=theme["quality"]["history_weeks"],
+        )
+        snapshot["meta"]["source_sha256"] = snapshot_source_hash(snapshot)
+        with self.assertRaisesRegex(ContractError, "research lens"):
+            validate_latest_semantics(snapshot, verify_source_hash=True)
+
+    def test_legacy_three_bucket_projection_never_infers_structural_context(self):
+        legacy = {"selection_version": "2.0", "max_research_items": 5, "research_now": [], "watch_recovery": [], "avoid_now": [{"id": "x", "label": "X", "source": "fixed_theme"}]}
+        current = migrate_candidate_buckets_2_to_3(legacy)
+        self.assertEqual(current["selection_version"], "3.0")
+        self.assertEqual(current["long_term_context_price_weak"], [])
+        self.assertEqual(current["avoid_now"][0]["classification_reason"], "avoid_now")
+
+    def test_schema_1_1_additive_snapshot_remains_read_only_compatible(self):
+        legacy = build_synthetic()
+        legacy["meta"].update(schema_version="1.1", methodology_version="1.1.0")
+        legacy["candidate_buckets"]["selection_version"] = "2.0"
+        legacy["candidate_buckets"].pop("long_term_context_price_weak")
+        for name in ("research_now", "watch_recovery", "avoid_now"):
+            for item in legacy["candidate_buckets"][name]:
+                item.pop("classification_reason", None)
+        legacy["dynamic_discovery"] = {"discovery_version": "1.0", "thresholds": legacy["dynamic_discovery"]["thresholds"], "candidate_ids": [], "candidates": {}, "rejected": {}}
+        for item in legacy["company_candidates"]:
+            item.pop("research_lens_source", None)
+        legacy["user_view"]["presentation_version"] = "1.0"
+        legacy["meta"]["source_sha256"] = snapshot_source_hash(legacy)
+        validate_schema(legacy, load_json(ROOT / "schemas" / "rotation_snapshot.schema.json"), "legacy additive")
+        validate_latest_semantics(legacy, verify_source_hash=True)
+
+    def test_phase_four_and_six_always_name_all_four_buckets(self):
+        snapshot = build_synthetic()
+        for phase in (4, 6):
+            rendered = render_phase(snapshot["user_view"], phase)
+            for label in ("個別企業を調べる", "回復条件を監視する", "長期材料はあるが現在の株価は弱い", "現在は避ける"):
+                self.assertIn(label, rendered)
+            self.assertIn("該当なし", rendered)
+
+    def test_semantic_validator_rejects_four_bucket_and_display_corruption(self):
+        base = build_synthetic()
+        mutations = {}
+        value = copy.deepcopy(base); value["candidate_buckets"].pop("long_term_context_price_weak"); mutations["missing fourth bucket"] = value
+        value = copy.deepcopy(base); value["candidate_buckets"]["avoid_now"].append(copy.deepcopy(value["candidate_buckets"]["research_now"][0])); mutations["duplicate membership"] = value
+        value = copy.deepcopy(base); value["candidate_buckets"]["avoid_now"].append({"id": "unknown", "label": "未知", "source": "fixed_theme", "classification_reason": "avoid_now"}); mutations["unknown candidate"] = value
+        value = copy.deepcopy(base); item = value["candidate_buckets"]["research_now"].pop(); item["classification_reason"] = "long_term_context_price_weak"; value["candidate_buckets"]["long_term_context_price_weak"].append(item); mutations["unsupported long term"] = value
+        value = copy.deepcopy(base); value["company_candidates"][0].pop("key_check"); mutations["missing company lens"] = value
+        value = copy.deepcopy(base); value["user_view"]["phases"][3]["conclusion"] = "classification_eligible"; mutations["internal field leak"] = value
+        if len(base["company_candidates"]) > 1:
+            value = copy.deepcopy(base)
+            for item in value["company_candidates"][1:]:
+                item["key_check"] = value["company_candidates"][0]["key_check"]
+                item["counter_evidence"] = value["company_candidates"][0]["counter_evidence"]
+            mutations["identical company text"] = value
+        for name, value in mutations.items():
+            value["meta"]["source_sha256"] = snapshot_source_hash(value)
+            with self.subTest(name=name), self.assertRaises(ContractError):
+                validate_latest_semantics(value, verify_source_hash=True)
+
     def test_eight_required_display_fixtures_are_registered(self):
         value = json.loads((ROOT / "tests" / "fixtures" / "user_display_cases.json").read_text(encoding="utf-8"))
         self.assertEqual(
