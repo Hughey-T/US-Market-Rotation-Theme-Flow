@@ -166,7 +166,7 @@ class PipelineContractTests(unittest.TestCase):
     def test_custom_gpt_instruction_contract(self):
         text = (ROOT / "docs" / "custom_gpt_instructions_current.md").read_text(encoding="utf-8")
         self.assertLessEqual(len(text), 8000)
-        for required in ("更新", "次", "詳細", "用語", "再評価", "user_view.phases", "candidate_buckets", "initial_observation", "資金流入・流出と断定しない", "research_now", "watch_recovery", "long_term_context_price_weak", "avoid_now"):
+        for required in ("更新", "次", "詳細", "用語", "再評価", "user_view.phases", "consumer_contract_version=\"1.0\"", "source_identity.analysis_id", "source_identity.generation_id", "initial_observation", "資金流入・流出と断定しない", "不完全JSON", "前回キャッシュ"):
             self.assertIn(required, text)
 
     def test_daily_screen_contract_is_not_present(self):

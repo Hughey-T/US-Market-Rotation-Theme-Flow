@@ -1,6 +1,6 @@
 # US Market Rotation & Theme Flow v1.2 user experience
 
-Versions: data schema `1.2`（旧1.1は読み取り互換）、decision contract `3.0`、presentation `1.2`（1.1は読み取り互換）、Custom GPT instruction `1.3.0`、publication contract `1.0`。
+Versions: data schema `1.2`（旧1.1は読み取り互換）、decision contract `3.0`、presentation `1.2`（1.1は読み取り互換）、Custom GPT instruction `1.4.0`、publication contract `1.1`（1.0は読み取り互換）、consumer contract `1.0`。
 
 米国株を市場環境→スタイル→セクター・業種→テーマ→個別企業→最終判断の6段階で調べる週次データ基盤です。内部では再現可能な監査情報を保持し、通常回答では結論・意味・注意点・次の確認だけを平易な日本語で表示します。週次preflight、commit、repository validatorは同一の厳密なpublication file inventoryを使用し、unknown file、invalid current、lock/staging残骸を取得・commit前に拒否します。
 
@@ -18,7 +18,7 @@ Versions: data schema `1.2`（旧1.1は読み取り互換）、decision contract
 - 企業候補は1対象最大2社、全体でticker重複なし
 - `更新` と5回の `次` だけで全6段階を完了
 
-通常利用は [Custom GPT正本指示 1.3.0](docs/custom_gpt_instructions_current.md)（[GitHub raw正本](https://raw.githubusercontent.com/Hughey-T/US-Market-Rotation-Theme-Flow/main/docs/custom_gpt_instructions_current.md)）、完成形は [6段階の表示サンプル](docs/display_samples_v1.2.md)、方法は [Methodology 1.2](docs/methodology_v1.2.md)、fieldは [Data Dictionary 1.2](docs/data_dictionary_v1.2.md) を参照してください。
+通常利用は [Custom GPT正本指示 1.4.0](docs/custom_gpt_instructions_current.md)（[GitHub raw正本](https://raw.githubusercontent.com/Hughey-T/US-Market-Rotation-Theme-Flow/main/docs/custom_gpt_instructions_current.md)）、完成形は [6段階の表示サンプル](docs/display_samples_v1.2.md)、方法は [Methodology 1.2](docs/methodology_v1.2.md)、fieldは [Data Dictionary 1.2](docs/data_dictionary_v1.2.md) を参照してください。
 
 数値計算、欠損処理、market regime、theme判定、動的発見、4分類候補、企業候補、表示文はコードが決定します。Custom GPTは `user_view` を順番に提示し、結果を変更しません。価格上昇を直接的な資金流入とは扱いません。
 
@@ -116,14 +116,14 @@ Market Rotation 1.0はdefaultで拒否します。`scripts/migrate_1_0_to_1_1.py
 - 閾値は未較正の暫定値で、履歴へ合わせて事後最適化しない
 
 現状監査は[CURRENT_STATE](docs/CURRENT_STATE.md)、schema拡張は[Schema 1.2](docs/schema_v1.2.md)、実装は[Implementation Notes](docs/implementation_notes_v1.2.md)、テストは[Test Specification](docs/test_specification_v1.2.md)、運用は[Operations Guide](docs/operations_guide_v1.2.md)、移行は[Migration 1.2](docs/migration_v1.2.md)、公開契約は[Public Artifact 1.2](docs/public_artifact_v1.2.md)を参照してください。
-## Publication contract 1.0
+## Publication contract 1.1 / consumer contract 1.0
 
-`publication`ブランチの`output/current.json`が唯一のauthoritative generation pointerです。Manifests and pointers carry `publication_contract_version=1.0`. `analysis_id` identifies deterministic inputs and logic without the clock; `generation_id` identifies one execution. `output/consumer/latest.json`は同一workflowでcurrentから生成・Schema検証・remote再取得比較まで完了した派生consumer exportであり、authoritative pointerの代替ではありません。ローカルでは次のcommandで同じexportを再生成できます。
+`publication`ブランチの`output/current.json`が唯一のauthoritative generation pointerです。新しいmanifestsとpointersは`publication_contract_version=1.1`を使用し、履歴上の1.0 generationも読み取れます。完全なlatest/archive、history、judgment index、manifestは縮小しません。`output/consumer/latest.json`だけをcurrent generationから生成する決定的な表示用projectionへ変更し、`consumer_contract_version=1.0`、source identity、validity、quality、完全な`user_view`だけを含めます。repository validatorはprojectionを再生成して公開consumerと完全一致することを確認します。UTF-8 canonical JSONと配信fileはいずれも32 KiB上限です。
 
 ```bash
 python scripts/export_current_latest.py exported/latest.json
 ```
 
-Custom GPTのGitHub sourceは`publication`ブランチの`output/consumer/latest.json`へ固定します。公開URLは`https://raw.githubusercontent.com/Hughey-T/US-Market-Rotation-Theme-Flow/publication/output/consumer/latest.json`です。初期設定後の日常操作は「更新」「次」だけで、週次のbranch作成、PR、Actions承認、merge、file添付を要求しません。A legacy fixed publication is migrated explicitly with `python scripts/migrate_publication_v1.py --explicit`; scheduled generation stops safely until migration. Inspect a lock with `python scripts/publication_lock.py inspect`; recover only an expired, non-live lock with `python scripts/publication_lock.py recover --stale-after-hours 6`.
+Custom GPTのGitHub sourceは`publication`ブランチの`output/consumer/latest.json`へ固定します。公開URLは`https://raw.githubusercontent.com/Hughey-T/US-Market-Rotation-Theme-Flow/publication/output/consumer/latest.json`です。Custom GPTは軽量schema、source identity、status、critical missing、validity、presentation identity、6 phasesだけをfail-closedで検証します。重いsemantic・source hash・TOCTOU検証はpublication workflowが担当します。初期設定後の日常操作は「更新」「次」だけです。
 
 This public repository protects `main` with pull requests, strict up-to-date required checks, resolved review conversations, and blocked force pushes and branch deletion. The eight required checks and the supplementary human release procedure are documented in the [Manual merge gate](docs/manual_merge_gate.md). No approving review is required by configuration, and repository administrators retain an emergency bypass path. A Draft PR remains Draft until final independent review is complete and must never be merged directly.

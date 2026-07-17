@@ -1,4 +1,4 @@
-"""Publication contract 1.0: validated generations and one atomic current pointer."""
+"""Publication contract 1.1: validated generations and one atomic current pointer."""
 from __future__ import annotations
 
 import copy
@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Callable, Literal
 
 from . import INSTRUCTION_VERSION, PUBLICATION_CONTRACT_VERSION
+from .consumer import validate_consumer_artifact
 from .identity import safe_generation_path, validate_safe_id
 from .judgments import StableJsonChangedError, StableJsonSnapshot, validate_index_records
 from .provenance import atomic_write_json, canonical_bytes, stable_hash
@@ -39,6 +40,11 @@ VERIFICATION_SCHEMA = load_json(SCHEMA_ROOT / "verification_record.schema.json")
 def instruction_version_for_data_schema(schema_version: str) -> str:
     """Return the instruction identity valid when a snapshot was created."""
     return "1.1.1" if schema_version == "1.1" else INSTRUCTION_VERSION
+
+
+def instruction_versions_for_data_schema(schema_version: str) -> set[str]:
+    """Return read-compatible instruction identities for immutable generations."""
+    return {"1.1.1"} if schema_version == "1.1" else {"1.3.0", INSTRUCTION_VERSION}
 
 
 @dataclass(frozen=True)
@@ -182,9 +188,11 @@ def validate_generation(directory: Path) -> tuple[dict, dict, dict, dict]:
         raise ContractError("generation history semantic mismatch")
     publication = index["publication"]
     index_expected = {"analysis_id": meta["run_id"], "generation_id": generation_id, "run_id": meta["run_id"],
-                      "data_date": meta["data_date"], "source_sha256": meta["source_sha256"],
-                      "instruction_version": instruction_version_for_data_schema(meta["schema_version"])}
-    if publication != index_expected:
+                      "data_date": meta["data_date"], "source_sha256": meta["source_sha256"]}
+    if (
+        {key: value for key, value in publication.items() if key != "instruction_version"} != index_expected
+        or publication.get("instruction_version") not in instruction_versions_for_data_schema(meta["schema_version"])
+    ):
         raise ContractError("generation judgment index publication identity mismatch")
     def source_loader(record: dict) -> dict | None:
         source = output.parent / record["source_snapshot"]
@@ -245,6 +253,8 @@ def validate_pointer_candidate(output: Path, pointer: dict) -> tuple[dict, dict,
     comparisons = ("analysis_id", "generation_id", "run_id", "data_date", "previous_generation_id")
     if any(pointer[field] != manifest[field] for field in comparisons) or pointer["manifest_sha256"] != stable_hash(manifest):
         raise ContractError("publication pointer and generation manifest mismatch")
+    if pointer["publication_contract_version"] != manifest["publication_contract_version"]:
+        raise ContractError("publication pointer and generation manifest contract version mismatch")
     previous = pointer["previous_generation_id"]
     if previous == generation_id:
         raise ContractError("publication pointer cannot reference itself as previous generation")
@@ -422,7 +432,7 @@ def _validate_generation_chain(
     return files, generation_ids
 
 
-def _validate_consumer(output: Path, latest: dict, files: set[str], *, required: bool) -> None:
+def _validate_consumer(output: Path, current: tuple, files: set[str], *, required: bool) -> None:
     consumer = output / "consumer"
     expected = consumer / "latest.json"
     if not consumer.exists() and not consumer.is_symlink():
@@ -438,12 +448,11 @@ def _validate_consumer(output: Path, latest: dict, files: set[str], *, required:
     _add_regular_file(output, expected, files)
     try:
         value = load_json(expected)
-        validate_schema(value, LATEST_SCHEMA, output_relative_path(output, expected))
-        validate_public_latest(value, verify_source_hash=True)
+        validate_consumer_artifact(
+            value, current[3], pointer=current[0], manifest=current[2],
+        )
     except (ContractError, OSError, UnicodeError, ValueError) as error:
         raise _inventory_error(output, expected, "invalid publication entry") from error
-    if canonical_bytes(value) != canonical_bytes(latest):
-        raise _inventory_error(output, expected, "consumer export mismatch")
 
 
 def _validate_current_publication_inventory(
@@ -487,7 +496,7 @@ def _validate_current_publication_inventory(
         and not effective_index["records"]
     ):
         _validate_root_judgments(output, effective_index, files)
-    _validate_consumer(output, current[3], files, required=require_consumer)
+    _validate_consumer(output, current, files, required=require_consumer)
 
     latest = output / "latest.json"
     if latest.exists() or latest.is_symlink():

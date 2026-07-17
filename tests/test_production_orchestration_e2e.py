@@ -13,6 +13,7 @@ from unittest import mock
 import numpy as np
 import pandas as pd
 
+from rotation.consumer import build_consumer_snapshot
 from rotation.judgments import evaluate_withdrawal
 from rotation.provenance import canonical_bytes, snapshot_source_hash
 from rotation.publication import load_current_generation, publish_generation
@@ -380,7 +381,9 @@ class ProductionOrchestrationE2E(unittest.TestCase):
             consumer = output / "consumer" / "latest.json"
             export_current(output, consumer)
             self.assertEqual(validate_public_outputs(output.parent, LATEST_SCHEMA), 2)
-            self.assertEqual(load_json(consumer)["market_regime"], latest["market_regime"])
+            projected = load_json(consumer)
+            self.assertNotIn("market_regime", projected)
+            self.assertEqual(projected["user_view"], latest["user_view"])
             root = output.parent
             shutil.copytree(ROOT / "schemas", root / "schemas")
             shutil.copytree(ROOT / "docs", root / "docs")
@@ -426,7 +429,7 @@ class ProductionOrchestrationE2E(unittest.TestCase):
                 validate_public_latest(remote_current[3], verify_source_hash=True)
                 self.assertEqual(
                     canonical_bytes(load_json(remote_clone / "output" / "consumer" / "latest.json")),
-                    canonical_bytes(remote_current[3]),
+                    canonical_bytes(build_consumer_snapshot(remote_current[3])),
                 )
         finally:
             temporary.cleanup()

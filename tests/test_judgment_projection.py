@@ -48,7 +48,7 @@ def complete_projection(source):
         source_sha256=meta["source_sha256"],
         data_schema_version=meta["schema_version"],
         methodology_version=meta["methodology_version"],
-        instruction_version="1.3.0" if meta["schema_version"] == "1.2" else "1.1.1",
+        instruction_version="1.4.0" if meta["schema_version"] == "1.2" else "1.1.1",
     )
     record["regime"] = copy.deepcopy(source["market_regime"]["classification"])
     template = record["theme_judgments"][0]

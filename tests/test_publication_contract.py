@@ -7,6 +7,7 @@ from rotation.provenance import atomic_write_json, snapshot_source_hash, stable_
 from rotation.publication import committed_history, instruction_version_for_data_schema, load_current_generation, publish_generation
 from rotation.validation import ContractError, load_json, validate_latest_semantics, validate_public_latest
 from scripts.generate_weekly import history_item
+from scripts.export_current_latest import export_current
 from scripts.validate_repository import validate_public_outputs
 from tests.test_pipeline_contract import build_synthetic
 
@@ -40,7 +41,7 @@ def generation(data_date: str, suffix: str):
 class PublicLatestContractTests(unittest.TestCase):
     def test_instruction_identity_follows_snapshot_schema_for_legacy_generation_validation(self):
         self.assertEqual(instruction_version_for_data_schema("1.1"), "1.1.1")
-        self.assertEqual(instruction_version_for_data_schema("1.2"), "1.3.0")
+        self.assertEqual(instruction_version_for_data_schema("1.2"), "1.4.0")
 
     def test_generic_failed_manifest_is_valid_but_public_latest_rejects_it(self):
         value = generation("2026-07-10", "failed-manifest")
@@ -66,7 +67,7 @@ class PublicLatestContractTests(unittest.TestCase):
             with self.assertRaisesRegex(ContractError, "status=success"):
                 validate_public_outputs(root, SCHEMA)
 
-    def test_consumer_export_must_match_authoritative_current(self):
+    def test_consumer_projection_must_match_authoritative_current(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             output = root / "output"
@@ -74,15 +75,42 @@ class PublicLatestContractTests(unittest.TestCase):
             current = generation("2026-07-10", "consumer-current")
             publish_generation(output, current, history_item(current), index)
             consumer_path = output / "consumer" / "latest.json"
-            atomic_write_json(consumer_path, current)
+            export_current(output, consumer_path)
             self.assertEqual(validate_public_outputs(root, SCHEMA), 2)
-            mismatched = generation("2026-07-17", "consumer-mismatch")
-            atomic_write_json(consumer_path, mismatched)
-            with self.assertRaisesRegex(ContractError, "consumer export does not match"):
+            projected = load_json(consumer_path)
+            self.assertEqual(projected["user_view"], current["user_view"])
+            self.assertNotIn("themes", projected)
+            projected["source_identity"]["generation_id"] = "b" * 64
+            atomic_write_json(consumer_path, projected)
+            with self.assertRaisesRegex(ContractError, "generation ID mismatch"):
                 validate_public_outputs(root, SCHEMA)
 
 
 class TransactionalPublicationTests(unittest.TestCase):
+    def test_publication_1_1_writes_new_identity_and_reads_1_0(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "output"
+            value = generation("2026-07-10", "publication-version")
+            publish_generation(output, value, history_item(value), {"index_version": "1.0", "records": []})
+            current = load_current_generation(output)
+            self.assertEqual(current[0]["publication_contract_version"], "1.1")
+            self.assertEqual(current[2]["publication_contract_version"], "1.1")
+
+            manifest_path = current[1] / "manifest.json"
+            manifest = load_json(manifest_path)
+            manifest["publication_contract_version"] = "1.0"
+            atomic_write_json(manifest_path, manifest)
+            pointer = load_json(output / "current.json")
+            pointer["publication_contract_version"] = "1.0"
+            pointer["manifest_sha256"] = stable_hash(manifest)
+            atomic_write_json(output / "current.json", pointer)
+            self.assertEqual(load_current_generation(output)[0]["publication_contract_version"], "1.0")
+
+            pointer["publication_contract_version"] = "1.1"
+            atomic_write_json(output / "current.json", pointer)
+            with self.assertRaisesRegex(ContractError, "contract version mismatch"):
+                load_current_generation(output)
+
     def test_all_seven_failure_points_preserve_current_and_retry(self):
         index = {"index_version": "1.0", "records": []}
         for point in FAILURE_POINTS:

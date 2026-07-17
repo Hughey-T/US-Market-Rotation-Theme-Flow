@@ -1,6 +1,6 @@
 # Rollback plan
 
-Publication contract 1.0 rollback validates a retained generation and the exact candidate pointer before atomically replacing `output/current.json`. Never mix component files or treat an exported fixed latest as authoritative. Re-run `scripts/export_current_latest.py` after a pointer rollback.
+Publication contract 1.1 rollback validates a retained 1.1またはread-compatible 1.0 generation and the exact candidate pointer before atomically replacing `output/current.json`. Never mix component files or treat a consumer projection as authoritative. Re-run `scripts/export_current_latest.py` after a pointer rollback; data schema 1.2 generations produce consumer 1.0 projection, while legacy generations without`user_view`produce the read-only legacy full export and are rejected by current Custom GPT instructions.
 
 1. Revert the 1.1 implementation commit(s) with a normal revert commit; do not rewrite history or force-push.
 2. Restore the matching 1.0 generator, workflow, schema, and Custom GPT instructions together. Never read a 1.1 artifact with 1.0 instructions.

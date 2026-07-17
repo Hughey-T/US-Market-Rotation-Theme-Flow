@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Resolve publication contract 1.0 and export one validated latest.json."""
+"""Export one deterministic lightweight consumer from the authoritative current generation."""
 from __future__ import annotations
 
 import argparse
@@ -9,6 +9,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from rotation.consumer import (
+    CONSUMER_FILE_SIZE_LIMIT,
+    build_consumer_snapshot,
+    validate_consumer_artifact,
+    validate_consumer_snapshot,
+)
 from rotation.provenance import atomic_write_json, canonical_bytes
 from rotation.publication import load_current_generation
 from rotation.validation import ContractError, load_json, validate_public_latest, validate_schema
@@ -21,15 +27,33 @@ def export_current(output: Path, destination: Path) -> Path:
     current = load_current_generation(output)
     if current is None:
         raise ContractError("output/current.json is absent; no authoritative generation is available")
-    latest = current[3]
+    pointer, _, manifest, latest, _, _ = current
     validate_schema(latest, LATEST_SCHEMA, "current latest before export")
     validate_public_latest(latest, verify_source_hash=True)
-    atomic_write_json(destination, latest)
+    legacy_without_user_view = latest.get("user_view") is None
+    consumer = latest if legacy_without_user_view else build_consumer_snapshot(latest)
+    if legacy_without_user_view:
+        validate_consumer_artifact(
+            consumer, latest, pointer=pointer, manifest=manifest,
+        )
+    else:
+        validate_consumer_snapshot(consumer, latest, pointer=pointer, manifest=manifest)
+    atomic_write_json(destination, consumer)
+    file_size = destination.stat().st_size
+    if not legacy_without_user_view and file_size > CONSUMER_FILE_SIZE_LIMIT:
+        destination.unlink(missing_ok=True)
+        raise ContractError(
+            f"consumer file exceeds {CONSUMER_FILE_SIZE_LIMIT} bytes: {file_size}"
+        )
     exported = load_json(destination)
-    validate_schema(exported, LATEST_SCHEMA, str(destination))
-    validate_public_latest(exported, verify_source_hash=True)
-    if canonical_bytes(exported) != canonical_bytes(latest):
-        raise ContractError("exported latest differs from current generation")
+    if legacy_without_user_view:
+        validate_consumer_artifact(
+            exported, latest, pointer=pointer, manifest=manifest,
+        )
+    else:
+        validate_consumer_snapshot(exported, latest, pointer=pointer, manifest=manifest)
+    if canonical_bytes(exported) != canonical_bytes(consumer):
+        raise ContractError("exported consumer differs from deterministic projection")
     return destination
 
 

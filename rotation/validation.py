@@ -483,11 +483,13 @@ def validate_judgment_semantics(record: dict, source_latest: dict | None) -> Non
     versions = {
         "data_schema_version": source_meta.get("schema_version"),
         "methodology_version": source_meta.get("methodology_version"),
-        "instruction_version": INSTRUCTION_VERSION if source_meta.get("schema_version") == "1.2" else "1.1.1",
     }
     for field, expected in versions.items():
         if record.get(field) != expected:
             errors.append(f"judgment {field} does not match source latest contract")
+    allowed_instruction_versions = {"1.3.0", INSTRUCTION_VERSION} if source_meta.get("schema_version") == "1.2" else {"1.1.1"}
+    if record.get("instruction_version") not in allowed_instruction_versions:
+        errors.append("judgment instruction_version does not match source latest contract")
     source_regime = source_latest.get("market_regime", {}).get("classification", {})
     for field in ("primary_regime", "secondary_regimes", "confidence", "matched_conditions", "contrary_evidence"):
         if record.get("regime", {}).get(field) != source_regime.get(field):

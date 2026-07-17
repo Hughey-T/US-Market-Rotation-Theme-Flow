@@ -20,3 +20,19 @@
 | `effective_contributor_count` | 1/HHI。実質的な寄与企業数。 |
 
 旧 `evidence.direction=inflow/outflow` と `theme_shortlist` は immutable judgment 互換の監査フィールドです。通常表示に使用しません。
+
+## Consumer contract 1.0
+
+| Field | 意味 |
+| --- | --- |
+| `consumer_contract_version` | Custom GPT表示用projectionのversion。現行は1.0。 |
+| `source_identity.analysis_id` | authoritative analysis identity。`meta.run_id`と一致。 |
+| `source_identity.generation_id` | authoritative generation identity。`meta.source_snapshot`のpathと一致。 |
+| `meta.source_commit` | generationを作成したmain commit。 |
+| `meta.source_sha256` | repositoryで検証済みの完全snapshot source hash。consumer単体から再計算しない。 |
+| `meta.generated_at/data_date/valid_until/hard_stop_after` | 生成・観測・有効性identity。 |
+| `meta.status/failure_reason` | 公開成功状態。current consumerはsuccess/nullのみ。 |
+| `meta.global_quality` | `critical_missing`と利用者向けwarningだけを投影。 |
+| `user_view` | authoritative snapshotのpresentation version、analysis mode、6 phasesの完全copy。 |
+
+consumerには`themes`、market/style/sector inputs、condition、reason、history、judgmentを含めません。これらはauthoritative generationだけで保持・検証します。
