@@ -1,6 +1,6 @@
 # US Market Rotation & Theme Flow v1.2 user experience
 
-Versions: data schema `1.2`（旧1.1は読み取り互換）、decision contract `3.0`、presentation `1.1`、Custom GPT instruction `1.3.0`、publication contract `1.0`。
+Versions: data schema `1.2`（旧1.1は読み取り互換）、decision contract `3.0`、presentation `1.2`（1.1は読み取り互換）、Custom GPT instruction `1.3.0`、publication contract `1.0`。
 
 米国株を市場環境→スタイル→セクター・業種→テーマ→個別企業→最終判断の6段階で調べる週次データ基盤です。内部では再現可能な監査情報を保持し、通常回答では結論・意味・注意点・次の確認だけを平易な日本語で表示します。週次preflight、commit、repository validatorは同一の厳密なpublication file inventoryを使用し、unknown file、invalid current、lock/staging残骸を取得・commit前に拒否します。
 
@@ -8,7 +8,7 @@ Versions: data schema `1.2`（旧1.1は読み取り互換）、decision contract
 
 - データ層、判断層、表示層を分離し、通常表示専用の `user_view` を追加
 - 固定テーマ外の強い業種を、ETF信号＋最低3社の企業breadthで動的発見
-- 候補を「個別企業を調べる」「回復条件を監視する」「長期材料はあるが現在の株価は弱い」「現在は避ける」の相互排他的な4分類へ変更
+- 候補を「個別企業を調べる」「回復条件を監視する」「長期材料はあるが、現在の株価は弱い」「現在は避ける」の相互排他的な4分類へ変更
 - 固定テーマと動的業種へ、株価から推測しないversion付き構造的背景を追加
 - 企業調査観点をティッカー上書き、テーマ別役割、構成上の役割、全体既定値の順で具体化
 - 調査対象は0〜5件。弱い候補で枠を埋めない

@@ -1,6 +1,6 @@
 # Migration 1.1 → data/decision contract 1.2/3.0
 
-3分類から4分類への必須key変更はbreaking contractです。新規生成物はdata schema 1.2、decision contract 3.0とします。既存1.1監査フィールド、履歴、immutable judgment recordは読み取り専用で保持します。
+3分類から4分類への必須key変更はbreaking contractです。新規生成物はdata schema 1.2、decision contract 3.0、presentation contract 1.2とします。presentation 1.1は公開更新時の読み取り互換として保持し、新規生成しません。既存1.1監査フィールド、履歴、immutable judgment recordは読み取り専用で保持します。
 
 1. `dynamic_discovery`
 2. `candidate_buckets`

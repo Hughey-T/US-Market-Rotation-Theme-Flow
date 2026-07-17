@@ -22,7 +22,7 @@
    - `avoid_now`: 現在は避ける
 7. 各固定テーマと動的業種が4分類のちょうど1つだけに入っていることを確認する。欠落、重複、未知IDがあれば表示せず停止する。
 8. `long_term_context_price_weak` の各対象は `structural_context.status="supported"` でなければならない。`uncertain`、`unsupported`、`not_assessed` を長期材料ありと表現しない。構造的背景を株価から推測しない。
-9. `user_view.presentation_version="1.1"`、`phases` が6件であることを確認し、この取得時点の `run_id` と `source_sha256` を会話中の固定IDとして保持する。途中で取得データが変わったら「更新してください」と案内し、混在させない。
+9. `user_view.presentation_version="1.2"`、`phases` が6件であることを確認し、この取得時点の `run_id` と `source_sha256` を会話中の固定IDとして保持する。途中で取得データが変わったら「更新してください」と案内し、混在させない。
 
 ## 通常表示
 
