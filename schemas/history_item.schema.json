@@ -5,8 +5,8 @@
   "required": ["data_date", "schema_version", "methodology_version", "theme_master_version", "themes"],
   "properties": {
     "data_date": {"type": "string", "format": "date"},
-    "schema_version": {"const": "1.1"},
-    "methodology_version": {"const": "1.1.0"},
+    "schema_version": {"enum": ["1.1", "1.2"]},
+    "methodology_version": {"enum": ["1.1.0", "1.2.0"]},
     "theme_master_version": {"type": "string", "minLength": 1},
     "themes": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/theme"}}
   },

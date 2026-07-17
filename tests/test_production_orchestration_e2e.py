@@ -133,8 +133,8 @@ class ProductionOrchestrationE2E(unittest.TestCase):
             work = temporary / "work"
             remote = temporary / "publication.git"
             verified = temporary / "verified"
-            subprocess.run(["git", "clone", "--no-local", str(ROOT), str(checkout)], check=True, capture_output=True)
-            shutil.copytree(checkout, work, ignore=shutil.ignore_patterns(".git"))
+            shutil.copytree(ROOT, checkout, ignore=shutil.ignore_patterns(".git", ".venv", "__pycache__", ".pytest_cache"))
+            shutil.copytree(checkout, work)
             subprocess.run(["git", "init", "-b", "main"], cwd=work, check=True, capture_output=True)
             subprocess.run(["git", "add", "."], cwd=work, check=True, capture_output=True)
             subprocess.run(

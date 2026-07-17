@@ -63,8 +63,8 @@ class PipelineContractTests(unittest.TestCase):
         value = build_synthetic()
         validate_schema(value, load_json(ROOT / "schemas" / "rotation_snapshot.schema.json"))
         validate_latest_semantics(value, verify_source_hash=True)
-        self.assertEqual(value["meta"]["schema_version"], "1.1")
-        self.assertEqual(value["meta"]["methodology_version"], "1.1.0")
+        self.assertEqual(value["meta"]["schema_version"], "1.2")
+        self.assertEqual(value["meta"]["methodology_version"], "1.2.0")
 
     def test_fixed_input_clock_source_is_reproducible(self):
         first = build_synthetic()
@@ -164,9 +164,9 @@ class PipelineContractTests(unittest.TestCase):
             validate_schema(value, load_json(ROOT / "schemas" / "judgment_record.schema.json"))
 
     def test_custom_gpt_instruction_contract(self):
-        text = (ROOT / "docs" / "custom_gpt_instructions_v1.2.md").read_text(encoding="utf-8")
+        text = (ROOT / "docs" / "custom_gpt_instructions_current.md").read_text(encoding="utf-8")
         self.assertLessEqual(len(text), 8000)
-        for required in ("更新", "次", "詳細", "用語", "再評価", "user_view.phases", "candidate_buckets", "initial_observation", "資金流入・流出を断定しない"):
+        for required in ("更新", "次", "詳細", "用語", "再評価", "user_view.phases", "candidate_buckets", "initial_observation", "資金流入・流出と断定しない", "research_now", "watch_recovery", "long_term_context_price_weak", "avoid_now"):
             self.assertIn(required, text)
 
     def test_daily_screen_contract_is_not_present(self):

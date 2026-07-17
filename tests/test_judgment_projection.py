@@ -21,6 +21,7 @@ def two_theme_source():
     second = copy.deepcopy(load_json(ROOT / "tests" / "fixtures" / "latest_p5_low_priority.json")["themes"]["fixture_theme"])
     second["theme_id"] = "second_theme"
     second["label"] = "架空全面弱化theme"
+    second["structural_context"] = {"version": "1.0", "status": "not_assessed", "as_of": "2026-07-10", "summary": "test context", "source_category": []}
     for index, constituent in enumerate(second["constituents"]):
         constituent["ticker"] = f"SECOND{index}"
     source["themes"]["second_theme"] = second
@@ -28,7 +29,7 @@ def two_theme_source():
     source["candidate_buckets"] = build_candidate_buckets(source["themes"], source["dynamic_discovery"])
     source["company_candidates"] = select_companies(source["themes"], source["dynamic_discovery"], source["candidate_buckets"])
     for theme_id, theme in source["themes"].items():
-        bucket = next(name for name in ("research_now", "watch_recovery", "avoid_now") if any(item["id"] == theme_id and item["source"] == "fixed_theme" for item in source["candidate_buckets"][name]))
+        bucket = next(name for name in ("research_now", "watch_recovery", "long_term_context_price_weak", "avoid_now") if any(item["id"] == theme_id and item["source"] == "fixed_theme" for item in source["candidate_buckets"][name]))
         theme["decision"] = build_theme_decision(theme, bucket)
     source["user_view"] = build_user_view(regime=source["market_regime"], style_factor=source["style_factor"], sectors=source["sectors"], industries=source["industries"], themes=source["themes"], dynamic=source["dynamic_discovery"], buckets=source["candidate_buckets"], companies=source["company_candidates"], history_weeks=min(theme["quality"]["history_weeks"] for theme in source["themes"].values()))
     source["meta"]["universe_definition"]["theme_count"] = 2
@@ -47,6 +48,7 @@ def complete_projection(source):
         source_sha256=meta["source_sha256"],
         data_schema_version=meta["schema_version"],
         methodology_version=meta["methodology_version"],
+        instruction_version="1.3.0" if meta["schema_version"] == "1.2" else "1.1.1",
     )
     record["regime"] = copy.deepcopy(source["market_regime"]["classification"])
     template = record["theme_judgments"][0]

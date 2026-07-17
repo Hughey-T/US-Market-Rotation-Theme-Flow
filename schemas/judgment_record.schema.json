@@ -7,9 +7,9 @@
   "required": ["judgment_schema_version", "instruction_version", "data_schema_version", "methodology_version", "judgment_id", "run_id", "data_date", "generated_at", "source_commit", "source_snapshot", "source_sha256", "previous_judgment_date", "regime", "theme_judgments", "dd_handoff"],
   "properties": {
     "judgment_schema_version": {"const": "1.0"},
-    "instruction_version": {"const": "1.1.1"},
-    "data_schema_version": {"const": "1.1"},
-    "methodology_version": {"const": "1.1.0"},
+    "instruction_version": {"enum": ["1.1.1", "1.3.0"]},
+    "data_schema_version": {"enum": ["1.1", "1.2"]},
+    "methodology_version": {"enum": ["1.1.0", "1.2.0"]},
     "judgment_id": {"type": "string", "pattern": "^judgment_[A-Za-z0-9._-]+$"},
     "run_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
     "data_date": {"type": "string", "format": "date"},

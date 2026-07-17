@@ -1,7 +1,7 @@
 # Deprecated Custom GPT Instructions 1.1.1
 
 この指示文は監査履歴として残しています。新規 Custom GPT では
-[`custom_gpt_instructions_v1.2.md`](custom_gpt_instructions_v1.2.md) を使用してください。
+[`custom_gpt_instructions_current.md`](custom_gpt_instructions_current.md) を使用してください。
 
 以下は旧仕様です。
 

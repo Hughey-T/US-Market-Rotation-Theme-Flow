@@ -109,14 +109,18 @@ def build_snapshot(
         trends = compute_theme_trends(compatible, definition["theme_id"], current_history)
         flags, classifications = classify_theme(metrics, trends, quality, by_role)
         constituents = [{key: row.get(key) for key in ("ticker", "role", "valid", "return_4w", "rel_spy_4w", "market_cap", "dollar_volume_20d", "positive_contribution_ratio", "overlap_theme_count")} for row in rows]
-        themes[definition["theme_id"]] = {"theme_id": definition["theme_id"], "label": definition["label"], "quality": quality, "metrics": metrics, "trends": trends, "condition_flags": flags, "classifications": classifications, "relative_strength_rank_4w": None, "selected_for_deep_dive": False, "shortlist_rank": None, "shortlist_reason_codes": [], "by_role": by_role, "constituents": constituents}
+        structural_context = config.get("structural_contexts", {}).get(definition["theme_id"], {
+            "version": config.get("structural_context_version", "1.0"), "status": "not_assessed", "as_of": None,
+            "summary": "構造的背景は未評価です。価格条件だけから長期材料を推測しません。", "source_category": [],
+        })
+        themes[definition["theme_id"]] = {"theme_id": definition["theme_id"], "label": definition["label"], "structural_context": structural_context, "quality": quality, "metrics": metrics, "trends": trends, "condition_flags": flags, "classifications": classifications, "relative_strength_rank_4w": None, "selected_for_deep_dive": False, "shortlist_rank": None, "shortlist_reason_codes": [], "by_role": by_role, "constituents": constituents}
     themes, shortlist = apply_shortlist(themes)
     dynamic = discover_dynamic_industries(config, observations, spy)
     candidate_buckets = build_candidate_buckets(themes, dynamic)
-    company_candidates = select_companies(themes, dynamic, candidate_buckets)
+    company_candidates = select_companies(themes, dynamic, candidate_buckets, config)
     for theme_id, theme in themes.items():
         bucket = next(
-            name for name in ("research_now", "watch_recovery", "avoid_now")
+            name for name in ("research_now", "watch_recovery", "long_term_context_price_weak", "avoid_now")
             if any(item["id"] == theme_id and item["source"] == "fixed_theme" for item in candidate_buckets[name])
         )
         theme["decision"] = build_theme_decision(theme, bucket)
