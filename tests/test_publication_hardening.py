@@ -7,13 +7,12 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from rotation import INSTRUCTION_VERSION
 from rotation.identity import generation_identity
 from rotation.judgments import StableJsonSnapshot
 from rotation.provenance import atomic_write_json, file_sha256, snapshot_source_hash, stable_hash
 from rotation.publication import (
     current_pointer, generation_manifest, load_current_generation, publish_generation,
-    validate_current_publication_inventory,
+    instruction_version_for_data_schema, validate_current_publication_inventory,
 )
 from rotation.validation import ContractError, load_json
 from scripts import generate_weekly
@@ -46,7 +45,7 @@ def write_generation(output: Path, snapshot: dict, index: dict, previous_generat
         "analysis_id": snapshot["meta"]["run_id"], "generation_id": generation_id,
         "run_id": snapshot["meta"]["run_id"], "data_date": snapshot["meta"]["data_date"],
         "source_sha256": snapshot["meta"]["source_sha256"],
-        "instruction_version": INSTRUCTION_VERSION,
+        "instruction_version": instruction_version_for_data_schema(snapshot["meta"]["schema_version"]),
     }}
     history = history_item(snapshot)
     manifest = generation_manifest(snapshot, history, generation_index, previous_generation_id)
