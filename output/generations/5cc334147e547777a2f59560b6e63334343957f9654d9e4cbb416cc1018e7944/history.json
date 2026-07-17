@@ -1,0 +1,64 @@
+{
+  "data_date": "2026-07-16",
+  "schema_version": "1.1",
+  "methodology_version": "1.1.0",
+  "theme_master_version": "2026-Q3-r1",
+  "themes": {
+    "ai_semis": {
+      "equal_weight_rel_spy_4w": -0.17539989175870552,
+      "advance_count_4w": 0,
+      "above_50dma_count": 1,
+      "pct_above_50dma": 0.125,
+      "volume_ratio_20d_60d": 0.939408005511342
+    },
+    "ai_software_data": {
+      "equal_weight_rel_spy_4w": 0.0003710738827998883,
+      "advance_count_4w": 3,
+      "above_50dma_count": 4,
+      "pct_above_50dma": 0.5714285714285714,
+      "volume_ratio_20d_60d": 0.9003815520398136
+    },
+    "cybersecurity": {
+      "equal_weight_rel_spy_4w": 0.19110944473147431,
+      "advance_count_4w": 7,
+      "above_50dma_count": 7,
+      "pct_above_50dma": 1.0,
+      "volume_ratio_20d_60d": 0.8911891664687229
+    },
+    "dc_power_infra": {
+      "equal_weight_rel_spy_4w": -0.04571911955539981,
+      "advance_count_4w": 2,
+      "above_50dma_count": 0,
+      "pct_above_50dma": 0.0,
+      "volume_ratio_20d_60d": 1.0484613494995854
+    },
+    "defense": {
+      "equal_weight_rel_spy_4w": -0.042868944982187684,
+      "advance_count_4w": 2,
+      "above_50dma_count": 3,
+      "pct_above_50dma": 0.375,
+      "volume_ratio_20d_60d": 1.096180090011739
+    },
+    "networking_optical": {
+      "equal_weight_rel_spy_4w": -0.22719559040376036,
+      "advance_count_4w": 0,
+      "above_50dma_count": 1,
+      "pct_above_50dma": 0.14285714285714285,
+      "volume_ratio_20d_60d": 0.9460746059194075
+    },
+    "nuclear_uranium": {
+      "equal_weight_rel_spy_4w": -0.1536773962571152,
+      "advance_count_4w": 0,
+      "above_50dma_count": 0,
+      "pct_above_50dma": 0.0,
+      "volume_ratio_20d_60d": 0.946495449439097
+    },
+    "semi_equipment": {
+      "equal_weight_rel_spy_4w": -0.1552880827057068,
+      "advance_count_4w": 0,
+      "above_50dma_count": 3,
+      "pct_above_50dma": 0.42857142857142855,
+      "volume_ratio_20d_60d": 1.1643467554827194
+    }
+  }
+}
