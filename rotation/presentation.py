@@ -24,7 +24,10 @@ def _section(conclusion: str, meaning: str, cautions: list[str], next_checks: li
     return {"conclusion": conclusion, "investment_meaning": meaning, "cautions": cautions, "next_checks": next_checks}
 
 
-def build_user_view(*, regime: dict, style_factor: dict, sectors: dict, industries: dict, themes: dict, dynamic: dict, buckets: dict, companies: list[dict], history_weeks: int) -> dict:
+def build_user_view(*, regime: dict, style_factor: dict, sectors: dict, industries: dict, themes: dict, dynamic: dict, buckets: dict, companies: list[dict], history_weeks: int, presentation_version: str = "1.2") -> dict:
+    if presentation_version not in {"1.1", "1.2"}:
+        raise ValueError("presentation_version must be 1.1 or 1.2")
+    long_term_label = "長期材料はあるが、現在の株価は弱い" if presentation_version == "1.2" else "長期材料はあるが現在の株価は弱い"
     initial = history_weeks < 3
     primary = regime.get("classification", {}).get("primary_regime", "unclassifiable")
     phase1 = _section(
@@ -46,7 +49,7 @@ def build_user_view(*, regime: dict, style_factor: dict, sectors: dict, industri
         ["新たに見つかった業種の構成企業が市場平均を上回り続けるか"],
     )
     phase4 = _section(
-        f"個別企業を調べる対象は{_names(buckets['research_now'])}です。回復条件を監視する対象は{_names(buckets['watch_recovery'])}です。長期材料はあるが、現在の株価は弱い対象は{_names(buckets['long_term_context_price_weak'])}です。現在は避ける対象は{_names(buckets['avoid_now'])}です。",
+        f"個別企業を調べる対象は{_names(buckets['research_now'])}です。回復条件を監視する対象は{_names(buckets['watch_recovery'])}です。{long_term_label}対象は{_names(buckets['long_term_context_price_weak'])}です。現在は避ける対象は{_names(buckets['avoid_now'])}です。",
         "条件を満たす対象が少ない週は、件数を埋めず現金余力と調査時間を温存します。",
         ["政策や長期材料が良くても、現在の株価が弱い対象は自動的に昇格しません。"],
         ["回復条件を監視する対象が50日移動平均線と市場平均比を回復するか"],
@@ -57,12 +60,12 @@ def build_user_view(*, regime: dict, style_factor: dict, sectors: dict, industri
     ) if companies else "該当なし"
     phase5 = _section(f"個別企業の調査候補は次のとおりです。{company_text}", "1対象につき最大2社とし、代表企業と広がり確認用企業を分けて調べます。", ["候補は売買推奨ではなく、決算・競争力・割高感を調べる入口です。"], ["各社の最重要確認事項と反対材料を一次資料で確かめる"])
     phase6 = _section(
-        f"今週は{REGIME_LABELS.get(primary, REGIME_LABELS['unclassifiable'])}。個別企業を調べる対象は{_names(buckets['research_now'])}、回復条件を監視する対象は{_names(buckets['watch_recovery'])}、長期材料はあるが、現在の株価は弱い対象は{_names(buckets['long_term_context_price_weak'])}、現在は避ける対象は{_names(buckets['avoid_now'])}です。",
+        f"今週は{REGIME_LABELS.get(primary, REGIME_LABELS['unclassifiable'])}。個別企業を調べる対象は{_names(buckets['research_now'])}、回復条件を監視する対象は{_names(buckets['watch_recovery'])}、{long_term_label}対象は{_names(buckets['long_term_context_price_weak'])}、現在は避ける対象は{_names(buckets['avoid_now'])}です。",
         f"個別企業は{company_text}から確認します。",
         ["直接的な資金フロー、過去時点の時価総額、決算直前日程は取得できない場合があります。"],
         ["市場の広がり、候補テーマの50日線上比率、企業業績の裏付けを次週確認します。"],
     )
-    return {"presentation_version": "1.1", "analysis_mode": "initial_observation" if initial else "trend", "phases": [phase1, phase2, phase3, phase4, phase5, phase6]}
+    return {"presentation_version": presentation_version, "analysis_mode": "initial_observation" if initial else "trend", "phases": [phase1, phase2, phase3, phase4, phase5, phase6]}
 
 
 def render_phase(user_view: dict, phase_number: int) -> str:

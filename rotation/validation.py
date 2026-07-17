@@ -418,10 +418,15 @@ def validate_latest_semantics(latest: dict, verify_source_hash: bool = False) ->
             all(item.get(field) for field in ("ticker", "theme_label", "selection_role", "why", "key_check", "counter_evidence"))
             for item in companies
         ) else expected_companies
+        presentation_version = user_view.get("presentation_version")
+        if presentation_version not in {"1.1", "1.2"}:
+            errors.append(f"unsupported schema 1.2 presentation version: {presentation_version}")
+            presentation_version = "1.2"
         expected_view = build_user_view(
             regime=latest.get("market_regime", {}), style_factor=latest.get("style_factor", {}),
             sectors=latest.get("sectors", {}), industries=latest.get("industries", {}), themes=themes,
             dynamic=dynamic, buckets=expected_buckets, companies=view_companies, history_weeks=history_weeks,
+            presentation_version=presentation_version,
         )
         errors.extend(_semantic_differences(user_view, expected_view, "user_view"))
         forbidden = ("classification_eligible", "direction_eligible", "condition_flags", "matched_conditions", "source_sha256", "run_id", "EV_", "SL_", "Q_", "P1", "P2", "P3", "P4", "P5")

@@ -440,7 +440,7 @@
       "type": "object", "additionalProperties": false,
       "required": ["presentation_version", "analysis_mode", "phases"],
       "properties": {
-        "presentation_version": {"enum": ["1.0", "1.1"]}, "analysis_mode": {"enum": ["initial_observation", "trend"]},
+        "presentation_version": {"enum": ["1.0", "1.1", "1.2"]}, "analysis_mode": {"enum": ["initial_observation", "trend"]},
         "phases": {"type": "array", "minItems": 6, "maxItems": 6, "items": {"$ref": "#/$defs/userPhase"}}
       }
     },
