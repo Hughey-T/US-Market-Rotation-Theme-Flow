@@ -9,8 +9,11 @@
 ## 候補分類
 
 - `research_now`: 相対強度が正、advance ratio 60%以上、50日線上比率50%以上、広範上昇、品質十分。最大5件。
-- `watch_recovery`: 長期相対強度は正だが、直近が弱い、または研究枠外。
-- `avoid_now`: 上記を満たさない。0件を含む件数は正常。
+- `watch_recovery`: 長期相対強度は正だが、直近が弱い、または方向が悪化しており、価格回復条件を監視する。
+- `long_term_context_price_weak`: version付き構造的背景が `supported` で、現在の価格・breadthが弱い。株価だけから構造的背景を推測しない。
+- `avoid_now`: 上記を満たさない、または今週の調査上限外。0件を含む件数は正常。
+
+4分類は相互排他的で、固定テーマと設定済み動的業種の全件がちょうど1つへ入ります。構造的背景の状態は `supported|uncertain|unsupported|not_assessed` です。
 
 旧 `theme_shortlist` は監査互換として deprecated。正式な利用者向け契約は `candidate_buckets` です。
 

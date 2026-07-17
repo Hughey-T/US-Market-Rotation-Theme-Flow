@@ -4,7 +4,8 @@
 | --- | --- |
 | `dynamic_discovery` | 固定テーマ外の業種候補、閾値、却下理由。監査用。 |
 | `candidate_buckets.research_now` | 個別企業調査へ進める0〜5対象。 |
-| `candidate_buckets.watch_recovery` | 条件回復または調査枠待ち。 |
+| `candidate_buckets.watch_recovery` | 長期相対強度を残し、直近の価格回復条件を監視する対象。 |
+| `candidate_buckets.long_term_context_price_weak` | version付き構造的背景はsupportedだが現在の価格・breadthが弱い対象。 |
 | `candidate_buckets.avoid_now` | 現在は避ける対象。 |
 | `themes.*.decision.price_preference` | 価格とbreadthによる選好。positive/negative/mixed/unavailable。 |
 | `themes.*.decision.direct_flow_confirmation` | 実フロー確認。未取得時はunavailable。 |

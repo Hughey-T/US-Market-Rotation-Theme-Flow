@@ -50,24 +50,34 @@ def discover_dynamic_industries(config: dict, observations: dict[str, dict], spy
             reasons.append("single_company_concentration_or_unknown")
         if reasons:
             rejected[candidate_id] = reasons
-            continue
         candidates[candidate_id] = {
             "candidate_id": candidate_id,
             "label": definition["label"],
             "source": "dynamic_industry",
             "reference_etf": definition["etf"],
             "reference_etf_rel_spy_4w": etf_rel4,
+            "eligible": not reasons,
+            "rejection_reasons": reasons,
+            "structural_context": config.get("structural_contexts", {}).get(candidate_id, {
+                "version": config.get("structural_context_version", "1.0"),
+                "status": "not_assessed", "as_of": None,
+                "summary": "構造的背景は未評価です。価格条件だけから長期材料を推測しません。",
+                "source_category": [],
+            }),
             "metrics": metrics,
             "constituents": [
                 {key: row.get(key) for key in ("ticker", "return_4w", "rel_spy_4w", "above_50dma", "positive_contribution_ratio", "dollar_volume_20d")}
                 for row in rows
             ],
         }
-    ordered = sorted(candidates, key=lambda key: (-candidates[key]["metrics"]["equal_weight_rel_spy_4w"], key))
+    ordered = sorted(
+        (key for key, candidate in candidates.items() if candidate["eligible"]),
+        key=lambda key: (-candidates[key]["metrics"]["equal_weight_rel_spy_4w"], key),
+    )
     return {
-        "discovery_version": "1.0",
+        "discovery_version": "2.0",
         "thresholds": {"etf_rel_spy_4w_min": 0.03, "minimum_companies": 3, "pct_above_50dma_min": 0.50, "median_rel_spy_4w_min_exclusive": 0.0},
         "candidate_ids": ordered,
-        "candidates": {key: candidates[key] for key in ordered},
+        "candidates": {key: candidates[key] for key in sorted(candidates)},
         "rejected": rejected,
     }

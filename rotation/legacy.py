@@ -36,3 +36,21 @@ def read_legacy_snapshot(value: dict, *, explicit: bool = False) -> dict:
         "migration_report_version": "1.0", "source_schema_version": "1.0", "target_schema_version": "1.1",
         "publishable": False, "automatic_judgment_conversion": False, "theme_mappings": mappings,
     }
+
+
+def migrate_candidate_buckets_2_to_3(legacy: dict) -> dict:
+    """Explicitly project the old three-bucket decision view into contract 3.0.
+
+    No item is inferred into the structural-context bucket during migration;
+    that bucket requires a fresh evaluation against versioned context data.
+    """
+    if legacy.get("selection_version") != "2.0":
+        raise UnsupportedLegacyVersion("expected candidate bucket selection_version 2.0")
+    projected = {"selection_version": "3.0", "max_research_items": 5}
+    for name in ("research_now", "watch_recovery", "avoid_now"):
+        projected[name] = [
+            {**copy.deepcopy(item), "classification_reason": name}
+            for item in legacy.get(name, [])
+        ]
+    projected["long_term_context_price_weak"] = []
+    return projected

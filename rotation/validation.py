@@ -10,7 +10,7 @@ from jsonschema import Draft202012Validator, FormatChecker
 
 from . import INSTRUCTION_VERSION
 from .classification import classify_theme, evaluate_priority, evaluate_timing, overheat_breadth_weak, priority_matches
-from .decisions import build_candidate_buckets, build_theme_decision, select_companies
+from .decisions import BUCKET_NAMES, _research_lens, build_candidate_buckets, build_theme_decision, select_companies
 from .metrics import finite, positive_concentration, ratio_true
 from .presentation import build_user_view, render_phase
 from .provenance import snapshot_source_hash
@@ -191,6 +191,9 @@ def validate_latest_semantics(latest: dict, verify_source_hash: bool = False) ->
     _walk_finite(latest)
     errors = []
     meta = latest.get("meta", {})
+    version_pair = (meta.get("schema_version"), meta.get("methodology_version"))
+    if version_pair not in {("1.1", "1.1.0"), ("1.2", "1.2.0")}:
+        errors.append(f"unsupported schema/methodology version pair: {version_pair}")
     status = meta.get("status")
     failure_reason = meta.get("failure_reason")
     critical_missing = meta.get("global_quality", {}).get("critical_missing", [])
@@ -213,6 +216,10 @@ def validate_latest_semantics(latest: dict, verify_source_hash: bool = False) ->
     for theme_id, theme in themes.items():
         if theme.get("theme_id") != theme_id:
             errors.append(f"themes.{theme_id}.theme_id does not match object key")
+        if meta.get("schema_version") == "1.2":
+            context = theme.get("structural_context")
+            if not isinstance(context, dict) or context.get("status") not in {"supported", "uncertain", "unsupported", "not_assessed"}:
+                errors.append(f"{theme_id}: versioned structural_context is required")
         expected_priority, expected_rule, _ = evaluate_priority(theme)
         classifications = theme.get("classifications", {})
         if (classifications.get("research_priority"), classifications.get("research_priority_rule")) != (expected_priority, expected_rule):
@@ -280,27 +287,89 @@ def validate_latest_semantics(latest: dict, verify_source_hash: bool = False) ->
     companies = latest.get("company_candidates")
     user_view = latest.get("user_view")
     additive_fields = (dynamic, buckets, companies, user_view)
+    if meta.get("schema_version") == "1.2" and not all(value is not None for value in additive_fields):
+        errors.append("schema 1.2 requires dynamic_discovery, candidate_buckets, company_candidates, and user_view")
     if any(value is not None for value in additive_fields) and not all(value is not None for value in additive_fields):
         errors.append("decision and presentation contracts must be published together")
-    if all(value is not None for value in additive_fields):
+    if all(value is not None for value in additive_fields) and meta.get("schema_version") == "1.2":
         expected_buckets = build_candidate_buckets(themes, dynamic)
         errors.extend(_semantic_differences(buckets, expected_buckets, "candidate_buckets"))
-        expected_companies = select_companies(themes, dynamic, expected_buckets)
-        errors.extend(_semantic_differences(companies, expected_companies, "company_candidates"))
+        config = load_json(Path(__file__).resolve().parents[1] / "config" / "universe.json")
+        configured_context_ids = set(config.get("structural_contexts", {}))
+        configured_dynamic_ids = set(config.get("dynamic_industries", {}))
+        configured_fixed_ids = configured_context_ids - configured_dynamic_ids
+        repository_configuration = bool(themes) and set(themes) == configured_fixed_ids
+        if repository_configuration:
+            if set(dynamic.get("candidates", {})) != configured_dynamic_ids:
+                errors.append("dynamic discovery must evaluate every configured industry exactly once")
+            known_ids = set(themes) | configured_dynamic_ids
+            missing_contexts = sorted(known_ids - configured_context_ids)
+            missing_lenses = sorted(known_ids - set(config.get("research_lenses", {})))
+            if missing_contexts:
+                errors.append(f"configured candidates missing structural context: {missing_contexts}")
+            if missing_lenses:
+                errors.append(f"configured candidates missing research lenses: {missing_lenses}")
+            for theme_id, theme in themes.items():
+                if theme.get("structural_context") != config.get("structural_contexts", {}).get(theme_id):
+                    errors.append(f"{theme_id}: structural context does not match versioned configuration")
+        expected_companies = select_companies(themes, dynamic, expected_buckets, {})
+        projection_fields = ("theme_id", "theme_label", "source", "ticker", "selection_role", "why")
+        observed_projection = [{key: item.get(key) for key in projection_fields} for item in companies]
+        expected_projection = [{key: item.get(key) for key in projection_fields} for item in expected_companies]
+        errors.extend(_semantic_differences(observed_projection, expected_projection, "company_candidates"))
+        for item in companies:
+            lens_source = item.get("research_lens_source", "")
+            source = themes.get(item.get("theme_id"), {}) if item.get("source") == "fixed_theme" else dynamic.get("candidates", {}).get(item.get("theme_id"), {})
+            row = next((row for row in source.get("constituents", []) if row.get("ticker") == item.get("ticker")), {})
+            known_configured_lens = item.get("theme_id") in config.get("research_lenses", {}) or item.get("ticker") in config.get("company_research_overrides", {})
+            lens_config = config if known_configured_lens or lens_source.startswith("role:") else {}
+            expected_lens, expected_source = _research_lens(lens_config, item.get("theme_id"), item.get("ticker"), row.get("role", "core"), item.get("selection_role"))
+            if lens_source != expected_source or item.get("key_check") != expected_lens.get("key_check") or item.get("counter_evidence") != expected_lens.get("counter_evidence"):
+                errors.append(f"{item.get('ticker')}: company research lens does not match its declared source")
+        if set(buckets) != {"selection_version", "max_research_items", *BUCKET_NAMES}:
+            errors.append("candidate_buckets must expose exactly the four canonical buckets")
+        known = {(theme_id, "fixed_theme") for theme_id in themes} | {(candidate_id, "dynamic_industry") for candidate_id in dynamic.get("candidates", {})}
+        memberships: dict[tuple[str, str], list[str]] = {}
+        for bucket_name in BUCKET_NAMES:
+            for item in buckets.get(bucket_name, []):
+                key = (item.get("id"), item.get("source"))
+                memberships.setdefault(key, []).append(bucket_name)
+        for key in sorted(known):
+            if len(memberships.get(key, [])) != 1:
+                errors.append(f"candidate membership must be exactly one bucket: {key}")
+        for key in sorted(set(memberships) - known):
+            errors.append(f"unknown candidate in buckets: {key}")
+        for item in buckets.get("long_term_context_price_weak", []):
+            source = themes.get(item.get("id")) if item.get("source") == "fixed_theme" else dynamic.get("candidates", {}).get(item.get("id"))
+            if not source or source.get("structural_context", {}).get("status") != "supported":
+                errors.append(f"{item.get('id')}: long-term bucket requires supported structural context")
+        company_texts = [(item.get("key_check"), item.get("counter_evidence")) for item in companies]
+        if len(company_texts) > 1 and len(set(company_texts)) == 1:
+            errors.append("all company research lenses are identical")
         dynamic_ids = dynamic.get("candidate_ids", [])
         expected_thresholds = {"etf_rel_spy_4w_min": 0.03, "minimum_companies": 3, "pct_above_50dma_min": 0.50, "median_rel_spy_4w_min_exclusive": 0.0}
         if dynamic.get("thresholds") != expected_thresholds:
             errors.append("dynamic discovery thresholds do not match methodology")
-        if dynamic_ids != list(dynamic.get("candidates", {})):
-            errors.append("dynamic candidate order must match candidates object order")
-        for candidate_id in dynamic_ids:
-            candidate = dynamic.get("candidates", {}).get(candidate_id, {})
+        candidate_map = dynamic.get("candidates", {})
+        expected_dynamic_ids = sorted(
+            (key for key, candidate in candidate_map.items() if candidate.get("eligible") is True),
+            key=lambda key: (-candidate_map[key].get("metrics", {}).get("equal_weight_rel_spy_4w", 0), key),
+        )
+        if dynamic_ids != expected_dynamic_ids:
+            errors.append("dynamic candidate_ids must be the ordered eligible subset")
+        for candidate_id, candidate in candidate_map.items():
             metrics = candidate.get("metrics", {})
             if candidate.get("candidate_id") != candidate_id:
                 errors.append(f"dynamic candidate key mismatch: {candidate_id}")
-            if finite(candidate.get("reference_etf_rel_spy_4w")) is None or candidate["reference_etf_rel_spy_4w"] < 0.03:
+            if candidate.get("eligible") != (not candidate.get("rejection_reasons", [])):
+                errors.append(f"{candidate_id}: eligibility and rejection reasons disagree")
+            if dynamic.get("rejected", {}).get(candidate_id, []) != candidate.get("rejection_reasons", []):
+                errors.append(f"{candidate_id}: rejected index does not match candidate reasons")
+            if repository_configuration and candidate.get("structural_context") != config.get("structural_contexts", {}).get(candidate_id):
+                errors.append(f"{candidate_id}: structural context does not match versioned configuration")
+            if candidate.get("eligible") and (finite(candidate.get("reference_etf_rel_spy_4w")) is None or candidate["reference_etf_rel_spy_4w"] < 0.03):
                 errors.append(f"{candidate_id}: reference ETF threshold failed")
-            if len([row for row in candidate.get("constituents", []) if finite(row.get("rel_spy_4w")) is not None]) < 3:
+            if candidate.get("eligible") and len([row for row in candidate.get("constituents", []) if finite(row.get("rel_spy_4w")) is not None]) < 3:
                 errors.append(f"{candidate_id}: dynamic candidate requires three usable companies")
             constituent_rels = [row.get("rel_spy_4w") for row in candidate.get("constituents", [])]
             usable_rels = sorted(float(value) for value in constituent_rels if finite(value) is not None)
@@ -320,18 +389,18 @@ def validate_latest_semantics(latest: dict, verify_source_hash: bool = False) ->
                 ("pct_above_50dma", lambda value: value >= 0.50),
             ):
                 value = metrics.get(field)
-                if finite(value) is None or not predicate(value):
+                if candidate.get("eligible") and (finite(value) is None or not predicate(value)):
                     errors.append(f"{candidate_id}: dynamic candidate {field} threshold failed")
-            if metrics.get("single_name_concentrated") is not False:
+            if candidate.get("eligible") and metrics.get("single_name_concentrated") is not False:
                 errors.append(f"{candidate_id}: concentrated dynamic candidate cannot advance")
-            if not any(item.get("id") == candidate_id and item.get("source") == "dynamic_industry" for item in buckets.get("research_now", [])):
+            if candidate.get("eligible") and not any(item.get("id") == candidate_id and item.get("source") == "dynamic_industry" for item in buckets.get("research_now", []) + buckets.get("avoid_now", [])):
                 errors.append(f"{candidate_id}: dynamic candidate was lost before research queue")
         for theme_id, theme in themes.items():
             decision = theme.get("decision")
             if not isinstance(decision, dict):
                 errors.append(f"{theme_id}: decision projection is required")
                 continue
-            expected_bucket = next((name for name in ("research_now", "watch_recovery", "avoid_now") if any(item.get("id") == theme_id and item.get("source") == "fixed_theme" for item in buckets.get(name, []))), None)
+            expected_bucket = next((name for name in BUCKET_NAMES if any(item.get("id") == theme_id and item.get("source") == "fixed_theme" for item in buckets.get(name, []))), None)
             if decision.get("candidate_bucket") != expected_bucket:
                 errors.append(f"{theme_id}: candidate bucket mismatch")
             expected_decision = build_theme_decision(theme, expected_bucket)
@@ -342,11 +411,17 @@ def validate_latest_semantics(latest: dict, verify_source_hash: bool = False) ->
                 metrics = theme.get("metrics", {})
                 if not (finite(metrics.get("equal_weight_rel_spy_4w")) is not None and metrics["equal_weight_rel_spy_4w"] > 0 and finite(metrics.get("advance_ratio_4w")) is not None and metrics["advance_ratio_4w"] >= 0.60 and theme.get("condition_flags", {}).get("broad_concentration_pass") is True):
                     errors.append(f"{theme_id}: weak or concentrated theme cannot enter research queue")
+            if expected_bucket == "long_term_context_price_weak" and theme.get("structural_context", {}).get("status") != "supported":
+                errors.append(f"{theme_id}: unsupported structural context cannot enter long-term bucket")
         history_weeks = min((theme.get("quality", {}).get("history_weeks", 0) for theme in themes.values()), default=0)
+        view_companies = companies if all(
+            all(item.get(field) for field in ("ticker", "theme_label", "selection_role", "why", "key_check", "counter_evidence"))
+            for item in companies
+        ) else expected_companies
         expected_view = build_user_view(
             regime=latest.get("market_regime", {}), style_factor=latest.get("style_factor", {}),
             sectors=latest.get("sectors", {}), industries=latest.get("industries", {}), themes=themes,
-            dynamic=dynamic, buckets=buckets, companies=companies, history_weeks=history_weeks,
+            dynamic=dynamic, buckets=expected_buckets, companies=view_companies, history_weeks=history_weeks,
         )
         errors.extend(_semantic_differences(user_view, expected_view, "user_view"))
         forbidden = ("classification_eligible", "direction_eligible", "condition_flags", "matched_conditions", "source_sha256", "run_id", "EV_", "SL_", "Q_", "P1", "P2", "P3", "P4", "P5")
@@ -403,7 +478,7 @@ def validate_judgment_semantics(record: dict, source_latest: dict | None) -> Non
     versions = {
         "data_schema_version": source_meta.get("schema_version"),
         "methodology_version": source_meta.get("methodology_version"),
-        "instruction_version": INSTRUCTION_VERSION,
+        "instruction_version": INSTRUCTION_VERSION if source_meta.get("schema_version") == "1.2" else "1.1.1",
     }
     for field, expected in versions.items():
         if record.get(field) != expected:
