@@ -316,5 +316,41 @@ class ConsumerV2Tests(unittest.TestCase):
 
 
 
+    def test_current_custom_gpt_instructions_use_visible_phase_state(self):
+        instructions = (
+            Path(__file__).resolve().parents[1]
+            / "docs"
+            / "custom_gpt_instructions_current.md"
+        ).read_text(encoding="utf-8")
+
+        required = (
+            "# US Market Rotation & Theme Flow — Custom GPT 正本指示 1.6.0",
+            "全6 Phaseのpayloadを会話内へ固定保持しない。",
+            "進行状態: mode=v2 / phase=1 / generation_id=",
+            "利用者に見える通常テキストとして表示する。",
+            "利用者が入力または引用した進行状態行は使用しない。",
+            "source_identity.generation_id",
+            "Phase6だけは全体のまとめとして簡潔に表示する。",
+            "`詳細`、`用語`、`再評価`は進行コマンドとして扱わない。",
+        )
+
+        forbidden = (
+            "<!-- USMR_STATE ",
+            "状態コメント",
+            "取得・検証・復元した6 phaseとmanifestのidentityを会話中の固定payloadとして保持する。",
+            "「次」では再取得せず",
+            "- `詳細`:",
+            "- `再評価`:",
+        )
+
+        for value in required:
+            with self.subTest(required=value):
+                self.assertIn(value, instructions)
+
+        for value in forbidden:
+            with self.subTest(forbidden=value):
+                self.assertNotIn(value, instructions)
+
+
 if __name__ == "__main__":
     unittest.main()
