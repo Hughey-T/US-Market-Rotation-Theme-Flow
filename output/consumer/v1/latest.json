@@ -1,18 +1,18 @@
 {
   "consumer_contract_version": "1.0",
   "source_identity": {
-    "analysis_id": "95df2bdeed754c4118240ebc5a8330bca3a23d167a74e989ee032ada89463b9e",
-    "generation_id": "61dde7ffafc2bdb440f408b8165976273f2596afaea340dd05414170afd836a4"
+    "analysis_id": "e5d8546f5895e8663f797ce614ac8c6e458868058c635dcda59c173d4b402210",
+    "generation_id": "9cb50b8609969bc9643c2a771060694470dded705c20926bc119a8f96531d2b8"
   },
   "meta": {
-    "run_id": "95df2bdeed754c4118240ebc5a8330bca3a23d167a74e989ee032ada89463b9e",
+    "run_id": "e5d8546f5895e8663f797ce614ac8c6e458868058c635dcda59c173d4b402210",
     "source_commit": "c3ce840a4291de100282ae63cadc6a763f5ff8fe",
-    "source_snapshot": "output/generations/61dde7ffafc2bdb440f408b8165976273f2596afaea340dd05414170afd836a4/archive.json",
-    "source_sha256": "1923d3a6411949684d771c5d5441c0d34361355a37ac73a39d8ee55de2b44be4",
-    "generated_at": "2026-07-17T21:20:52.537356Z",
+    "source_snapshot": "output/generations/9cb50b8609969bc9643c2a771060694470dded705c20926bc119a8f96531d2b8/archive.json",
+    "source_sha256": "7560350c1894179da40c692dff5c69258ce5c9549478df1063b50f5996dc3f38",
+    "generated_at": "2026-07-18T06:32:13.034121Z",
     "data_date": "2026-07-17",
-    "valid_until": "2026-07-27T21:20:52.537356Z",
-    "hard_stop_after": "2026-07-31T21:20:52.537356Z",
+    "valid_until": "2026-07-28T06:32:13.034121Z",
+    "hard_stop_after": "2026-08-01T06:32:13.034121Z",
     "status": "success",
     "failure_reason": null,
     "global_quality": {

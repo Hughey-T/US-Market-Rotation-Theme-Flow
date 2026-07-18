@@ -1,13 +1,13 @@
 {
   "details_contract_version": "1.0",
   "source_identity": {
-    "analysis_id": "95df2bdeed754c4118240ebc5a8330bca3a23d167a74e989ee032ada89463b9e",
-    "generation_id": "61dde7ffafc2bdb440f408b8165976273f2596afaea340dd05414170afd836a4"
+    "analysis_id": "e5d8546f5895e8663f797ce614ac8c6e458868058c635dcda59c173d4b402210",
+    "generation_id": "9cb50b8609969bc9643c2a771060694470dded705c20926bc119a8f96531d2b8"
   },
   "meta": {
-    "run_id": "95df2bdeed754c4118240ebc5a8330bca3a23d167a74e989ee032ada89463b9e",
+    "run_id": "e5d8546f5895e8663f797ce614ac8c6e458868058c635dcda59c173d4b402210",
     "source_commit": "c3ce840a4291de100282ae63cadc6a763f5ff8fe",
-    "source_sha256": "1923d3a6411949684d771c5d5441c0d34361355a37ac73a39d8ee55de2b44be4",
+    "source_sha256": "7560350c1894179da40c692dff5c69258ce5c9549478df1063b50f5996dc3f38",
     "data_date": "2026-07-17",
     "status": "success"
   },
@@ -73,9 +73,9 @@
             "label": "石油・ガス開発",
             "source": "dynamic_industry",
             "classification_explanation": "現在の相対強度、広がり、集中度が調査を進める条件を満たしています。",
-            "relative_strength_4w": 0.04146478628357601,
+            "relative_strength_4w": 0.043037193013607714,
             "breadth_above_50dma": 0.8,
-            "concentration_top1": 0.3193166068005258,
+            "concentration_top1": 0.3441860528201407,
             "structural_context_status": "not_assessed",
             "recovery_condition": "相対強度と上昇銘柄の広がりが同時に改善するかを次回確認します。",
             "largest_counter_evidence": "明示的な反対条件は検出されていません。"
@@ -92,7 +92,7 @@
             "label": "AI半導体",
             "source": "fixed_theme",
             "classification_explanation": "中期の強さを残す一方、直近の回復確認が必要です。",
-            "relative_strength_4w": -0.13539610442188046,
+            "relative_strength_4w": -0.13539445121441862,
             "breadth_above_50dma": 0.0,
             "concentration_top1": null,
             "structural_context_status": "not_assessed",
@@ -104,7 +104,7 @@
             "label": "半導体製造装置",
             "source": "fixed_theme",
             "classification_explanation": "中期の強さを残す一方、直近の回復確認が必要です。",
-            "relative_strength_4w": -0.12313307913807633,
+            "relative_strength_4w": -0.12313134315763338,
             "breadth_above_50dma": 0.2857142857142857,
             "concentration_top1": null,
             "structural_context_status": "not_assessed",
