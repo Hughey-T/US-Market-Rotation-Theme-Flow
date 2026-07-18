@@ -25,6 +25,7 @@ from scripts.commit_weekly_outputs import commit_weekly_outputs
 from scripts.export_current_latest import export_current
 from scripts.export_consumer_projection import export_consumer_projection
 from scripts.export_consumer_details import export_consumer_details
+from scripts.export_consumer_v2 import export_consumer_v2
 from scripts.validate_repository import validate_public_outputs
 from tests.test_pipeline_contract import synthetic_inputs
 
@@ -38,6 +39,7 @@ def export_consumers(output):
     export_current(output, output / "consumer/latest.json")
     export_consumer_projection(output, output / "consumer/v1/latest.json")
     export_consumer_details(output, output / "consumer/v1/details")
+    export_consumer_v2(output, output / "consumer/v2")
 
 
 def raw_frame(profile="market", volume_tail=130.0):
