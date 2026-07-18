@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/us-market-rotation/consumer_chunk.schema.2.0.json",
+  "title": "Custom GPT small-payload consumer chunk 2.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "consumer_contract_version",
+    "source_identity",
+    "meta",
+    "kind",
+    "phase",
+    "part",
+    "part_count",
+    "fragments"
+  ],
+  "properties": {
+    "consumer_contract_version": {
+      "const": "2.0"
+    },
+    "source_identity": {
+      "$ref": "#/$defs/sourceIdentity"
+    },
+    "meta": {
+      "$ref": "#/$defs/chunkMeta"
+    },
+    "kind": {
+      "enum": [
+        "phase",
+        "detail"
+      ]
+    },
+    "phase": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 6
+    },
+    "part": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 999
+    },
+    "part_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 999
+    },
+    "fragments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "field",
+          "value"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "minLength": 1
+          },
+          "value": {}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sourceIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "analysis_id",
+        "generation_id"
+      ],
+      "properties": {
+        "analysis_id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "generation_id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "chunkMeta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_id",
+        "source_commit",
+        "source_sha256",
+        "data_date",
+        "status"
+      ],
+      "properties": {
+        "run_id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "source_commit": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "source_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "data_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "status": {
+          "const": "success"
+        }
+      }
+    }
+  }
+}

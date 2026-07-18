@@ -4,10 +4,8 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
-import io
 import subprocess
 import sys
-import tarfile
 import tempfile
 from pathlib import Path
 
@@ -59,29 +57,89 @@ def _validate_staged_allowlist(repo: Path, allowed: set[str]) -> None:
 
 
 def _validate_committed_publication_tree(repo: Path) -> set[str]:
-    archived = subprocess.run(
-        ["git", "archive", "--format=tar", "HEAD", "output"], cwd=repo,
-        capture_output=True, check=True,
+    """Validate the exact blob bytes committed under output/."""
+
+    listing = subprocess.run(
+        [
+            "git",
+            "ls-tree",
+            "-r",
+            "-z",
+            "--full-tree",
+            "HEAD",
+            "--",
+            "output",
+        ],
+        cwd=repo,
+        capture_output=True,
+        check=True,
     ).stdout
+
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
-        with tarfile.open(fileobj=io.BytesIO(archived), mode="r:") as archive:
-            for member in archive.getmembers():
-                relative = Path(member.name)
-                if relative.is_absolute() or ".." in relative.parts:
-                    raise RuntimeError(f"unsafe publication commit tree path: {member.name}")
-                target = root / relative
-                if member.isdir():
-                    target.mkdir(parents=True, exist_ok=True)
-                elif member.isfile():
-                    target.parent.mkdir(parents=True, exist_ok=True)
-                    extracted = archive.extractfile(member)
-                    if extracted is None:
-                        raise RuntimeError(f"cannot read publication commit tree path: {member.name}")
-                    target.write_bytes(extracted.read())
-                else:
-                    raise RuntimeError(f"unsupported publication commit tree entry: {member.name}")
-        return validate_current_publication_inventory(root / "output", require_consumer=True)
+
+        for record in listing.split(b"\0"):
+            if not record:
+                continue
+
+            try:
+                metadata, raw_path = record.split(b"\t", 1)
+                mode, object_type, object_id = (
+                    metadata.decode("ascii").split()
+                )
+                name = raw_path.decode("utf-8")
+            except (
+                UnicodeDecodeError,
+                ValueError,
+            ) as error:
+                raise RuntimeError(
+                    "invalid committed publication tree entry"
+                ) from error
+
+            relative = Path(name)
+
+            if (
+                relative.is_absolute()
+                or ".." in relative.parts
+                or not relative.parts
+                or relative.parts[0] != "output"
+            ):
+                raise RuntimeError(
+                    f"unsafe publication commit tree path: {name}"
+                )
+
+            if (
+                object_type != "blob"
+                or mode not in {"100644", "100755"}
+            ):
+                raise RuntimeError(
+                    "unsupported publication commit tree entry: "
+                    f"{name} ({mode} {object_type})"
+                )
+
+            blob = subprocess.run(
+                [
+                    "git",
+                    "cat-file",
+                    "blob",
+                    object_id,
+                ],
+                cwd=repo,
+                capture_output=True,
+                check=True,
+            ).stdout
+
+            target = root / relative
+            target.parent.mkdir(
+                parents=True,
+                exist_ok=True,
+            )
+            target.write_bytes(blob)
+
+        return validate_current_publication_inventory(
+            root / "output",
+            require_consumer=True,
+        )
 
 
 def commit_weekly_outputs(

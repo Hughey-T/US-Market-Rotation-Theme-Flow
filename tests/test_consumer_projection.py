@@ -29,6 +29,7 @@ from rotation.publication import (
 from rotation.validation import ContractError, load_json, validate_schema
 from scripts.export_consumer_details import export_consumer_details
 from scripts.export_consumer_projection import export_consumer_projection
+from scripts.export_consumer_v2 import export_consumer_v2
 from scripts.export_current_latest import export_current
 from scripts.generate_weekly import history_item
 from scripts.validate_repository import validate_public_outputs
@@ -44,6 +45,7 @@ def publish_and_export(output: Path, latest: dict) -> None:
     export_current(output, output / "consumer/latest.json")
     export_consumer_projection(output, output / "consumer/v1/latest.json")
     export_consumer_details(output, output / "consumer/v1/details")
+    export_consumer_v2(output, output / "consumer/v2")
 
 
 class ConsumerProjectionTests(unittest.TestCase):
@@ -61,7 +63,7 @@ class ConsumerProjectionTests(unittest.TestCase):
             self.assertIn("themes", legacy)
             self.assertNotIn("consumer_contract_version", legacy)
 
-    def test_live_migration_shape_accepts_old_full_only_then_requires_complete_v1(self):
+    def test_live_migration_requires_complete_v1_and_v2(self):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "output"
             atomic_write_json(output / "judgments/index.json", {"index_version": "1.0", "records": []})
@@ -69,10 +71,17 @@ class ConsumerProjectionTests(unittest.TestCase):
             export_current(output, output / "consumer/latest.json")
             self.assertEqual(classify_publication_start_state(output).kind, "current")
             validate_current_publication_inventory(output, require_consumer=False)
+
             with self.assertRaises(ContractError):
                 validate_current_publication_inventory(output, require_consumer=True)
+
             export_consumer_projection(output, output / "consumer/v1/latest.json")
             export_consumer_details(output, output / "consumer/v1/details")
+
+            with self.assertRaises(ContractError):
+                validate_current_publication_inventory(output, require_consumer=True)
+
+            export_consumer_v2(output, output / "consumer/v2")
             validate_current_publication_inventory(output, require_consumer=True)
 
     def test_legacy_generation_requires_full_only_and_rejects_v1(self):

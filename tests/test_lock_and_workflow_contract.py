@@ -18,6 +18,7 @@ from scripts.commit_weekly_outputs import PUBLICATION_BRANCH, _validate_staged_a
 from scripts.export_current_latest import export_current
 from scripts.export_consumer_projection import export_consumer_projection
 from scripts.export_consumer_details import export_consumer_details
+from scripts.export_consumer_v2 import export_consumer_v2
 from scripts.generate_weekly import history_item
 from scripts.validate_immutable_judgments import validate_immutable_judgments
 from tests.test_publication_contract import generation
@@ -60,6 +61,7 @@ class WorkflowContractTests(unittest.TestCase):
         export_current(output, output / "consumer/latest.json")
         export_consumer_projection(output, output / "consumer/v1/latest.json")
         export_consumer_details(output, output / "consumer/v1/details")
+        export_consumer_v2(output, output / "consumer/v2")
 
     def git(self, repo, *args, check=True):
         return subprocess.run(["git", *args], cwd=repo, text=True, capture_output=True, check=check)
@@ -94,6 +96,7 @@ class WorkflowContractTests(unittest.TestCase):
         # A retained schema 1.1 generation supports only the legacy full URL.
         export_current(output, output / "consumer/latest.json")
         shutil.rmtree(output / "consumer/v1")
+        shutil.rmtree(output / "consumer/v2")
         record = load_json(ROOT / "tests/fixtures/judgment_record.json")
         record_path = judgments / "judgment.json"
         atomic_write_json(record_path, record)
