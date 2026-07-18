@@ -1,13 +1,13 @@
 {
   "details_contract_version": "1.0",
   "source_identity": {
-    "analysis_id": "e5d8546f5895e8663f797ce614ac8c6e458868058c635dcda59c173d4b402210",
-    "generation_id": "9cb50b8609969bc9643c2a771060694470dded705c20926bc119a8f96531d2b8"
+    "analysis_id": "c35c3efdd41f56306fd2c62b395b6b36f04a05a962f9868b5fdb216303862771",
+    "generation_id": "ddf65f06cb01d0a83f5289227279ba34f61453384bfd70a66ae6a8c21d46b2e8"
   },
   "meta": {
-    "run_id": "e5d8546f5895e8663f797ce614ac8c6e458868058c635dcda59c173d4b402210",
-    "source_commit": "c3ce840a4291de100282ae63cadc6a763f5ff8fe",
-    "source_sha256": "7560350c1894179da40c692dff5c69258ce5c9549478df1063b50f5996dc3f38",
+    "run_id": "c35c3efdd41f56306fd2c62b395b6b36f04a05a962f9868b5fdb216303862771",
+    "source_commit": "12bed664fa558a85a04ac7614d691e0a40813807",
+    "source_sha256": "c857d25094aee07bc6754a9f767dc0560225b6a8ab0d28cb2bdb66051729f1a9",
     "data_date": "2026-07-17",
     "status": "success"
   },
