@@ -4,12 +4,13 @@ import unittest
 from pathlib import Path
 
 from rotation.provenance import atomic_write_json, snapshot_source_hash, stable_hash
-from rotation.publication import committed_history, instruction_version_for_data_schema, load_current_generation, publish_generation
+from rotation.publication import committed_history, instruction_version_for_data_schema, instruction_versions_for_data_schema, load_current_generation, publish_generation
 from rotation.validation import ContractError, load_json, validate_latest_semantics, validate_public_latest
 from scripts.generate_weekly import history_item
 from scripts.export_current_latest import export_current
 from scripts.export_consumer_projection import export_consumer_projection
 from scripts.export_consumer_details import export_consumer_details
+from scripts.export_consumer_v2 import export_consumer_v2
 from scripts.validate_repository import validate_public_outputs
 from tests.test_pipeline_contract import build_synthetic
 
@@ -43,7 +44,11 @@ def generation(data_date: str, suffix: str):
 class PublicLatestContractTests(unittest.TestCase):
     def test_instruction_identity_follows_snapshot_schema_for_legacy_generation_validation(self):
         self.assertEqual(instruction_version_for_data_schema("1.1"), "1.1.1")
-        self.assertEqual(instruction_version_for_data_schema("1.2"), "1.4.0")
+        self.assertEqual(instruction_version_for_data_schema("1.2"), "1.5.0")
+        self.assertEqual(
+            instruction_versions_for_data_schema("1.2"),
+            {"1.3.0", "1.4.0", "1.5.0"},
+        )
 
     def test_generic_failed_manifest_is_valid_but_public_latest_rejects_it(self):
         value = generation("2026-07-10", "failed-manifest")
@@ -80,6 +85,7 @@ class PublicLatestContractTests(unittest.TestCase):
             export_current(output, consumer_path)
             export_consumer_projection(output, output / "consumer/v1/latest.json")
             export_consumer_details(output, output / "consumer/v1/details")
+            export_consumer_v2(output, output / "consumer/v2")
             self.assertEqual(validate_public_outputs(root, SCHEMA), 2)
             projected = load_json(output / "consumer/v1/latest.json")
             self.assertEqual(projected["user_view"], current["user_view"])

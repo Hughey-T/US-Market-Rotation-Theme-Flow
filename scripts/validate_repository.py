@@ -16,6 +16,11 @@ from rotation.consumer import (
     validate_consumer_snapshot,
     validate_legacy_full_consumer,
 )
+from rotation.consumer_v2 import (
+    CONSUMER_V2_MANIFEST_SCHEMA,
+    load_consumer_v2_file,
+    validate_consumer_v2_payloads,
+)
 from rotation.publication import load_current_generation, validate_repository_output_inventory
 from rotation.validation import (
     ContractError,
@@ -26,6 +31,99 @@ from rotation.validation import (
     validate_schema,
     validate_theme_master_semantics,
 )
+
+
+def _load_consumer_v2_kind(
+    root: Path,
+    kind: str,
+    inventory: list[dict],
+) -> dict[int, list[dict]]:
+    directory = root / kind
+
+    if directory.is_symlink() or not directory.is_dir():
+        raise ContractError(
+            f"invalid consumer v2 {kind} directory: {directory}"
+        )
+
+    expected_phases = {
+        f"phase-{phase}"
+        for phase in range(1, 7)
+    }
+    phase_entries = {
+        entry.name: entry
+        for entry in directory.iterdir()
+    }
+
+    if set(phase_entries) != expected_phases:
+        raise ContractError(
+            f"consumer v2 {kind} phase inventory mismatch"
+        )
+
+    if [
+        item.get("phase")
+        for item in inventory
+    ] != list(range(1, 7)):
+        raise ContractError(
+            f"consumer v2 {kind} manifest phases are invalid"
+        )
+
+    result: dict[int, list[dict]] = {}
+
+    for item in inventory:
+        phase = item["phase"]
+        part_count = item["part_count"]
+        phase_directory = (
+            directory / f"phase-{phase}"
+        )
+
+        if (
+            phase_directory.is_symlink()
+            or not phase_directory.is_dir()
+        ):
+            raise ContractError(
+                f"invalid consumer v2 {kind} phase directory: "
+                f"{phase_directory}"
+            )
+
+        expected_parts = {
+            f"part-{part}.json"
+            for part in range(1, part_count + 1)
+        }
+        part_entries = {
+            entry.name: entry
+            for entry in phase_directory.iterdir()
+        }
+
+        if set(part_entries) != expected_parts:
+            raise ContractError(
+                f"consumer v2 {kind} phase {phase} "
+                "part inventory mismatch"
+            )
+
+        result[phase] = []
+
+        for part in range(1, part_count + 1):
+            part_path = (
+                phase_directory
+                / f"part-{part}.json"
+            )
+
+            if (
+                part_path.is_symlink()
+                or not part_path.is_file()
+            ):
+                raise ContractError(
+                    f"invalid consumer v2 part: {part_path}"
+                )
+
+            result[phase].append(
+                load_consumer_v2_file(
+                    part_path,
+                    f"consumer v2 {kind} phase {phase} part {part}",
+                )
+            )
+
+    return result
 
 
 def validate_public_outputs(root: Path, latest_schema: dict) -> int:
@@ -61,6 +159,52 @@ def validate_public_outputs(root: Path, latest_schema: dict) -> int:
                     load_json(root / "output" / "consumer" / "v1" / "details" / f"phase-{phase}.json"),
                     current[3], phase=phase,
                 )
+
+            v2_root = (
+                root
+                / "output"
+                / "consumer"
+                / "v2"
+            )
+            manifest_path = (
+                v2_root / "manifest.json"
+            )
+
+            if (
+                manifest_path.is_symlink()
+                or not manifest_path.is_file()
+            ):
+                raise ContractError(
+                    "consumer v2 manifest is missing or invalid"
+                )
+
+            manifest = load_consumer_v2_file(
+                manifest_path,
+                "output/consumer/v2/manifest.json",
+            )
+            validate_schema(
+                manifest,
+                CONSUMER_V2_MANIFEST_SCHEMA,
+                "output/consumer/v2/manifest.json",
+            )
+
+            phase_chunks = _load_consumer_v2_kind(
+                v2_root,
+                "phases",
+                manifest["phase_inventory"],
+            )
+            detail_chunks = _load_consumer_v2_kind(
+                v2_root,
+                "details",
+                manifest["detail_inventory"],
+            )
+
+            validate_consumer_v2_payloads(
+                manifest,
+                phase_chunks,
+                detail_chunks,
+                current[3],
+            )
         count += 1
     return count
 
@@ -70,6 +214,8 @@ def main() -> int:
             "latest": load_json(ROOT / "schemas" / "rotation_snapshot.schema.json"),
             "consumer": load_json(ROOT / "schemas" / "consumer_snapshot.schema.json"),
             "consumer_details": load_json(ROOT / "schemas" / "consumer_details.schema.json"),
+            "consumer_v2_manifest": load_json(ROOT / "schemas" / "consumer_manifest_v2.schema.json"),
+            "consumer_v2_chunk": load_json(ROOT / "schemas" / "consumer_chunk_v2.schema.json"),
             "judgment": load_json(ROOT / "schemas" / "judgment_record.schema.json"),
             "master": load_json(ROOT / "schemas" / "theme_master.schema.json"),
             "generation_manifest": load_json(ROOT / "schemas" / "generation_manifest.schema.json"),
@@ -169,19 +315,22 @@ def main() -> int:
             raise ContractError(f"Custom GPT instructions exceed 8,000 characters: {len(instructions)}")
         required_terms = [
             "更新", "次", "詳細", "用語", "再評価", "user_view.phases",
-            "consumer_contract_version=\"1.0\"", "source_identity.analysis_id", "404の場合だけ",
-            "source_identity.generation_id", "critical_missing=[]", "presentation_version=\"1.2\"",
-            "initial_observation", "資金流入・流出と断定しない", "不完全JSON", "前回キャッシュ",
+            "consumer/v2/manifest.json", "consumer_contract_version=\"2.0\"",
+            "phase_inventory", "detail_inventory", "part_count", "fragments",
+            "source_identity.analysis_id", "source_identity.generation_id",
+            "404の場合だけ", "critical_missing=[]", "presentation_version=\"1.2\"",
+            "consumer_contract_version=\"1.0\"", "initial_observation",
+            "資金流入・流出と断定しない", "不完全JSON", "前回キャッシュ",
             "details/phase-", "details_contract_version=\"1.0\"", "表示を停止",
         ]
         missing = [term for term in required_terms if term not in instructions]
         if missing:
             raise ContractError(f"Custom GPT instructions missing contract terms: {missing}")
-        for old_name in ("custom_gpt_instructions_v1.1.md", "custom_gpt_instructions_v1.2.md", "custom_gpt_instructions_v2.md"):
+        for old_name in ("custom_gpt_instructions_v1.1.md", "custom_gpt_instructions_v1.2.md", "custom_gpt_instructions_v2.md", "custom_gpt_instructions_v1.4.md"):
             old_text = (ROOT / "docs" / old_name).read_text(encoding="utf-8")
             if "Deprecated" not in old_text or "custom_gpt_instructions_current.md" not in old_text:
                 raise ContractError(f"historical Custom GPT instructions are not clearly deprecated: {old_name}")
-        print(f"validation passed: 11 schemas, 7 latest fixtures, 8 display fixtures, 1 sample latest, 1 judgment fixture, 1 sample judgment, 1 master fixture, {public_count} public outputs, {len(warnings)} overlap warnings")
+        print(f"validation passed: 13 schemas, 7 latest fixtures, 8 display fixtures, 1 sample latest, 1 judgment fixture, 1 sample judgment, 1 master fixture, {public_count} public outputs, {len(warnings)} overlap warnings")
         return 0
     except (ContractError, OSError, ValueError) as error:
         print(f"validation failed:\n{error}", file=sys.stderr)
