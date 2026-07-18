@@ -1,8 +1,8 @@
 # US Market Rotation & Theme Flow v1.2 user experience
 
-Versions: data schema `1.2`（旧1.1は読み取り互換）、decision contract `3.0`、presentation `1.2`（1.1は読み取り互換）、Custom GPT instruction `1.4.0`、publication contract `1.1`（1.0は読み取り互換）、consumer contract `1.0`。
+Versions: data schema `1.2`（旧1.1は読み取り互換）、decision contract `3.0`、presentation `1.2`（1.1は読み取り互換）、Custom GPT instruction `1.6.0`、publication contract `1.1`（1.0は読み取り互換）、consumer contracts `2.0`・`1.0`。
 
-米国株を市場環境→スタイル→セクター・業種→テーマ→個別企業→最終判断の6段階で調べる週次データ基盤です。内部では再現可能な監査情報を保持し、通常回答では結論・意味・注意点・次の確認だけを平易な日本語で表示します。週次preflight、commit、repository validatorは同一の厳密なpublication file inventoryを使用し、unknown file、invalid current、lock/staging残骸を取得・commit前に拒否します。
+米国株を市場環境→スタイル→セクター・業種→テーマ→個別企業→最終判断の6つのPhaseで調べる週次データ基盤です。内部では再現可能な監査情報を保持し、Phase1〜Phase5では通常データとdetailを合わせて詳しく説明し、Phase6だけを簡潔な全体まとめとして表示します。週次preflight、commit、repository validatorは同一の厳密なpublication file inventoryを使用し、unknown file、invalid current、lock/staging残骸を取得・commit前に拒否します。
 
 ## 1.2 user experience の主要変更
 
@@ -16,9 +16,9 @@ Versions: data schema `1.2`（旧1.1は読み取り互換）、decision contract
 - 履歴3週未満は初期観測モードとし、変化・反転・加速を断定しない
 - 中央値、winsorized、流動性加重、寄与HHI、実効寄与企業数を追加
 - 企業候補は1対象最大2社、全体でticker重複なし
-- `更新` と5回の `次` だけで全6段階を完了
+- `更新`と5回の`次`だけで全6 Phaseを完了
 
-通常利用は [Custom GPT正本指示 1.4.0](docs/custom_gpt_instructions_current.md)（[GitHub raw正本](https://raw.githubusercontent.com/Hughey-T/US-Market-Rotation-Theme-Flow/main/docs/custom_gpt_instructions_current.md)）、完成形は [6段階の表示サンプル](docs/display_samples_v1.2.md)、方法は [Methodology 1.2](docs/methodology_v1.2.md)、fieldは [Data Dictionary 1.2](docs/data_dictionary_v1.2.md) を参照してください。
+通常利用は [Custom GPT正本指示 1.6.0](docs/custom_gpt_instructions_current.md)（[GitHub raw正本](https://raw.githubusercontent.com/Hughey-T/US-Market-Rotation-Theme-Flow/main/docs/custom_gpt_instructions_current.md)）、完成形は [6 Phaseの表示サンプル](docs/display_samples_v1.2.md)、方法は [Methodology 1.2](docs/methodology_v1.2.md)、fieldは [Data Dictionary 1.2](docs/data_dictionary_v1.2.md) を参照してください。
 
 数値計算、欠損処理、market regime、theme判定、動的発見、4分類候補、企業候補、表示文はコードが決定します。Custom GPTは `user_view` を順番に提示し、結果を変更しません。価格上昇を直接的な資金流入とは扱いません。
 
@@ -119,16 +119,23 @@ Market Rotation 1.0はdefaultで拒否します。`scripts/migrate_1_0_to_1_1.py
 - 閾値は未較正の暫定値で、履歴へ合わせて事後最適化しない
 
 現状監査は[CURRENT_STATE](docs/CURRENT_STATE.md)、schema拡張は[Schema 1.2](docs/schema_v1.2.md)、実装は[Implementation Notes](docs/implementation_notes_v1.2.md)、テストは[Test Specification](docs/test_specification_v1.2.md)、運用は[Operations Guide](docs/operations_guide_v1.2.md)、移行は[Migration 1.2](docs/migration_v1.2.md)、公開契約は[Public Artifact 1.2](docs/public_artifact_v1.2.md)を参照してください。
-## Publication contract 1.1 / consumer contract 1.0
+## Publication contract 1.1 / consumer contracts 2.0・1.0
 
-`publication`ブランチの`output/current.json`が唯一のauthoritative generation pointerです。完全なlatest/archive、history、judgment index、manifestは縮小しません。既存Custom GPT 1.3.0の無停止互換のため`output/consumer/latest.json`はauthoritative currentと完全一致するfull snapshotのまま維持します。新しい通常利用は`output/consumer/v1/latest.json`の軽量consumerを使い、`consumer_contract_version=1.0`、source identity、validity、quality、完全な`user_view`だけを含めます。`output/consumer/v1/details/phase-1.json`〜`phase-6.json`は現在phaseだけを説明する決定的な監査projectionです。新consumerと各detailsのcanonical JSON・配信fileにはそれぞれ32 KiB上限を適用します。
+`publication`ブランチの`output/current.json`が唯一のauthoritative generation pointerです。完全なlatest、archive、history、judgment index、manifestは縮小しません。
 
-```bash
-python scripts/export_current_latest.py exported/latest.json
-python scripts/export_consumer_projection.py exported/v1/latest.json
-python scripts/export_consumer_details.py exported/v1/details
-```
+Custom GPTの主経路はconsumer v2です。
 
-新Custom GPTの主URLは`https://raw.githubusercontent.com/Hughey-T/US-Market-Rotation-Theme-Flow/publication/output/consumer/v1/latest.json`です。主URLのHTTP statusが404の場合だけ旧full URLへfallbackし、存在する主payloadが無効ならfail-closedとします。「詳細」だけ現在phaseのdetails 1件を取得して固定consumerとの6 identity field一致を確認します。旧URLの廃止は今回行わず、別PRと利用者移行確認を必須とします。
+- manifest: `output/consumer/v2/manifest.json`
+- 通常Phase: `output/consumer/v2/phases/phase-{n}/part-{p}.json`
+- detail: `output/consumer/v2/details/phase-{n}/part-{p}.json`
 
+consumer v2の各ファイルは4 KiB以下で、manifestとchunkのidentity、part数、順序、canonical JSON、元データへのlossless復元をrepository側で検証します。
+
+`更新`ではmanifestを検証し、Phase1の通常chunkとdetail chunkだけを取得します。各Phase末尾には、`mode`、現在のPhase番号、完全なgeneration IDだけを含む可視の進行状態行を表示します。`次`ではmanifestを再取得し、generation IDが進行状態行と一致する場合だけ次のPhaseを取得します。manifestとchunk間ではanalysis ID、generation ID、run ID、source commit、source SHA-256、data dateを毎回完全検証します。全6 Phaseのpayloadは会話内へ固定保持しません。
+
+公開データが別generationへ更新された場合は、新旧generationを混在させず停止します。利用者は新しいセッションで`更新`から開始します。
+
+Phase1〜Phase5は通常データとdetailを合わせて詳しく表示し、Phase6だけを簡潔な全体まとめとします。表示名は`Phase1`〜`Phase6`に統一し、`詳細`、`用語`、`再評価`は進行コマンドとして使用しません。
+
+v2 manifestがHTTP 404の場合だけconsumer v1へ、v1もHTTP 404の場合だけ旧full consumerへfallbackします。存在する上位形式が無効な場合はfallbackせずfail-closedで停止します。旧URLは互換用として維持します。
 This public repository protects `main` with pull requests, strict up-to-date required checks, resolved review conversations, and blocked force pushes and branch deletion. The eight required checks and the supplementary human release procedure are documented in the [Manual merge gate](docs/manual_merge_gate.md). No approving review is required by configuration, and repository administrators retain an emergency bypass path. A Draft PR remains Draft until final independent review is complete and must never be merged directly.
