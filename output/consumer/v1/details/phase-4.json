@@ -1,14 +1,14 @@
 {
   "details_contract_version": "1.0",
   "source_identity": {
-    "analysis_id": "c35c3efdd41f56306fd2c62b395b6b36f04a05a962f9868b5fdb216303862771",
-    "generation_id": "ddf65f06cb01d0a83f5289227279ba34f61453384bfd70a66ae6a8c21d46b2e8"
+    "analysis_id": "352903ee123e026d13541e286657d59ea95ed331a39970cc1c5ee98c7a0a3e43",
+    "generation_id": "e29bfda3e4c5534368e35026987f7bc57e2ddcdd2b6aae2833126729a7aeaf48"
   },
   "meta": {
-    "run_id": "c35c3efdd41f56306fd2c62b395b6b36f04a05a962f9868b5fdb216303862771",
-    "source_commit": "12bed664fa558a85a04ac7614d691e0a40813807",
-    "source_sha256": "c857d25094aee07bc6754a9f767dc0560225b6a8ab0d28cb2bdb66051729f1a9",
-    "data_date": "2026-07-17",
+    "run_id": "352903ee123e026d13541e286657d59ea95ed331a39970cc1c5ee98c7a0a3e43",
+    "source_commit": "570540590fb6a9ab4defc8dd6e9d292481bed2af",
+    "source_sha256": "ecdca81f3cfe59f49970c95ba366c518f1fa8135714499910d37cf49f3186644",
+    "data_date": "2026-07-23",
     "status": "success"
   },
   "phase": 4,
@@ -25,45 +25,21 @@
             "label": "サイバーセキュリティ",
             "source": "fixed_theme",
             "classification_explanation": "現在の相対強度、広がり、集中度が調査を進める条件を満たしています。",
-            "relative_strength_4w": 0.2273157873932899,
-            "breadth_above_50dma": 1.0,
-            "concentration_top1": 0.19412459590730388,
+            "relative_strength_4w": 0.10725319960971823,
+            "breadth_above_50dma": 0.8571428571428571,
+            "concentration_top1": 0.21299009289636656,
             "structural_context_status": "not_assessed",
             "recovery_condition": "相対強度と上昇銘柄の広がりが同時に改善するかを次回確認します。",
             "largest_counter_evidence": "直接的な資金フロー確認はありません。"
-          },
-          {
-            "id": "regional_banks",
-            "label": "地方銀行",
-            "source": "dynamic_industry",
-            "classification_explanation": "現在の相対強度、広がり、集中度が調査を進める条件を満たしています。",
-            "relative_strength_4w": 0.0852266505245078,
-            "breadth_above_50dma": 1.0,
-            "concentration_top1": 0.1956516455253887,
-            "structural_context_status": "not_assessed",
-            "recovery_condition": "相対強度と上昇銘柄の広がりが同時に改善するかを次回確認します。",
-            "largest_counter_evidence": "明示的な反対条件は検出されていません。"
           },
           {
             "id": "transportation",
             "label": "運輸",
             "source": "dynamic_industry",
             "classification_explanation": "現在の相対強度、広がり、集中度が調査を進める条件を満たしています。",
-            "relative_strength_4w": 0.06017213825216883,
+            "relative_strength_4w": 0.09424441067600413,
             "breadth_above_50dma": 0.8333333333333334,
-            "concentration_top1": 0.3227741211242782,
-            "structural_context_status": "not_assessed",
-            "recovery_condition": "相対強度と上昇銘柄の広がりが同時に改善するかを次回確認します。",
-            "largest_counter_evidence": "明示的な反対条件は検出されていません。"
-          },
-          {
-            "id": "biotechnology",
-            "label": "バイオテクノロジー",
-            "source": "dynamic_industry",
-            "classification_explanation": "現在の相対強度、広がり、集中度が調査を進める条件を満たしています。",
-            "relative_strength_4w": 0.05396299259124421,
-            "breadth_above_50dma": 0.8333333333333334,
-            "concentration_top1": 0.292345451768685,
+            "concentration_top1": 0.2956100130965417,
             "structural_context_status": "not_assessed",
             "recovery_condition": "相対強度と上昇銘柄の広がりが同時に改善するかを次回確認します。",
             "largest_counter_evidence": "明示的な反対条件は検出されていません。"
@@ -73,12 +49,24 @@
             "label": "石油・ガス開発",
             "source": "dynamic_industry",
             "classification_explanation": "現在の相対強度、広がり、集中度が調査を進める条件を満たしています。",
-            "relative_strength_4w": 0.043037193013607714,
-            "breadth_above_50dma": 0.8,
-            "concentration_top1": 0.3441860528201407,
+            "relative_strength_4w": 0.07766758587436287,
+            "breadth_above_50dma": 1.0,
+            "concentration_top1": 0.24860788233842734,
             "structural_context_status": "not_assessed",
             "recovery_condition": "相対強度と上昇銘柄の広がりが同時に改善するかを次回確認します。",
             "largest_counter_evidence": "明示的な反対条件は検出されていません。"
+          },
+          {
+            "id": "defense",
+            "label": "防衛",
+            "source": "fixed_theme",
+            "classification_explanation": "現在の相対強度、広がり、集中度が調査を進める条件を満たしています。",
+            "relative_strength_4w": 0.05626656708041834,
+            "breadth_above_50dma": 0.5,
+            "concentration_top1": 0.2537867464540494,
+            "structural_context_status": "not_assessed",
+            "recovery_condition": "相対強度と上昇銘柄の広がりが同時に改善するかを次回確認します。",
+            "largest_counter_evidence": "直接的な資金フロー確認はありません。"
           }
         ]
       },
@@ -92,24 +80,36 @@
             "label": "AI半導体",
             "source": "fixed_theme",
             "classification_explanation": "中期の強さを残す一方、直近の回復確認が必要です。",
-            "relative_strength_4w": -0.13539445121441862,
-            "breadth_above_50dma": 0.0,
-            "concentration_top1": null,
+            "relative_strength_4w": -0.08512414832181227,
+            "breadth_above_50dma": 0.25,
+            "concentration_top1": 0.39139631456875784,
             "structural_context_status": "not_assessed",
             "recovery_condition": "相対強度と上昇銘柄の広がりが同時に改善するかを次回確認します。",
             "largest_counter_evidence": "直接的な資金フロー確認はありません。"
+          },
+          {
+            "id": "networking_optical",
+            "label": "ネットワーク・光通信",
+            "source": "fixed_theme",
+            "classification_explanation": "中期の強さを残す一方、直近の回復確認が必要です。",
+            "relative_strength_4w": -0.11249980753431335,
+            "breadth_above_50dma": 0.2857142857142857,
+            "concentration_top1": 0.9923285204208079,
+            "structural_context_status": "not_assessed",
+            "recovery_condition": "相対強度と上昇銘柄の広がりが同時に改善するかを次回確認します。",
+            "largest_counter_evidence": "反対条件が検出されています。次回の価格と広がりで再確認します。"
           },
           {
             "id": "semi_equipment",
             "label": "半導体製造装置",
             "source": "fixed_theme",
             "classification_explanation": "中期の強さを残す一方、直近の回復確認が必要です。",
-            "relative_strength_4w": -0.12313134315763338,
+            "relative_strength_4w": -0.09638655652710629,
             "breadth_above_50dma": 0.2857142857142857,
-            "concentration_top1": null,
+            "concentration_top1": 1.0,
             "structural_context_status": "not_assessed",
             "recovery_condition": "相対強度と上昇銘柄の広がりが同時に改善するかを次回確認します。",
-            "largest_counter_evidence": "直接的な資金フロー確認はありません。"
+            "largest_counter_evidence": "反対条件が検出されています。次回の価格と広がりで再確認します。"
           }
         ]
       },
@@ -125,13 +125,25 @@
         "explanation": "反対材料または弱い価格条件が優勢な分類です。",
         "items": [
           {
+            "id": "biotechnology",
+            "label": "バイオテクノロジー",
+            "source": "dynamic_industry",
+            "classification_explanation": "現在の価格、広がり、集中度または反対材料から、調査優先度を下げています。",
+            "relative_strength_4w": 0.015689599515577673,
+            "breadth_above_50dma": 0.8333333333333334,
+            "concentration_top1": 0.3830657100357144,
+            "structural_context_status": "not_assessed",
+            "recovery_condition": "相対強度と上昇銘柄の広がりが同時に改善するかを次回確認します。",
+            "largest_counter_evidence": "明示的な反対条件は検出されていません。"
+          },
+          {
             "id": "homebuilders",
             "label": "住宅建設",
             "source": "dynamic_industry",
             "classification_explanation": "現在の価格、広がり、集中度または反対材料から、調査優先度を下げています。",
-            "relative_strength_4w": -0.013238515632407875,
-            "breadth_above_50dma": 0.6,
-            "concentration_top1": 0.5375310283605587,
+            "relative_strength_4w": -0.05080376704767468,
+            "breadth_above_50dma": 0.4,
+            "concentration_top1": null,
             "structural_context_status": "not_assessed",
             "recovery_condition": "相対強度と上昇銘柄の広がりが同時に改善するかを次回確認します。",
             "largest_counter_evidence": "明示的な反対条件は検出されていません。"
@@ -141,9 +153,21 @@
             "label": "インフラ建設",
             "source": "dynamic_industry",
             "classification_explanation": "現在の価格、広がり、集中度または反対材料から、調査優先度を下げています。",
-            "relative_strength_4w": -0.08900224288035402,
-            "breadth_above_50dma": 0.25,
+            "relative_strength_4w": -0.0845240773007857,
+            "breadth_above_50dma": 0.0,
             "concentration_top1": null,
+            "structural_context_status": "not_assessed",
+            "recovery_condition": "相対強度と上昇銘柄の広がりが同時に改善するかを次回確認します。",
+            "largest_counter_evidence": "明示的な反対条件は検出されていません。"
+          },
+          {
+            "id": "regional_banks",
+            "label": "地方銀行",
+            "source": "dynamic_industry",
+            "classification_explanation": "現在の価格、広がり、集中度または反対材料から、調査優先度を下げています。",
+            "relative_strength_4w": 0.02718513171382183,
+            "breadth_above_50dma": 1.0,
+            "concentration_top1": 0.31483100276442294,
             "structural_context_status": "not_assessed",
             "recovery_condition": "相対強度と上昇銘柄の広がりが同時に改善するかを次回確認します。",
             "largest_counter_evidence": "明示的な反対条件は検出されていません。"
@@ -153,9 +177,9 @@
             "label": "小売",
             "source": "dynamic_industry",
             "classification_explanation": "現在の価格、広がり、集中度または反対材料から、調査優先度を下げています。",
-            "relative_strength_4w": -0.03229235953105094,
+            "relative_strength_4w": -0.053720447943430824,
             "breadth_above_50dma": 0.2,
-            "concentration_top1": 1.0,
+            "concentration_top1": null,
             "structural_context_status": "not_assessed",
             "recovery_condition": "相対強度と上昇銘柄の広がりが同時に改善するかを次回確認します。",
             "largest_counter_evidence": "明示的な反対条件は検出されていません。"
@@ -165,9 +189,9 @@
             "label": "AIソフトウェア・データ基盤",
             "source": "fixed_theme",
             "classification_explanation": "現在の価格、広がり、集中度または反対材料から、調査優先度を下げています。",
-            "relative_strength_4w": 0.0014471119316856584,
+            "relative_strength_4w": 0.0035156727592889434,
             "breadth_above_50dma": 0.2857142857142857,
-            "concentration_top1": 0.4595224671756135,
+            "concentration_top1": 0.46408883929347206,
             "structural_context_status": "not_assessed",
             "recovery_condition": "相対強度と上昇銘柄の広がりが同時に改善するかを次回確認します。",
             "largest_counter_evidence": "直接的な資金フロー確認はありません。"
@@ -177,48 +201,24 @@
             "label": "データセンター電力・インフラ",
             "source": "fixed_theme",
             "classification_explanation": "現在の価格、広がり、集中度または反対材料から、調査優先度を下げています。",
-            "relative_strength_4w": -0.04271375571742572,
-            "breadth_above_50dma": 0.25,
-            "concentration_top1": 1.0,
+            "relative_strength_4w": -0.01807079598304452,
+            "breadth_above_50dma": 0.5,
+            "concentration_top1": 0.349110091030681,
             "structural_context_status": "not_assessed",
             "recovery_condition": "相対強度と上昇銘柄の広がりが同時に改善するかを次回確認します。",
-            "largest_counter_evidence": "反対条件が検出されています。次回の価格と広がりで再確認します。"
-          },
-          {
-            "id": "defense",
-            "label": "防衛",
-            "source": "fixed_theme",
-            "classification_explanation": "現在の価格、広がり、集中度または反対材料から、調査優先度を下げています。",
-            "relative_strength_4w": -0.0531473923740851,
-            "breadth_above_50dma": 0.25,
-            "concentration_top1": 0.6426593413996029,
-            "structural_context_status": "not_assessed",
-            "recovery_condition": "相対強度と上昇銘柄の広がりが同時に改善するかを次回確認します。",
-            "largest_counter_evidence": "反対条件が検出されています。次回の価格と広がりで再確認します。"
-          },
-          {
-            "id": "networking_optical",
-            "label": "ネットワーク・光通信",
-            "source": "fixed_theme",
-            "classification_explanation": "現在の価格、広がり、集中度または反対材料から、調査優先度を下げています。",
-            "relative_strength_4w": -0.17568868239694393,
-            "breadth_above_50dma": 0.14285714285714285,
-            "concentration_top1": 1.0,
-            "structural_context_status": "not_assessed",
-            "recovery_condition": "相対強度と上昇銘柄の広がりが同時に改善するかを次回確認します。",
-            "largest_counter_evidence": "反対条件が検出されています。次回の価格と広がりで再確認します。"
+            "largest_counter_evidence": "直接的な資金フロー確認はありません。"
           },
           {
             "id": "nuclear_uranium",
             "label": "原子力・ウラン",
             "source": "fixed_theme",
             "classification_explanation": "現在の価格、広がり、集中度または反対材料から、調査優先度を下げています。",
-            "relative_strength_4w": -0.1324153092443544,
-            "breadth_above_50dma": 0.14285714285714285,
-            "concentration_top1": null,
+            "relative_strength_4w": -0.11124545250612204,
+            "breadth_above_50dma": 0.2857142857142857,
+            "concentration_top1": 0.7178143680948721,
             "structural_context_status": "not_assessed",
             "recovery_condition": "相対強度と上昇銘柄の広がりが同時に改善するかを次回確認します。",
-            "largest_counter_evidence": "直接的な資金フロー確認はありません。"
+            "largest_counter_evidence": "反対条件が検出されています。次回の価格と広がりで再確認します。"
           }
         ]
       }

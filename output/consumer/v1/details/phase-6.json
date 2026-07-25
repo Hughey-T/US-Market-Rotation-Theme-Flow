@@ -1,14 +1,14 @@
 {
   "details_contract_version": "1.0",
   "source_identity": {
-    "analysis_id": "c35c3efdd41f56306fd2c62b395b6b36f04a05a962f9868b5fdb216303862771",
-    "generation_id": "ddf65f06cb01d0a83f5289227279ba34f61453384bfd70a66ae6a8c21d46b2e8"
+    "analysis_id": "352903ee123e026d13541e286657d59ea95ed331a39970cc1c5ee98c7a0a3e43",
+    "generation_id": "e29bfda3e4c5534368e35026987f7bc57e2ddcdd2b6aae2833126729a7aeaf48"
   },
   "meta": {
-    "run_id": "c35c3efdd41f56306fd2c62b395b6b36f04a05a962f9868b5fdb216303862771",
-    "source_commit": "12bed664fa558a85a04ac7614d691e0a40813807",
-    "source_sha256": "c857d25094aee07bc6754a9f767dc0560225b6a8ab0d28cb2bdb66051729f1a9",
-    "data_date": "2026-07-17",
+    "run_id": "352903ee123e026d13541e286657d59ea95ed331a39970cc1c5ee98c7a0a3e43",
+    "source_commit": "570540590fb6a9ab4defc8dd6e9d292481bed2af",
+    "source_sha256": "ecdca81f3cfe59f49970c95ba366c518f1fa8135714499910d37cf49f3186644",
+    "data_date": "2026-07-23",
     "status": "success"
   },
   "phase": 6,
@@ -20,12 +20,12 @@
       "市場、スタイル、セクター、テーマ、企業の順に同一snapshotを確認しています。"
     ],
     "bucket_counts": {
-      "research_now": 5,
-      "watch_recovery": 2,
+      "research_now": 4,
+      "watch_recovery": 3,
       "long_term_context_price_weak": 0,
       "avoid_now": 8
     },
-    "company_count": 10,
+    "company_count": 8,
     "analysis_mode": "initial_observation",
     "constraints": [
       "OVERLAP:CEG",

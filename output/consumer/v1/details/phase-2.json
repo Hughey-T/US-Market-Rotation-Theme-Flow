@@ -1,14 +1,14 @@
 {
   "details_contract_version": "1.0",
   "source_identity": {
-    "analysis_id": "c35c3efdd41f56306fd2c62b395b6b36f04a05a962f9868b5fdb216303862771",
-    "generation_id": "ddf65f06cb01d0a83f5289227279ba34f61453384bfd70a66ae6a8c21d46b2e8"
+    "analysis_id": "352903ee123e026d13541e286657d59ea95ed331a39970cc1c5ee98c7a0a3e43",
+    "generation_id": "e29bfda3e4c5534368e35026987f7bc57e2ddcdd2b6aae2833126729a7aeaf48"
   },
   "meta": {
-    "run_id": "c35c3efdd41f56306fd2c62b395b6b36f04a05a962f9868b5fdb216303862771",
-    "source_commit": "12bed664fa558a85a04ac7614d691e0a40813807",
-    "source_sha256": "c857d25094aee07bc6754a9f767dc0560225b6a8ab0d28cb2bdb66051729f1a9",
-    "data_date": "2026-07-17",
+    "run_id": "352903ee123e026d13541e286657d59ea95ed331a39970cc1c5ee98c7a0a3e43",
+    "source_commit": "570540590fb6a9ab4defc8dd6e9d292481bed2af",
+    "source_sha256": "ecdca81f3cfe59f49970c95ba366c518f1fa8135714499910d37cf49f3186644",
+    "data_date": "2026-07-23",
     "status": "success"
   },
   "phase": 2,
@@ -18,92 +18,92 @@
       {
         "ticker": "ARKK",
         "label": "赤字成長・投機的グロースの代理指標",
-        "return_1w": -0.06287003085129472,
-        "return_4w": -0.0490642993547431,
-        "return_13w": -0.02767002186422396,
-        "relative_strength_1w": -0.04742525438775058,
-        "relative_strength_4w": -0.0422337461692367,
-        "relative_strength_13w": -0.08972981941110347
+        "return_1w": -0.037041820864956665,
+        "return_4w": -0.037167429092051285,
+        "return_13w": -0.0689785751601163,
+        "relative_strength_1w": -0.02033788528748859,
+        "relative_strength_4w": -0.04343801373009237,
+        "relative_strength_13w": -0.10957371960508755
       },
       {
         "ticker": "IJR",
         "label": "小型株（S&P600・黒字基準あり）",
-        "return_1w": 0.0031602550259868245,
-        "return_4w": 0.023839638701990795,
-        "return_13w": 0.10378633143877969,
-        "relative_strength_1w": 0.018605031489530965,
-        "relative_strength_4w": 0.0306701918874972,
-        "relative_strength_13w": 0.041726533891900175
+        "return_1w": -0.015493331901050511,
+        "return_4w": 0.014779019032071128,
+        "return_13w": 0.07150844608605711,
+        "relative_strength_1w": 0.0012106036764175654,
+        "relative_strength_4w": 0.00850843439403004,
+        "relative_strength_13w": 0.030913301641085855
       },
       {
         "ticker": "IWD",
         "label": "大型バリュー",
-        "return_1w": 0.004820946601284515,
-        "return_4w": 0.020867599297528017,
-        "return_13w": 0.10612605251081031,
-        "relative_strength_1w": 0.020265723064828656,
-        "relative_strength_4w": 0.02769815248303442,
-        "relative_strength_13w": 0.044066254963930795
+        "return_1w": -0.013148456465200575,
+        "return_4w": 0.021705730623696518,
+        "return_13w": 0.0900735427012449,
+        "relative_strength_1w": 0.003555479112267501,
+        "relative_strength_4w": 0.01543514598565543,
+        "relative_strength_13w": 0.04947839825627365
       },
       {
         "ticker": "IWF",
         "label": "大型グロース",
-        "return_1w": -0.036869703972098655,
-        "return_4w": -0.03218485018089423,
-        "return_13w": 0.018563421905716693,
-        "relative_strength_1w": -0.021424927508554514,
-        "relative_strength_4w": -0.025354296995387826,
-        "relative_strength_13w": -0.04349637564116282
+        "return_1w": -0.02153465904348284,
+        "return_4w": -0.010182799812732513,
+        "return_13w": -0.00854564781230538,
+        "relative_strength_1w": -0.0048307234660147635,
+        "relative_strength_4w": -0.0164533844507736,
+        "relative_strength_13w": -0.04914079225727663
       },
       {
         "ticker": "MTUM",
         "label": "モメンタム（直近の勝ち組銘柄）",
-        "return_1w": -0.06116167867645683,
-        "return_4w": -0.0734856382521687,
-        "return_13w": 0.11669641286863452,
-        "relative_strength_1w": -0.04571690221291269,
-        "relative_strength_4w": -0.06665508506666229,
-        "relative_strength_13w": 0.05463661532175501
+        "return_1w": 0.034837372521144605,
+        "return_4w": -0.04785297886942819,
+        "return_13w": 0.13890682181972758,
+        "relative_strength_1w": 0.05154130809861268,
+        "relative_strength_4w": -0.054123563507469274,
+        "relative_strength_13w": 0.09831167737475632
       },
       {
         "ticker": "QUAL",
         "label": "クオリティ（財務・収益性の高い企業）",
-        "return_1w": -0.008284433993322793,
-        "return_4w": 0.0005051460926084328,
-        "return_13w": 0.06821844812328015,
-        "relative_strength_1w": 0.007160342470221348,
-        "relative_strength_4w": 0.007335699278114838,
-        "relative_strength_13w": 0.006158650576400637
+        "return_1w": -0.021118479039115345,
+        "return_4w": 0.014036925826351743,
+        "return_13w": 0.04448070720047892,
+        "relative_strength_1w": -0.004414543461647269,
+        "relative_strength_4w": 0.007766341188310655,
+        "relative_strength_13w": 0.0038855627555076655
       },
       {
         "ticker": "SPHB",
         "label": "高ベータ（市場より値動きの大きい銘柄）",
-        "return_1w": -0.05694208551762725,
-        "return_4w": -0.07100820364462046,
-        "return_13w": 0.08926169692451258,
-        "relative_strength_1w": -0.04149730905408311,
-        "relative_strength_4w": -0.06417765045911406,
-        "relative_strength_13w": 0.027201899377633065
+        "return_1w": 0.003288561619959829,
+        "return_4w": -0.046989279600817224,
+        "return_13w": 0.07243495460654126,
+        "relative_strength_1w": 0.019992497197427905,
+        "relative_strength_4w": -0.05325986423885831,
+        "relative_strength_13w": 0.031839810161570004
       },
       {
         "ticker": "USMV",
         "label": "低ボラティリティ（値動きの小さい銘柄）",
-        "return_1w": -0.0118658309816001,
-        "return_4w": 0.007194190237366449,
-        "return_13w": 0.026620003625972277,
-        "relative_strength_1w": 0.0035789454819440403,
-        "relative_strength_4w": 0.014024743422872854,
-        "relative_strength_13w": -0.03543979392090724
+        "return_1w": -0.01050135562554555,
+        "return_4w": 0.01649918041504228,
+        "return_13w": 0.024669343952242295,
+        "relative_strength_1w": 0.006202579951922527,
+        "relative_strength_4w": 0.010228595777001193,
+        "relative_strength_13w": -0.01592580049272896
       },
       {
         "ticker": "VYM",
         "label": "高配当",
-        "return_1w": -0.005587941823710474,
-        "return_4w": 0.004567824396931375,
-        "return_13w": 0.0476030404129153,
-        "relative_strength_1w": 0.009856834639833667,
-        "relative_strength_4w": 0.01139837758243778,
-        "relative_strength_13w": -0.014456757133964215
+        "return_1w": 0.002673252467920495,
+        "return_4w": 0.019920279511904004,
+        "return_13w": 0.04818313136207486,
+        "relative_strength_1w": 0.01937718804538857,
+        "relative_strength_4w": 0.013649694873862916,
+        "relative_strength_13w": 0.007587986917103606
       }
     ],
     "moving_average_state": [

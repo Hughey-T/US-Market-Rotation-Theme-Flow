@@ -1,14 +1,14 @@
 {
   "details_contract_version": "1.0",
   "source_identity": {
-    "analysis_id": "c35c3efdd41f56306fd2c62b395b6b36f04a05a962f9868b5fdb216303862771",
-    "generation_id": "ddf65f06cb01d0a83f5289227279ba34f61453384bfd70a66ae6a8c21d46b2e8"
+    "analysis_id": "352903ee123e026d13541e286657d59ea95ed331a39970cc1c5ee98c7a0a3e43",
+    "generation_id": "e29bfda3e4c5534368e35026987f7bc57e2ddcdd2b6aae2833126729a7aeaf48"
   },
   "meta": {
-    "run_id": "c35c3efdd41f56306fd2c62b395b6b36f04a05a962f9868b5fdb216303862771",
-    "source_commit": "12bed664fa558a85a04ac7614d691e0a40813807",
-    "source_sha256": "c857d25094aee07bc6754a9f767dc0560225b6a8ab0d28cb2bdb66051729f1a9",
-    "data_date": "2026-07-17",
+    "run_id": "352903ee123e026d13541e286657d59ea95ed331a39970cc1c5ee98c7a0a3e43",
+    "source_commit": "570540590fb6a9ab4defc8dd6e9d292481bed2af",
+    "source_sha256": "ecdca81f3cfe59f49970c95ba366c518f1fa8135714499910d37cf49f3186644",
+    "data_date": "2026-07-23",
     "status": "success"
   },
   "phase": 5,
@@ -29,34 +29,12 @@
       {
         "theme_id": "cybersecurity",
         "theme_label": "サイバーセキュリティ",
-        "ticker": "NET",
+        "ticker": "ZS",
         "role": "breadth_check",
         "role_label": "広がり確認用企業",
         "why": "サイバーセキュリティの別企業にも及ぶ上昇の広がりを確認するためです。",
         "key_check": "需要が単一製品でなくクラウド・端末・ID管理へ広がっているか",
         "counter_evidence": "大型案件が少数企業に集中し、同業他社の請求額が伸びないこと",
-        "research_lens_explanation": "同じテーマの別企業にも改善が広がっているかを確認します。"
-      },
-      {
-        "theme_id": "regional_banks",
-        "theme_label": "地方銀行",
-        "ticker": "FITB",
-        "role": "representative",
-        "role_label": "代表企業",
-        "why": "地方銀行の代表企業として中心的な強さを確認するためです。",
-        "key_check": "預金コストの安定と貸出成長が純金利収益の改善へつながるか",
-        "counter_evidence": "商業用不動産の信用費用と預金流出が同時に増えること",
-        "research_lens_explanation": "テーマを代表する企業として業績の裏付けを確認します。"
-      },
-      {
-        "theme_id": "regional_banks",
-        "theme_label": "地方銀行",
-        "ticker": "RF",
-        "role": "breadth_check",
-        "role_label": "広がり確認用企業",
-        "why": "地方銀行の別企業にも及ぶ上昇の広がりを確認するためです。",
-        "key_check": "預金残高・預金コスト・商業用不動産引当が同時に安定するか",
-        "counter_evidence": "無保険預金流出と商業用不動産の信用損失が同時に増えること",
         "research_lens_explanation": "同じテーマの別企業にも改善が広がっているかを確認します。"
       },
       {
@@ -82,31 +60,9 @@
         "research_lens_explanation": "同じテーマの別企業にも改善が広がっているかを確認します。"
       },
       {
-        "theme_id": "biotechnology",
-        "theme_label": "バイオテクノロジー",
-        "ticker": "REGN",
-        "role": "representative",
-        "role_label": "代表企業",
-        "why": "バイオテクノロジーの代表企業として中心的な強さを確認するためです。",
-        "key_check": "主要パイプラインの臨床・承認節目と資金余力が企業価値を支えるか",
-        "counter_evidence": "試験失敗、安全性問題、資金調達による希薄化が重なること",
-        "research_lens_explanation": "テーマを代表する企業として業績の裏付けを確認します。"
-      },
-      {
-        "theme_id": "biotechnology",
-        "theme_label": "バイオテクノロジー",
-        "ticker": "BIIB",
-        "role": "breadth_check",
-        "role_label": "広がり確認用企業",
-        "why": "バイオテクノロジーの別企業にも及ぶ上昇の広がりを確認するためです。",
-        "key_check": "上昇が単一の治験結果でなく複数企業・治療領域へ広がっているか",
-        "counter_evidence": "少数の買収観測だけで指数が上がり、臨床進捗が伴わないこと",
-        "research_lens_explanation": "同じテーマの別企業にも改善が広がっているかを確認します。"
-      },
-      {
         "theme_id": "oil_gas_exploration",
         "theme_label": "石油・ガス開発",
-        "ticker": "EOG",
+        "ticker": "OXY",
         "role": "representative",
         "role_label": "代表企業",
         "why": "石油・ガス開発の代表企業として中心的な強さを確認するためです。",
@@ -123,6 +79,28 @@
         "why": "石油・ガス開発の別企業にも及ぶ上昇の広がりを確認するためです。",
         "key_check": "生産効率と資本規律が複数の開発企業で確認できるか",
         "counter_evidence": "一社の資産構成だけが有利で、同業の現金収支が弱いこと",
+        "research_lens_explanation": "同じテーマの別企業にも改善が広がっているかを確認します。"
+      },
+      {
+        "theme_id": "defense",
+        "theme_label": "防衛",
+        "ticker": "LMT",
+        "role": "representative",
+        "role_label": "代表企業",
+        "why": "防衛の代表企業として中心的な強さを確認するためです。",
+        "key_check": "予算措置が受注残と量産契約へ転換し、採算も維持できるか",
+        "counter_evidence": "固定価格契約のコスト超過や調達遅延で利益率が低下すること",
+        "research_lens_explanation": "テーマを代表する企業として業績の裏付けを確認します。"
+      },
+      {
+        "theme_id": "defense",
+        "theme_label": "防衛",
+        "ticker": "AVAV",
+        "role": "breadth_check",
+        "role_label": "広がり確認用企業",
+        "why": "防衛の別企業にも及ぶ上昇の広がりを確認するためです。",
+        "key_check": "航空・ミサイル・電子戦など複数領域で受注が拡大しているか",
+        "counter_evidence": "特定プログラムだけに依存し、他領域の受注残が増えないこと",
         "research_lens_explanation": "同じテーマの別企業にも改善が広がっているかを確認します。"
       }
     ],
