@@ -12,7 +12,7 @@
 | `themes.*.decision.analysis_mode` | initial_observation / trend。 |
 | `themes.*.decision.time_profile` | 非重複の直近1週・前3週・前9週の整合。 |
 | `company_candidates` | 重複なし、1対象最大2社の調査引継ぎ。 |
-| `user_view.phases` | 通常表示専用の6段階。内部コードを含めない。 |
+| `user_view.phases` | 通常表示用の6 Phase。内部コードを含めない。 |
 | `median_rel_spy_4w` | 構成企業4週SPY比の中央値。 |
 | `winsorized_equal_weight_rel_spy_4w` | 外れ値の影響を抑えた4週SPY比。 |
 | `liquidity_weight_rel_spy_4w` | 売買代金が利用可能な場合の流動性加重。 |
@@ -43,6 +43,6 @@
 | --- | --- |
 | `details_contract_version` | phase detailsのversion。現行は1.0。 |
 | `source_identity` | 軽量consumerと一致するanalysis/generation identity。 |
-| `meta.run_id/source_commit/source_sha256/data_date/status` | 固定consumerとの照合field。 |
-| `phase` | 1〜6の厳密な対象段階。 |
+| `meta.run_id/source_commit/source_sha256/data_date/status` | manifestとchunk間、およびfallback形式のsource identity検証に使用するfield。 |
+| `phase` | 1〜6の厳密な対象Phase。 |
 | `detail_view` | authoritative snapshotから決定的に作る、人間可読な当該phaseだけの説明。 |

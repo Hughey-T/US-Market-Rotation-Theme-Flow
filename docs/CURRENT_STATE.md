@@ -8,7 +8,7 @@
 
 - データ層: 取得、欠損、指標、履歴、条件、schema、source identity、atomic publication。
 - 判断層: 動的業種発見、version付き構造的背景、相互排他的4分類候補、価格上の選好、初期観測、企業別調査観点。
-- 表示層: `user_view` の6段階。通常表示と `詳細` を分離。
+- 表示層: `user_view`の6 Phase。Phase1〜Phase5では通常データとdetailを統合して詳しく表示し、Phase6だけを簡潔な全体まとめとする。
 
 ## 解消したギャップ
 

@@ -44,10 +44,10 @@ def generation(data_date: str, suffix: str):
 class PublicLatestContractTests(unittest.TestCase):
     def test_instruction_identity_follows_snapshot_schema_for_legacy_generation_validation(self):
         self.assertEqual(instruction_version_for_data_schema("1.1"), "1.1.1")
-        self.assertEqual(instruction_version_for_data_schema("1.2"), "1.5.0")
+        self.assertEqual(instruction_version_for_data_schema("1.2"), "1.6.0")
         self.assertEqual(
             instruction_versions_for_data_schema("1.2"),
-            {"1.3.0", "1.4.0", "1.5.0"},
+            {"1.3.0", "1.4.0", "1.5.0", "1.6.0"},
         )
 
     def test_generic_failed_manifest_is_valid_but_public_latest_rejects_it(self):

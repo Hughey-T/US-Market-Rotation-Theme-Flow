@@ -53,7 +53,7 @@ def instruction_version_for_data_schema(schema_version: str) -> str:
 
 def instruction_versions_for_data_schema(schema_version: str) -> set[str]:
     """Return read-compatible instruction identities for immutable generations."""
-    return {"1.1.1"} if schema_version == "1.1" else {"1.3.0", "1.4.0", INSTRUCTION_VERSION}
+    return {"1.1.1"} if schema_version == "1.1" else {"1.3.0", "1.4.0", "1.5.0", INSTRUCTION_VERSION}
 
 
 @dataclass(frozen=True)
