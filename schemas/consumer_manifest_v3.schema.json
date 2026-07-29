@@ -1,0 +1,237 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "consumer_contract_version",
+    "identity",
+    "presentation",
+    "phase_inventory",
+    "detail_inventory",
+    "handoff_inventory"
+  ],
+  "properties": {
+    "consumer_contract_version": {
+      "const": "3.0"
+    },
+    "identity": {
+      "$ref": "#/$defs/identity"
+    },
+    "presentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "presentation_version",
+        "analysis_mode"
+      ],
+      "properties": {
+        "presentation_version": {
+          "type": "string"
+        },
+        "analysis_mode": {
+          "enum": [
+            "initial_observation",
+            "trend"
+          ]
+        }
+      }
+    },
+    "phase_inventory": {
+      "$ref": "#/$defs/inventory"
+    },
+    "detail_inventory": {
+      "$ref": "#/$defs/inventory"
+    },
+    "handoff_inventory": {
+      "$ref": "#/$defs/inventoryItem"
+    }
+  },
+  "$defs": {
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "analysis_id",
+        "generation_id",
+        "run_id",
+        "source_commit",
+        "source_sha256",
+        "data_date",
+        "status"
+      ],
+      "properties": {
+        "analysis_id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "generation_id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_commit": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "data_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "status": {
+          "enum": [
+            "success",
+            "failed"
+          ]
+        }
+      }
+    },
+    "inventory": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "phase",
+          "part_count",
+          "fragment_count",
+          "total_bytes",
+          "reconstructed_sha256",
+          "parts"
+        ],
+        "properties": {
+          "phase": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 6
+          },
+          "part_count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 32
+          },
+          "fragment_count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "total_bytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 131072
+          },
+          "reconstructed_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "parts": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 32,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "part",
+                "bytes",
+                "sha256"
+              ],
+              "properties": {
+                "part": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 32
+                },
+                "bytes": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 131072
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "inventoryItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "phase",
+        "part_count",
+        "fragment_count",
+        "total_bytes",
+        "reconstructed_sha256",
+        "parts"
+      ],
+      "properties": {
+        "phase": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6
+        },
+        "part_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32
+        },
+        "fragment_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "total_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 131072
+        },
+        "reconstructed_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "parts": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "part",
+              "bytes",
+              "sha256"
+            ],
+            "properties": {
+              "part": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 32
+              },
+              "bytes": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 131072
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

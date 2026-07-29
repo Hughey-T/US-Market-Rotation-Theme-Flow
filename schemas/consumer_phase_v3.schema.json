@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "phase"
+  ],
+  "properties": {
+    "analysis_mode_display": {},
+    "classification_summary": {},
+    "companies": {},
+    "company_summary": {},
+    "coverage": {},
+    "data_date_display": {},
+    "explicit_avoid": {},
+    "flow_notice": {},
+    "generated_at_display": {},
+    "main_cautions": {},
+    "market_conclusion": {},
+    "next_update_checks": {},
+    "non_recommendation_notice": {},
+    "overlap_clusters": {},
+    "phase": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 6
+    },
+    "point_in_time_constituents": {},
+    "price_path": {},
+    "research_priorities": {},
+    "theme_assessments": {},
+    "validity_status_display": {}
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "phase": {
+            "const": 1
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "data_date_display",
+          "generated_at_display",
+          "analysis_mode_display",
+          "flow_notice",
+          "coverage",
+          "theme_assessments"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "phase": {
+            "const": 2
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "price_path"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "phase": {
+            "const": 3
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "point_in_time_constituents",
+          "overlap_clusters"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "phase": {
+            "const": 4
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "classification_summary",
+          "explicit_avoid"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "phase": {
+            "const": 5
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "companies",
+          "non_recommendation_notice"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "phase": {
+            "const": 6
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "market_conclusion",
+          "research_priorities",
+          "classification_summary",
+          "company_summary",
+          "main_cautions",
+          "next_update_checks",
+          "data_date_display",
+          "generated_at_display",
+          "validity_status_display",
+          "analysis_mode_display"
+        ]
+      }
+    }
+  ],
+  "additionalProperties": false
+}

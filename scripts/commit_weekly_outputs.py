@@ -154,6 +154,11 @@ def commit_weekly_outputs(
     if configure_identity:
         _git(repo, "config", "user.name", "github-actions[bot]")
         _git(repo, "config", "user.email", "github-actions[bot]@users.noreply.github.com")
+    else:
+        # A caller opting out of identity setup must provide repository-local
+        # identity.  Do not silently inherit a cloud runner's global config.
+        _git(repo, "config", "--local", "--get", "user.name")
+        _git(repo, "config", "--local", "--get", "user.email")
     full_inventory = validate_current_publication_inventory(repo / "output", require_consumer=True)
     allowed = committable_publication_files(repo / "output")
     _validate_staged_allowlist(repo, allowed)

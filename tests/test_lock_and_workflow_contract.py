@@ -64,7 +64,10 @@ class WorkflowContractTests(unittest.TestCase):
         export_consumer_v2(output, output / "consumer/v2")
 
     def git(self, repo, *args, check=True):
-        return subprocess.run(["git", *args], cwd=repo, text=True, capture_output=True, check=check)
+        # Keep temporary-repository identity tests independent from the cloud
+        # runner's global git configuration.
+        env = {**os.environ, "GIT_CONFIG_GLOBAL": os.devnull}
+        return subprocess.run(["git", *args], cwd=repo, text=True, capture_output=True, check=check, env=env)
 
     def make_repo(self):
         temporary = tempfile.TemporaryDirectory(); repo = Path(temporary.name)
