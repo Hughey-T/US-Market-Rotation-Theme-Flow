@@ -19,6 +19,7 @@ from .consumer_v2 import (
     load_consumer_v2_file,
     validate_consumer_v2_payloads,
 )
+from .consumer_v3 import load_and_validate_consumer_v3
 from .identity import safe_generation_path, validate_safe_id
 from .judgments import StableJsonChangedError, StableJsonSnapshot, validate_index_records
 from .provenance import atomic_write_json, canonical_bytes, stable_hash
@@ -587,7 +588,7 @@ def _validate_consumer(
         entry.name: entry
         for entry in consumer.iterdir()
     }
-    allowed = {"latest.json", "v1", "v2"}
+    allowed = {"latest.json", "v1", "v2", "v3"}
 
     if "latest.json" not in entries or set(entries) - allowed:
         unexpected = set(entries) - allowed
@@ -624,6 +625,16 @@ def _validate_consumer(
             legacy,
             "invalid publication entry",
         ) from error
+
+    v3 = consumer / "v3"
+    if "v3" in entries:
+        try:
+            load_and_validate_consumer_v3(v3)
+            for entry in v3.rglob("*"):
+                if entry.is_symlink(): raise ContractError("consumer v3 symlink is forbidden")
+                if entry.is_file(): _add_regular_file(output, entry, files)
+        except (ContractError, OSError, UnicodeError, ValueError) as error:
+            raise _inventory_error(output, v3, "invalid consumer v3 publication entry") from error
 
     expects_modern = (
         current[3]

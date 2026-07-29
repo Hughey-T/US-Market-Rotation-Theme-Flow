@@ -75,6 +75,7 @@ def regime_inputs(config, observations):
 def build_snapshot(
     *, config: dict, theme_master: dict, observations: dict[str, dict], history: list[dict], previous_judgments: dict,
     generated_at: dt.datetime, data_date: str, source_commit: str,
+    fundamentals_bundle: dict | None = None,
 ) -> dict:
     spy = observations["SPY"]
     master_version = theme_master["theme_master_version"]
@@ -142,6 +143,50 @@ def build_snapshot(
         themes=themes, dynamic=dynamic, buckets=candidate_buckets, companies=company_candidates,
         history_weeks=len(compatible) + 1,
     )
+    spy_daily = observations.get("SPY", {}).get("_daily_returns") or []
+    v3_themes = {}
+    for definition in theme_master["themes"]:
+        theme_id = definition["theme_id"]
+        effective = [member["ticker"] for member in definition["members"] if member_is_effective(member, data_date)]
+        by_date: dict[str, list[float]] = {}
+        for ticker in effective:
+            for point in observations.get(ticker, {}).get("_daily_returns") or []:
+                if point.get("date") <= data_date and isinstance(point.get("return"), (int, float)):
+                    by_date.setdefault(point["date"], []).append(float(point["return"]))
+        v3_themes[theme_id] = {
+            "theme_returns": [{"date": date, "return": sum(values) / len(values)} for date, values in sorted(by_date.items())],
+            "benchmark_returns": [point for point in spy_daily if point.get("date") <= data_date],
+            "history": [
+                {"data_date": item["data_date"], "value": (item.get("themes", {}).get(theme_id) or {}).get("equal_weight_rel_spy_4w")}
+                for item in compatible if item.get("data_date") <= data_date
+            ],
+            "forward_samples": [
+                {"prediction_date": compatible[index]["data_date"], "outcome_date": compatible[index + 4]["data_date"],
+                 "return": ((compatible[index + 4].get("themes", {}).get(theme_id) or {}).get("equal_weight_rel_spy_4w") or 0)
+                           - ((compatible[index].get("themes", {}).get(theme_id) or {}).get("equal_weight_rel_spy_4w") or 0)}
+                for index in range(max(0, len(compatible) - 4))
+                if compatible[index + 4]["data_date"] <= data_date
+                and (compatible[index].get("themes", {}).get(theme_id) or {}).get("equal_weight_rel_spy_4w") is not None
+                and (compatible[index + 4].get("themes", {}).get(theme_id) or {}).get("equal_weight_rel_spy_4w") is not None
+            ],
+            "factor_exposures": sorted(config.get("theme_factor_exposures", {}).get(theme_id, [])),
+        }
+    fundamentals_bundle = fundamentals_bundle or {
+        "adapter_version": "1.0", "as_of": data_date, "source": "not_configured",
+        "source_sha256": "0" * 64, "themes": {},
+    }
+    v3_inputs = {
+        "input_version": "1.0", "data_date": data_date,
+        "risk_window": "daily_60_observations", "benchmark": "SPY",
+        "themes": v3_themes, "fundamentals": fundamentals_bundle,
+    }
+    # Bind every v3 point-in-time input into analysis and generation identity.
+    quantitative["v3_inputs"] = v3_inputs
+    run_id = analysis_identity(
+        data_date=data_date, observations=observations, theme_master=theme_master,
+        config=config, source_commit=source_commit, quantitative=quantitative,
+    )
+    generation_id = generation_identity(run_id, generated_at_text, source_commit)
     snapshot = {
         "meta": {
             "schema_version": DATA_SCHEMA_VERSION, "methodology_version": METHODOLOGY_VERSION,
@@ -154,7 +199,7 @@ def build_snapshot(
             "periods": {"1w": 5, "4w": 21, "13w": 63},
             "global_quality": {"requested_ticker_count": len(observations), "usable_ticker_count": sum(row.get("return_4w") is not None for row in observations.values()), "coverage_ratio": sum(row.get("return_4w") is not None for row in observations.values()) / len(observations), "critical_missing": [] if spy.get("return_4w") is not None else ["SPY"], "missing_tickers": sorted(ticker for ticker, row in observations.items() if row.get("return_4w") is None), "warnings": sorted(f"OVERLAP:{ticker}" for ticker,count in active_membership.items() if count > 1)},
         },
-        "not_implemented": ["direct_etf_flow", "earnings_revision", "positioning", "point_in_time_market_cap"],
+        "not_implemented": ["direct_etf_flow", "positioning", "point_in_time_market_cap"],
         "market_regime": classified_regime,
         "style_factor": style_factor,
         "sectors": sectors, "industries": industries,
@@ -162,6 +207,7 @@ def build_snapshot(
         "dynamic_discovery": dynamic, "candidate_buckets": candidate_buckets,
         "company_candidates": company_candidates, "user_view": user_view,
         "history_weekly": compatible[-12:], "previous_judgments": previous_judgments,
+        "v3_inputs": v3_inputs,
     }
     snapshot["meta"]["source_sha256"] = snapshot_source_hash(snapshot)
     return snapshot

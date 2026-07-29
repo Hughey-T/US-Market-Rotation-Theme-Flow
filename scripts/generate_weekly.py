@@ -18,6 +18,7 @@ sys.path.insert(0, str(ROOT))
 from rotation.judgments import build_index, project_previous_judgments
 from rotation.membership import member_is_effective
 from rotation.pipeline import build_snapshot
+from rotation.fundamentals import load_fundamental_bundle
 from rotation.provenance import snapshot_source_hash
 from rotation.publication import (
     PublicationStartState, classify_publication_start_state, committed_history,
@@ -105,6 +106,11 @@ def ticker_observation(frame: pd.DataFrame) -> dict:
     result["change_4w"] = float(last - close.iloc[-22]) if len(close) > 21 else None
     result["market_cap"] = None  # optional until a point-in-time source is implemented
     result["last_date"] = str(close.index[-1].date())
+    daily = close.pct_change(fill_method=None).dropna().iloc[-60:]
+    result["_daily_returns"] = [
+        {"date": str(timestamp.date()), "return": float(value)}
+        for timestamp, value in daily.items()
+    ]
     return result
 
 
@@ -228,7 +234,9 @@ def main(argv=None) -> int:
     index = build_index(JUDGMENTS, judgment_schema, load_judgment_source)
     empty_projection = {"source": "output/judgments/index.json", "available": False, "latest_data_date": None, "records": []}
     generated_at = dt.datetime.now(dt.timezone.utc)
-    snapshot = build_snapshot(config=config, theme_master=master, observations=observations, history=history, previous_judgments=empty_projection, generated_at=generated_at, data_date=data_date, source_commit=source_commit())
+    fundamental_path = ROOT / "data" / "fundamentals" / f"{data_date}.json"
+    fundamentals = load_fundamental_bundle(fundamental_path, data_date) if fundamental_path.is_file() else None
+    snapshot = build_snapshot(config=config, theme_master=master, observations=observations, history=history, previous_judgments=empty_projection, generated_at=generated_at, data_date=data_date, source_commit=source_commit(), fundamentals_bundle=fundamentals)
     snapshot["previous_judgments"] = project_previous_judgments(index, snapshot, snapshot["history_weekly"])
     snapshot["meta"]["source_sha256"] = snapshot_source_hash(snapshot)
     validate_schema(snapshot, load_json(LATEST_SCHEMA), "generated latest")

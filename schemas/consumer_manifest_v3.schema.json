@@ -8,7 +8,9 @@
     "presentation",
     "phase_inventory",
     "detail_inventory",
-    "handoff_inventory"
+    "handoff_inventory",
+    "validity",
+    "fundamental_identity"
   ],
   "properties": {
     "consumer_contract_version": {
@@ -44,6 +46,88 @@
     },
     "handoff_inventory": {
       "$ref": "#/$defs/inventoryItem"
+    },
+    "validity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evaluation_at",
+        "generated_at",
+        "valid_until",
+        "hard_stop_after",
+        "timezone",
+        "status",
+        "status_display"
+      ],
+      "properties": {
+        "evaluation_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "generated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "valid_until": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "hard_stop_after": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "timezone": {
+          "const": "UTC"
+        },
+        "status": {
+          "enum": [
+            "fresh",
+            "stale_but_displayable",
+            "hard_stop"
+          ]
+        },
+        "status_display": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "fundamental_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "adapter_version",
+        "as_of",
+        "source",
+        "source_sha256"
+      ],
+      "properties": {
+        "adapter_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "as_of": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_sha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
     }
   },
   "$defs": {
@@ -57,7 +141,11 @@
         "source_commit",
         "source_sha256",
         "data_date",
-        "status"
+        "status",
+        "generated_at",
+        "valid_until",
+        "hard_stop_after",
+        "timezone"
       ],
       "properties": {
         "analysis_id": {
@@ -89,6 +177,21 @@
             "success",
             "failed"
           ]
+        },
+        "generated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "valid_until": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "hard_stop_after": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "timezone": {
+          "const": "UTC"
         }
       }
     },

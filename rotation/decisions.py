@@ -161,6 +161,8 @@ def select_companies(themes: dict[str, dict], dynamic: dict, buckets: dict, conf
             used.add(row["ticker"])
             selected.append({
                 "theme_id": item["id"], "theme_label": item["label"], "source": item["source"], "ticker": row["ticker"],
+                "company_name": config.get("company_names", {}).get(row["ticker"]),
+                "company_name_source": "config.company_names" if row["ticker"] in config.get("company_names", {}) else "not_available",
                 "selection_role": selection_role,
                 "why": f"{item['label']}の{'代表企業として中心的な強さ' if index == 0 else '別企業にも及ぶ上昇の広がり'}を確認するためです。",
                 "key_check": lens["key_check"],

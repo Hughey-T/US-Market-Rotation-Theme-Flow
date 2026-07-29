@@ -21,6 +21,7 @@ from rotation.consumer_v2 import (
     load_consumer_v2_file,
     validate_consumer_v2_payloads,
 )
+from rotation.consumer_v3 import load_and_validate_consumer_v3
 from rotation.publication import load_current_generation, validate_repository_output_inventory
 from rotation.validation import (
     ContractError,
@@ -205,6 +206,9 @@ def validate_public_outputs(root: Path, latest_schema: dict) -> int:
                 detail_chunks,
                 current[3],
             )
+            v3_root = root / "output" / "consumer" / "v3"
+            if v3_root.exists():
+                load_and_validate_consumer_v3(v3_root)
         count += 1
     return count
 
@@ -216,6 +220,12 @@ def main() -> int:
             "consumer_details": load_json(ROOT / "schemas" / "consumer_details.schema.json"),
             "consumer_v2_manifest": load_json(ROOT / "schemas" / "consumer_manifest_v2.schema.json"),
             "consumer_v2_chunk": load_json(ROOT / "schemas" / "consumer_chunk_v2.schema.json"),
+            "consumer_v3_pointer": load_json(ROOT / "schemas" / "consumer_pointer_v3.schema.json"),
+            "consumer_v3_manifest": load_json(ROOT / "schemas" / "consumer_manifest_v3.schema.json"),
+            "consumer_v3_chunk": load_json(ROOT / "schemas" / "consumer_chunk_v3.schema.json"),
+            "consumer_v3_phase": load_json(ROOT / "schemas" / "consumer_phase_v3.schema.json"),
+            "consumer_v3_detail": load_json(ROOT / "schemas" / "consumer_detail_phase_v3.schema.json"),
+            "handoff_v1": load_json(ROOT / "schemas" / "handoff_v1.schema.json"),
             "judgment": load_json(ROOT / "schemas" / "judgment_record.schema.json"),
             "master": load_json(ROOT / "schemas" / "theme_master.schema.json"),
             "generation_manifest": load_json(ROOT / "schemas" / "generation_manifest.schema.json"),
@@ -330,7 +340,7 @@ def main() -> int:
             old_text = (ROOT / "docs" / old_name).read_text(encoding="utf-8")
             if "Deprecated" not in old_text or "custom_gpt_instructions_current.md" not in old_text:
                 raise ContractError(f"historical Custom GPT instructions are not clearly deprecated: {old_name}")
-        print(f"validation passed: 13 schemas, 7 latest fixtures, 8 display fixtures, 1 sample latest, 1 judgment fixture, 1 sample judgment, 1 master fixture, {public_count} public outputs, {len(warnings)} overlap warnings")
+        print(f"validation passed: {len(schemas)} schemas, 7 latest fixtures, 8 display fixtures, 1 sample latest, 1 judgment fixture, 1 sample judgment, 1 master fixture, {public_count} public outputs, {len(warnings)} overlap warnings")
         return 0
     except (ContractError, OSError, ValueError) as error:
         print(f"validation failed:\n{error}", file=sys.stderr)

@@ -34,18 +34,22 @@ points is low, below 5 points is medium, otherwise high. Initial observations
 store no change language. Persistence fields explicitly carry history
 insufficiency, prior delta, churn, selection continuity, and retention.
 
-The independent risk path uses paired daily observations, SPY, a 60-observation
-window label, and a minimum of 20 usable pairs. It reports beta, volatility,
-beta-adjusted mean return, mean/volatility, residual momentum, and downside
-relative strength. Insufficient data produces `not_available` without inference.
+The weekly producer saves date-keyed daily theme and SPY returns. Risk analysis
+inner-joins by date, keeps the last 60 shared dates, records used and missing
+dates, and requires 20 pairs. Values are not annualized. Beta-adjusted return is
+the mean theme return less beta times mean SPY return; residual momentum is the
+sum of the latest 20 centered regression residuals, so the two definitions are
+not aliases. Zero benchmark variance and insufficient data are `not_available`.
 
-Multiple-comparison confidence uses an empirical universe percentile, a 0.15
-single-week penalty, and optional historical retention. Four-week forward return
-is reported only with at least five saved observations. These descriptive
-statistics are neither causal evidence nor a trading recommendation.
+`selection_stability_heuristic` uses an empirical universe percentile, a 0.15
+single-week penalty, and optional historical retention. It explicitly declares
+that it is not a multiple-testing correction or statistical confidence.
+Four-week forward return uses only outcomes dated on/before the generation data
+date and needs five matured samples; a future outcome fails generation.
 
-The fundamental adapter reads a saved, point-in-time public-filing fixture. It
-has no credential or network dependency. Revenue growth, earnings growth,
+The production adapter reads optional `data/fundamentals/{data_date}.json` during
+weekly generation. Its path, as-of, adapter version and raw SHA-256 are bound into
+the authoritative generation identity. It has no credential dependency. Revenue growth, earnings growth,
 margin, revisions, orders/contracts, capex, outlook, valuation, and theme
 evidence each carry availability, value, source, and as-of. The combined status
 is `price_only`, `fundamentals_only`, `price_and_fundamentals`, `unconfirmed`, or
@@ -54,8 +58,9 @@ is `price_only`, `fundamentals_only`, `price_and_fundamentals`, `unconfirmed`, o
 Constituent snapshots are fixed to `data_date` with source, universe version,
 canonical hash, inclusion/exclusion reasons, missing and unavailable tickers.
 Coverage separates configured, evaluated, partial, unavailable and missing
-themes plus constituent, price, and fundamental coverage. Low coverage emits a
-warning or critical missing and cannot become “none found.”
+themes and applies 0.75/0.50 thresholds to the minimum of constituent, price,
+fundamental, risk-adjustment, persistence, and overlap-correlation coverage.
+Low coverage emits a warning or critical missing and cannot become “none found.”
 
 Overlap analysis reports pairwise overlap rate, Jaccard similarity, shared top
 constituents, return-correlation availability, common factors, deterministic

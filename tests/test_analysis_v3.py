@@ -1,7 +1,7 @@
 import copy, unittest
 from pathlib import Path
 from rotation.analysis_v3 import (build_authoritative_v3, display_percent,
-    fundamental_confirmation, multiple_comparison, overlap_clusters,
+    fundamental_confirmation, selection_stability, overlap_clusters,
     persistence_statistics, risk_adjusted_metrics, threshold_assessment)
 from rotation.consumer_v3 import build_consumer_v3, validate_consumer_v3
 from tests.test_publication_contract import generation
@@ -17,13 +17,20 @@ class AnalysisV3Tests(unittest.TestCase):
         self.assertEqual(shown["margin_to_threshold_display"],"+17.7pt")
 
     def test_risk_adjustment_and_minimum_observation_missingness(self):
-        self.assertEqual(risk_adjusted_metrics([.01]*19,[.005]*19)["status"],"not_available")
-        result=risk_adjusted_metrics([i/1000 for i in range(30)],[i/2000 for i in range(30)])
+        points=lambda values:[{"date":f"2026-06-{i+1:02d}","return":v} for i,v in enumerate(values)]
+        self.assertEqual(risk_adjusted_metrics(points([.01]*19),points([.005]*19))["status"],"not_available")
+        result=risk_adjusted_metrics(points([i/1000 for i in range(30)]),points([i/2000 for i in range(30)]))
         self.assertEqual(result["status"],"available")
         self.assertAlmostEqual(result["market_beta"],2)
+        shifted=[{"date":f"2026-07-{i+1:02d}","return":.01} for i in range(20)]
+        mismatch=risk_adjusted_metrics(points([.01]*19),shifted)
+        self.assertEqual(mismatch["observation_count"],0)
+        zero=risk_adjusted_metrics(points([.01+i*.001 for i in range(20)]),points([.005]*20))
+        self.assertIsNone(zero["market_beta"])
 
     def test_multiple_comparison_penalty_and_forward_sample(self):
-        result=multiple_comparison(.4,[.1,.2,.3,.4],1,.8,[.01]*5)
+        samples=[{"prediction_date":"2026-01-01","outcome_date":f"2026-0{i+2}-01","return":.01} for i in range(5)]
+        result=selection_stability(.4,[.1,.2,.3,.4],1,.8,samples,"2026-07-17")
         self.assertEqual(result["single_week_penalty"],.15)
         self.assertEqual(result["forward_return"]["status"],"available")
 
@@ -44,8 +51,11 @@ class AnalysisV3Tests(unittest.TestCase):
     def test_overlap_cluster_is_order_independent(self):
         snapshot=generation("2026-07-17","overlap-v3")
         snapshot["themes"]={"b":{"constituents":[{"ticker":"A"},{"ticker":"B"}],"metrics":{}},"a":{"constituents":[{"ticker":"A"},{"ticker":"B"}],"metrics":{}}}
+        points=[{"date":f"2026-06-{i+1:02d}","return":i*.001} for i in range(20)]
+        snapshot["v3_inputs"]={"themes":{"a":{"theme_returns":points,"factor_exposures":["growth"]},"b":{"theme_returns":points,"factor_exposures":["growth"]}}}
         first=overlap_clusters(snapshot); snapshot["themes"]={k:snapshot["themes"][k] for k in reversed(snapshot["themes"])}
         self.assertEqual(first,overlap_clusters(snapshot)); self.assertTrue(first[0]["breadth_overstatement_warning"])
+        self.assertEqual(first[0]["theme_return_correlation"]["status"],"available"); self.assertEqual(first[0]["common_factor_exposure"],["growth"])
 
     def test_phase5_phase6_handoff_and_v3_e2e(self):
         snapshot=generation("2026-07-17","authoritative-v3")

@@ -1,7 +1,10 @@
 import copy, tempfile, unittest
 from pathlib import Path
-from rotation.consumer_v3 import build_consumer_v3, reconstruct_fragments, validate_consumer_v3
+from rotation.consumer_v3 import build_consumer_v3, reconstruct_fragments, validate_consumer_v3, canonical_file_bytes, sha256
 from rotation.validation import ContractError
+from rotation.provenance import canonical_bytes
+from rotation.validation import load_json, validate_schema
+from rotation.consumer_v3 import PHASE_SCHEMA, POINTER_SCHEMA
 from scripts.export_consumer_v3 import export_consumer_v3
 from tests.test_publication_contract import generation
 from rotation.publication import publish_generation
@@ -16,6 +19,8 @@ class ConsumerV3Tests(unittest.TestCase):
         validate_consumer_v3(self.pointer, self.manifest, self.phases, self.details, self.handoffs)
         self.assertEqual([x["phase"] for x in self.manifest["phase_inventory"]], list(range(1, 7)))
         self.assertTrue(all(x["part_count"] <= 8 for x in self.manifest["phase_inventory"]))
+        for phase,detail in zip(self.manifest["phase_inventory"],self.manifest["detail_inventory"]):
+            self.assertLessEqual(phase["fragment_count"]+detail["fragment_count"],1000)
 
     def test_tamper_fails_closed(self):
         phases = copy.deepcopy(self.phases); phases[1][0]["fragments"][0]["value"] = "tampered"
@@ -45,5 +50,43 @@ class ConsumerV3Tests(unittest.TestCase):
             one={p.relative_to(first):p.read_bytes() for p in first.rglob("*") if p.is_file()}
             two={p.relative_to(second):p.read_bytes() for p in second.rglob("*") if p.is_file()}
             self.assertEqual(one,two)
+
+    def test_pointer_phase_and_mode_contracts_fail_closed(self):
+        bad=copy.deepcopy(self.pointer); bad["unexpected"]=1
+        with self.assertRaises(ContractError): validate_schema(bad,POINTER_SCHEMA,"pointer")
+        phase6=copy.deepcopy(self.phases[6]); phase6[0]["fragments"].append({"field":"/companies","value":[]})
+        with self.assertRaises(ContractError): validate_consumer_v3(self.pointer,self.manifest,{**self.phases,6:phase6},self.details,self.handoffs)
+        manifest=copy.deepcopy(self.manifest); manifest["presentation"]["analysis_mode"]="initial_observation"
+        pointer=copy.deepcopy(self.pointer); pointer["generation_manifest_sha256"]=sha256(canonical_file_bytes(manifest))
+        with self.assertRaises(ContractError): validate_consumer_v3(pointer,manifest,self.phases,self.details,self.handoffs)
+
+    def test_validity_boundaries_and_hard_stop(self):
+        stale="2026-07-23T00:00:00Z"
+        pointer,manifest,phases,details,handoffs=build_consumer_v3(self.latest,evaluation_at=stale)
+        self.assertEqual(manifest["validity"]["status"],"stale_but_displayable")
+        validate_consumer_v3(pointer,manifest,phases,details,handoffs)
+        with self.assertRaisesRegex(ContractError,"E_HARD_STOP"):
+            build_consumer_v3(self.latest,evaluation_at="2026-07-25T00:00:01Z")
+
+    def test_coordinated_manifest_and_chunk_tamper_still_fails_schema(self):
+        manifest=copy.deepcopy(self.manifest); phases=copy.deepcopy(self.phases); pointer=copy.deepcopy(self.pointer)
+        chunk=phases[1][0]; chunk["unexpected_metadata"]="tampered"
+        raw=canonical_file_bytes(chunk); part=manifest["phase_inventory"][0]["parts"][0]
+        manifest["phase_inventory"][0]["total_bytes"] += len(raw)-part["bytes"]
+        part.update(bytes=len(raw),sha256=sha256(raw))
+        pointer["generation_manifest_sha256"]=sha256(canonical_file_bytes(manifest))
+        with self.assertRaises(ContractError): validate_consumer_v3(pointer,manifest,phases,self.details,self.handoffs)
+
+    def test_phase_schema_rejects_missing_wrong_extra_and_cross_phase(self):
+        from rotation.analysis_v3 import build_authoritative_v3
+        values=build_authoritative_v3(self.latest)["phases"]
+        for phase,mutation in (
+            (5,lambda x:x[5].pop("companies")),
+            (5,lambda x:x[5].__setitem__("companies",{})),
+            (5,lambda x:x[5].__setitem__("unexpected",True)),
+            (6,lambda x:x[6].__setitem__("companies",[])),
+        ):
+            changed=copy.deepcopy(values); mutation(changed)
+            with self.assertRaises(ContractError): validate_schema(changed[phase],PHASE_SCHEMA,"phase")
 
 if __name__ == "__main__": unittest.main()

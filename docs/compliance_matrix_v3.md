@@ -1,42 +1,41 @@
 # Requirements 1–35 compliance matrix
 
-All verification commands below are offline. “N/A” means the numbered section
-is an objective or reporting/process rule rather than a separate artifact.
+The production path is `generate_weekly.ticker_observation/load_fundamental_bundle → pipeline.build_snapshot.v3_inputs → analysis_v3.build_authoritative_v3 → consumer_v3.build_consumer_v3 → export_consumer_v3`. Status values use only the requested vocabulary.
 
-| § | requirement | implementation | schema | test | verification | status |
-|---|---|---|---|---|---|---|
-|1|deterministic verified display|`analysis_v3.build_authoritative_v3`|phase v3|analysis E2E|full unittest|implemented and verified|
-|2|v3 and compatibility|`consumer_v3`; compatibility exporters unchanged|manifest/chunk v3|consumer v3|repository validator|implemented and verified|
-|3|immutable generations|`export_consumer_v3`|manifest v3|immutable export|analysis/consumer tests|implemented and verified|
-|4|content integrity|`validate_consumer_v3`|manifest/chunk v3|tamper tests|consumer tests|implemented and verified|
-|5|limits and reconstruction|`reconstruct_fragments`|chunk/phase v3|strict reconstruction|consumer tests|implemented and verified|
-|6|structured Phase5|`build_authoritative_v3`|phase v3|Phase5 E2E|analysis tests|implemented and verified|
-|7|dedicated Phase6|`build_authoritative_v3`|phase/detail v3|no Phase5 duplication|analysis tests|implemented and verified|
-|8|prebuilt display values|`display_percent`|phase v3|display/margin test|analysis tests|implemented and verified|
-|9|dates and validity display|Phase1/6 projection; instructions|phase v3|schema/E2E|consumer tests|implemented and verified|
-|10|GPT boundary|instructions 1.7.0|N/A|instruction contracts|full unittest|implemented and verified|
-|11|exact commands|`interaction.ConversationSession`; instructions|N/A|user experience|full unittest|implemented and verified|
-|12|strict state|instructions 1.7.0|N/A|instruction contract|full unittest|implemented and verified|
-|13|error separation|validator codes; instructions|N/A|tamper/contract tests|consumer tests|implemented and verified|
-|14|untrusted payload|`_scan_untrusted`; instructions|phase v3|reserved prefix|consumer tests|implemented and verified|
-|15|classification semantics|Phase4 projection|phase v3|projection E2E|analysis tests|implemented and verified|
-|16|flow semantics|`FLOW_NOTICE`|phase v3|projection E2E|analysis tests|implemented and verified|
-|17|margin and confidence|`threshold_assessment`|phase v3|synthetic threshold|analysis tests|implemented and verified|
-|18|persistence/churn|persistence projection with explicit missingness|phase v3|initial observation E2E|analysis tests|implemented and verified|
-|19|beta/volatility path|`risk_adjusted_metrics`|phase v3|synthetic risk|analysis tests|implemented and verified|
-|20|multiple comparisons/forward return|`multiple_comparison`|phase v3|synthetic statistics|analysis tests|implemented and verified|
-|21|overlap clusters|`overlap_clusters`|phase v3|order-independent cluster|analysis tests|implemented and verified|
-|22|fundamental path|`fundamentals` adapter; confirmation|phase v3|saved fixture|analysis tests|implemented and verified|
-|23|point-in-time constituents|`point_in_time_constituents`|phase v3|projection E2E|analysis tests|implemented and verified|
-|24|coverage|`coverage`|phase v3|projection E2E|analysis tests|implemented and verified|
-|25|handoff contract|handoff projection/inventory|handoff v1|handoff E2E|analysis tests|implemented and verified|
-|26|traceability|detail source fields|detail v3|schema/E2E|consumer tests|implemented and verified|
-|27|Phase layout|authoritative six objects|phase v3|schema/E2E|consumer tests|implemented and verified|
-|28|fetch/fallback|instructions 1.7.0|N/A|instruction contracts|full unittest|implemented and verified|
-|29|backward compatibility|v2/v1/legacy unchanged|existing schemas|existing suites|full unittest|implemented and verified|
-|30|unit/integration/E2E|analysis and consumer tests|all v3 schemas|test modules|full unittest|implemented and verified|
-|31|workflow publication|weekly v3 export and byte diff|manifest v3|workflow tests|full unittest|implemented and verified|
-|32|documentation|instructions, contract, matrix|N/A|repository validator|validator|implemented and verified|
-|33|implementation quality|shared pure modules/constants|strict schemas|compile/tests|compileall|implemented and verified|
-|34|completion checks|this matrix and verification record|N/A|all suites|required commands|implemented and verified|
-|35|final reporting|final response and PR body|N/A|N/A|git/PR metadata|implemented and verified|
+|§|requirement|production input / implementation|schema|positive test|negative test|CI / validator|status|
+|---|---|---|---|---|---|---|---|
+|1|deterministic display|`v3_inputs`; `build_authoritative_v3`|phase v3|production E2E|tamper E2E|full discovery / v3 reload|implemented and verified|
+|2|v3 compatibility|weekly exporter; v2/v1 unchanged|pointer/manifest/chunk|consumer suites|invalid contract|full discovery / repository validator|implemented and verified|
+|3|immutable generation|`export_consumer_v3`|pointer v3|rerun/byte equality|generation collision|full discovery / exact inventory|implemented and verified|
+|4|integrity|canonical disk bytes; `validate_consumer_v3`|pointer/manifest/chunk|remote reload|byte/hash tamper|full discovery / remote-equivalent reload|implemented and verified|
+|5|limits/reconstruction|combined Phase+detail counters|chunk v3|strict reconstruction|sparse/duplicate/root conflict|full discovery / v3 reload|implemented and verified|
+|6|Phase5|weekly candidates; per-theme ranking|Phase5 oneOf|production E2E|missing/type/extra fields|full discovery / schema reload|implemented and verified|
+|7|Phase6|dedicated producer summary|Phase6 oneOf|no Phase5 duplication|cross-Phase company injection|full discovery / schema reload|implemented and verified|
+|8|display values|theme metrics; `display_percent`|assessment schema|margin synthetic|wrong type schema|full discovery / schema reload|implemented and verified|
+|9|dates/validity|snapshot meta + explicit evaluation time|pointer/manifest/Phase1/6|fresh/stale boundary|hard-stop boundary|full discovery / identity comparison|implemented and verified|
+|10|GPT boundary|v3 presentation fields|instructions|instruction contract|reserved prefix|full discovery / instruction audit|implemented and verified|
+|11|exact commands|`ConversationSession`|N/A|user experience|embedded commands|full discovery|implemented and verified|
+|12|state|pointer generation/hash/mode|pointer schema|mode identity|mode mismatch|full discovery / remote validator|implemented and verified|
+|13|errors|remote validation error classes|all v3 schemas|valid reload|tamper/hard stop|full discovery / validator|implemented and verified|
+|14|untrusted payload|`_scan_untrusted`|phase/detail/handoff|normal payload|reserved prefix|full discovery / remote validator|implemented and verified|
+|15|classification semantics|candidate buckets|Phase4|four buckets|cross-Phase schema|full discovery / schema reload|implemented and verified|
+|16|flow semantics|`FLOW_NOTICE`|Phase1/6|producer E2E|instruction audit|full discovery / validator|implemented and verified|
+|17|margin/confidence|theme metrics; `threshold_assessment`|assessment|synthetic boundary|missing observation|full discovery / schema reload|implemented and verified|
+|18|persistence/churn|identity-bound `history_weekly` in `v3_inputs`|persistence object|trend E2E|insufficient history|full discovery / remote reload|implemented and verified|
+|19|risk adjustment|date-keyed 60-day theme/SPY returns|risk object|available production E2E|date mismatch/zero variance|full discovery / schema reload|implemented and verified|
+|20|selection stability/forward|matured historical samples only|stability object|five-sample E2E|future leakage rejection|full discovery / schema reload|implemented and verified|
+|21|overlap|constituents, dated returns, configured factors|Phase3 pair objects|deterministic cluster/correlation|insufficient dates|full discovery / schema reload|implemented and verified|
+|22|fundamentals|`data/fundamentals/{data_date}.json`; hash-bound bundle|snapshot v3 input / fundamental object|available production E2E|as-of mismatch/missing fields|full discovery / snapshot validation|implemented and verified|
+|23|point-in-time constituents|effective master membership|Phase3 constituent object|generation projection|membership boundaries|full discovery / schema reload|implemented and verified|
+|24|coverage|all six analytical paths|coverage object|coverage E2E|low coverage warning|full discovery / schema reload|implemented and verified|
+|25|handoff|structured Phase5 candidates|handoff v1|remote handoff reload|identity/schema tamper|full discovery / v3 reload|implemented and verified|
+|26|traceability|authoritative `/themes`, `/v3_inputs`, `/meta` paths|detail oneOf|detail reload|self-reference/extra field|full discovery / schema reload|implemented and verified|
+|27|Phase layout|authoritative six objects|Phase oneOf|all six positive|Phase mixing|full discovery / schema reload|implemented and verified|
+|28|fetch/fallback|fixed publication raw URLs|instructions|URL contract|arbitrary/path-traversal prohibition|full discovery / instruction audit|implemented and verified|
+|29|backward compatibility|existing compatibility exporters|existing schemas|legacy/v1/v2 suites|invalid higher contract|full discovery / repository validator|implemented and verified|
+|30|tests|production/unit/integration/E2E inputs|all schemas|260+ suite|mutation suites|full-discovery CI|implemented and verified|
+|31|workflow|weekly v3 export and remote byte diff|all v3 schemas|workflow contract|unregistered test guard|full discovery / repository validator|implemented and verified|
+|32|documentation|instructions/contract/matrix|N/A|instruction audit|missing-term audit|full discovery / validator|implemented and verified|
+|33|quality|shared producer/validator/constants|closed schemas|compileall|schema mutation|CI compile / validator|implemented and verified|
+|34|completion|required command set|N/A|full suite|fail-closed checks|PR CI jobs|implemented and verified|
+|35|reporting|commit/PR test report|N/A|git audit|N/A|PR body|implemented and verified|

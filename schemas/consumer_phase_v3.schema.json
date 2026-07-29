@@ -1,137 +1,2208 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "type": "object",
-  "required": [
-    "phase"
-  ],
-  "properties": {
-    "analysis_mode_display": {},
-    "classification_summary": {},
-    "companies": {},
-    "company_summary": {},
-    "coverage": {},
-    "data_date_display": {},
-    "explicit_avoid": {},
-    "flow_notice": {},
-    "generated_at_display": {},
-    "main_cautions": {},
-    "market_conclusion": {},
-    "next_update_checks": {},
-    "non_recommendation_notice": {},
-    "overlap_clusters": {},
-    "phase": {
-      "type": "integer",
-      "minimum": 1,
-      "maximum": 6
-    },
-    "point_in_time_constituents": {},
-    "price_path": {},
-    "research_priorities": {},
-    "theme_assessments": {},
-    "validity_status_display": {}
-  },
-  "allOf": [
+  "oneOf": [
     {
-      "if": {
-        "properties": {
-          "phase": {
-            "const": 1
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "phase",
+        "data_date_display",
+        "generated_at_display",
+        "validity_status_display",
+        "analysis_mode_display",
+        "flow_notice",
+        "coverage",
+        "theme_assessments"
+      ],
+      "properties": {
+        "phase": {
+          "const": 1
+        },
+        "data_date_display": {
+          "type": "string",
+          "minLength": 1
+        },
+        "generated_at_display": {
+          "type": "string",
+          "minLength": 1
+        },
+        "validity_status_display": {
+          "type": "string",
+          "minLength": 1
+        },
+        "analysis_mode_display": {
+          "enum": [
+            "initial_observation",
+            "trend"
+          ]
+        },
+        "flow_notice": {
+          "type": "string",
+          "minLength": 1
+        },
+        "coverage": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "configured_theme_count",
+            "evaluated_theme_count",
+            "partial_theme_count",
+            "unavailable_theme_count",
+            "missing_themes",
+            "constituent_coverage",
+            "price_coverage",
+            "fundamental_coverage",
+            "risk_adjustment_coverage",
+            "persistence_coverage",
+            "overlap_correlation_coverage",
+            "thresholds",
+            "status",
+            "warning"
+          ],
+          "properties": {
+            "configured_theme_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "evaluated_theme_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "partial_theme_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "unavailable_theme_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "missing_themes": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "constituent_coverage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "price_coverage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "fundamental_coverage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "risk_adjustment_coverage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "persistence_coverage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "overlap_correlation_coverage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "thresholds": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "ok",
+                "warning"
+              ],
+              "properties": {
+                "ok": {
+                  "const": 0.75
+                },
+                "warning": {
+                  "const": 0.5
+                }
+              }
+            },
+            "status": {
+              "enum": [
+                "ok",
+                "warning",
+                "critical_missing"
+              ]
+            },
+            "warning": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "theme_assessments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "theme_id",
+              "theme_display_name",
+              "display_metric",
+              "threshold_assessment",
+              "risk_adjustment",
+              "selection_stability",
+              "persistence",
+              "fundamental_confirmation"
+            ],
+            "properties": {
+              "theme_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "theme_display_name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "display_metric": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "raw_value",
+                  "display_value",
+                  "unit",
+                  "precision",
+                  "rank",
+                  "comparison_text",
+                  "threshold",
+                  "threshold_display",
+                  "margin_to_threshold",
+                  "margin_to_threshold_display"
+                ],
+                "properties": {
+                  "raw_value": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "display_value": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "unit": {
+                    "const": "percent"
+                  },
+                  "precision": {
+                    "const": 1
+                  },
+                  "rank": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "comparison_text": {
+                    "type": "string"
+                  },
+                  "threshold": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "threshold_display": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "margin_to_threshold": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "margin_to_threshold_display": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "threshold_assessment": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "observed",
+                  "threshold",
+                  "margin",
+                  "passed",
+                  "borderline",
+                  "signal_confidence",
+                  "classification_confidence",
+                  "classification_change_boundary",
+                  "data_quality",
+                  "missingness"
+                ],
+                "properties": {
+                  "observed": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "threshold": {
+                    "type": "number"
+                  },
+                  "margin": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "passed": {
+                    "type": "boolean"
+                  },
+                  "borderline": {
+                    "type": "boolean"
+                  },
+                  "signal_confidence": {
+                    "enum": [
+                      "high",
+                      "medium",
+                      "low",
+                      "not_available"
+                    ]
+                  },
+                  "classification_confidence": {
+                    "enum": [
+                      "high",
+                      "medium",
+                      "low",
+                      "not_available"
+                    ]
+                  },
+                  "classification_change_boundary": {
+                    "type": "number"
+                  },
+                  "data_quality": {
+                    "type": "string"
+                  },
+                  "missingness": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "risk_adjustment": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "status",
+                  "window",
+                  "benchmark",
+                  "minimum_observations",
+                  "observation_count",
+                  "used_dates",
+                  "missing_theme_dates",
+                  "missing_benchmark_dates",
+                  "annualized",
+                  "market_beta",
+                  "volatility",
+                  "beta_adjusted_return",
+                  "volatility_adjusted_return",
+                  "residual_momentum",
+                  "downside_relative_strength",
+                  "benchmark_comparison"
+                ],
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "available",
+                      "not_available"
+                    ]
+                  },
+                  "window": {
+                    "const": "daily_60_observations"
+                  },
+                  "benchmark": {
+                    "const": "SPY"
+                  },
+                  "minimum_observations": {
+                    "type": "integer"
+                  },
+                  "observation_count": {
+                    "type": "integer"
+                  },
+                  "used_dates": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "date"
+                    }
+                  },
+                  "missing_theme_dates": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "date"
+                    }
+                  },
+                  "missing_benchmark_dates": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "date"
+                    }
+                  },
+                  "annualized": {
+                    "const": false
+                  },
+                  "market_beta": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "volatility": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "beta_adjusted_return": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "volatility_adjusted_return": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "residual_momentum": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "downside_relative_strength": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "benchmark_comparison": {
+                    "enum": [
+                      "above",
+                      "below_or_equal",
+                      "not_available"
+                    ]
+                  }
+                }
+              },
+              "selection_stability": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "status",
+                  "method",
+                  "is_multiple_testing_correction",
+                  "universe_size",
+                  "percentile",
+                  "adjusted_confidence",
+                  "single_week_penalty",
+                  "historical_retention",
+                  "forward_return"
+                ],
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "available",
+                      "not_available"
+                    ]
+                  },
+                  "method": {
+                    "const": "selection_stability_heuristic"
+                  },
+                  "is_multiple_testing_correction": {
+                    "const": false
+                  },
+                  "universe_size": {
+                    "type": "integer"
+                  },
+                  "percentile": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "adjusted_confidence": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "single_week_penalty": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "historical_retention": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "forward_return": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "status",
+                      "horizon_weeks",
+                      "sample_size",
+                      "mean"
+                    ],
+                    "properties": {
+                      "status": {
+                        "enum": [
+                          "available",
+                          "not_available"
+                        ]
+                      },
+                      "horizon_weeks": {
+                        "const": 4
+                      },
+                      "sample_size": {
+                        "type": "integer"
+                      },
+                      "mean": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "persistence": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "analysis_mode",
+                  "signal_persistence_weeks",
+                  "prior_generation_delta",
+                  "classification_churn",
+                  "selection_status",
+                  "historical_retention",
+                  "history_insufficient"
+                ],
+                "properties": {
+                  "analysis_mode": {
+                    "enum": [
+                      "initial_observation",
+                      "trend"
+                    ]
+                  },
+                  "signal_persistence_weeks": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "prior_generation_delta": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "classification_churn": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "selection_status": {
+                    "enum": [
+                      "initial_observation",
+                      "new",
+                      "continuing"
+                    ]
+                  },
+                  "historical_retention": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "history_insufficient": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "fundamental_confirmation": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "status",
+                  "adapter",
+                  "fields",
+                  "coverage"
+                ],
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "price_only",
+                      "fundamentals_only",
+                      "price_and_fundamentals",
+                      "unconfirmed",
+                      "not_assessed"
+                    ]
+                  },
+                  "adapter": {
+                    "const": "repository_point_in_time_fundamentals_v1"
+                  },
+                  "fields": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "revenue_growth",
+                      "earnings_growth",
+                      "margin",
+                      "estimate_revisions",
+                      "orders_contracts",
+                      "capex",
+                      "management_outlook",
+                      "valuation",
+                      "theme_evidence"
+                    ],
+                    "properties": {
+                      "revenue_growth": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "required": [
+                          "status",
+                          "value",
+                          "source",
+                          "as_of"
+                        ],
+                        "properties": {
+                          "status": {
+                            "enum": [
+                              "available",
+                              "not_available",
+                              "not_assessed"
+                            ]
+                          },
+                          "value": {
+                            "type": [
+                              "number",
+                              "string",
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "source": {
+                            "type": "string"
+                          },
+                          "as_of": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        }
+                      },
+                      "earnings_growth": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "required": [
+                          "status",
+                          "value",
+                          "source",
+                          "as_of"
+                        ],
+                        "properties": {
+                          "status": {
+                            "enum": [
+                              "available",
+                              "not_available",
+                              "not_assessed"
+                            ]
+                          },
+                          "value": {
+                            "type": [
+                              "number",
+                              "string",
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "source": {
+                            "type": "string"
+                          },
+                          "as_of": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        }
+                      },
+                      "margin": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "required": [
+                          "status",
+                          "value",
+                          "source",
+                          "as_of"
+                        ],
+                        "properties": {
+                          "status": {
+                            "enum": [
+                              "available",
+                              "not_available",
+                              "not_assessed"
+                            ]
+                          },
+                          "value": {
+                            "type": [
+                              "number",
+                              "string",
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "source": {
+                            "type": "string"
+                          },
+                          "as_of": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        }
+                      },
+                      "estimate_revisions": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "required": [
+                          "status",
+                          "value",
+                          "source",
+                          "as_of"
+                        ],
+                        "properties": {
+                          "status": {
+                            "enum": [
+                              "available",
+                              "not_available",
+                              "not_assessed"
+                            ]
+                          },
+                          "value": {
+                            "type": [
+                              "number",
+                              "string",
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "source": {
+                            "type": "string"
+                          },
+                          "as_of": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        }
+                      },
+                      "orders_contracts": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "required": [
+                          "status",
+                          "value",
+                          "source",
+                          "as_of"
+                        ],
+                        "properties": {
+                          "status": {
+                            "enum": [
+                              "available",
+                              "not_available",
+                              "not_assessed"
+                            ]
+                          },
+                          "value": {
+                            "type": [
+                              "number",
+                              "string",
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "source": {
+                            "type": "string"
+                          },
+                          "as_of": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        }
+                      },
+                      "capex": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "required": [
+                          "status",
+                          "value",
+                          "source",
+                          "as_of"
+                        ],
+                        "properties": {
+                          "status": {
+                            "enum": [
+                              "available",
+                              "not_available",
+                              "not_assessed"
+                            ]
+                          },
+                          "value": {
+                            "type": [
+                              "number",
+                              "string",
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "source": {
+                            "type": "string"
+                          },
+                          "as_of": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        }
+                      },
+                      "management_outlook": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "required": [
+                          "status",
+                          "value",
+                          "source",
+                          "as_of"
+                        ],
+                        "properties": {
+                          "status": {
+                            "enum": [
+                              "available",
+                              "not_available",
+                              "not_assessed"
+                            ]
+                          },
+                          "value": {
+                            "type": [
+                              "number",
+                              "string",
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "source": {
+                            "type": "string"
+                          },
+                          "as_of": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        }
+                      },
+                      "valuation": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "required": [
+                          "status",
+                          "value",
+                          "source",
+                          "as_of"
+                        ],
+                        "properties": {
+                          "status": {
+                            "enum": [
+                              "available",
+                              "not_available",
+                              "not_assessed"
+                            ]
+                          },
+                          "value": {
+                            "type": [
+                              "number",
+                              "string",
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "source": {
+                            "type": "string"
+                          },
+                          "as_of": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        }
+                      },
+                      "theme_evidence": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "required": [
+                          "status",
+                          "value",
+                          "source",
+                          "as_of"
+                        ],
+                        "properties": {
+                          "status": {
+                            "enum": [
+                              "available",
+                              "not_available",
+                              "not_assessed"
+                            ]
+                          },
+                          "value": {
+                            "type": [
+                              "number",
+                              "string",
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "source": {
+                            "type": "string"
+                          },
+                          "as_of": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "coverage": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  }
+                }
+              }
+            }
           }
         }
-      },
-      "then": {
-        "required": [
-          "data_date_display",
-          "generated_at_display",
-          "analysis_mode_display",
-          "flow_notice",
-          "coverage",
-          "theme_assessments"
-        ]
       }
     },
     {
-      "if": {
-        "properties": {
-          "phase": {
-            "const": 2
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "phase",
+        "price_path"
+      ],
+      "properties": {
+        "phase": {
+          "const": 2
+        },
+        "price_path": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "theme_id",
+              "theme_display_name",
+              "display_metric",
+              "threshold_assessment",
+              "risk_adjustment",
+              "selection_stability",
+              "persistence",
+              "fundamental_confirmation"
+            ],
+            "properties": {
+              "theme_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "theme_display_name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "display_metric": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "raw_value",
+                  "display_value",
+                  "unit",
+                  "precision",
+                  "rank",
+                  "comparison_text",
+                  "threshold",
+                  "threshold_display",
+                  "margin_to_threshold",
+                  "margin_to_threshold_display"
+                ],
+                "properties": {
+                  "raw_value": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "display_value": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "unit": {
+                    "const": "percent"
+                  },
+                  "precision": {
+                    "const": 1
+                  },
+                  "rank": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "comparison_text": {
+                    "type": "string"
+                  },
+                  "threshold": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "threshold_display": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "margin_to_threshold": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "margin_to_threshold_display": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "threshold_assessment": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "observed",
+                  "threshold",
+                  "margin",
+                  "passed",
+                  "borderline",
+                  "signal_confidence",
+                  "classification_confidence",
+                  "classification_change_boundary",
+                  "data_quality",
+                  "missingness"
+                ],
+                "properties": {
+                  "observed": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "threshold": {
+                    "type": "number"
+                  },
+                  "margin": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "passed": {
+                    "type": "boolean"
+                  },
+                  "borderline": {
+                    "type": "boolean"
+                  },
+                  "signal_confidence": {
+                    "enum": [
+                      "high",
+                      "medium",
+                      "low",
+                      "not_available"
+                    ]
+                  },
+                  "classification_confidence": {
+                    "enum": [
+                      "high",
+                      "medium",
+                      "low",
+                      "not_available"
+                    ]
+                  },
+                  "classification_change_boundary": {
+                    "type": "number"
+                  },
+                  "data_quality": {
+                    "type": "string"
+                  },
+                  "missingness": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "risk_adjustment": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "status",
+                  "window",
+                  "benchmark",
+                  "minimum_observations",
+                  "observation_count",
+                  "used_dates",
+                  "missing_theme_dates",
+                  "missing_benchmark_dates",
+                  "annualized",
+                  "market_beta",
+                  "volatility",
+                  "beta_adjusted_return",
+                  "volatility_adjusted_return",
+                  "residual_momentum",
+                  "downside_relative_strength",
+                  "benchmark_comparison"
+                ],
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "available",
+                      "not_available"
+                    ]
+                  },
+                  "window": {
+                    "const": "daily_60_observations"
+                  },
+                  "benchmark": {
+                    "const": "SPY"
+                  },
+                  "minimum_observations": {
+                    "type": "integer"
+                  },
+                  "observation_count": {
+                    "type": "integer"
+                  },
+                  "used_dates": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "date"
+                    }
+                  },
+                  "missing_theme_dates": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "date"
+                    }
+                  },
+                  "missing_benchmark_dates": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "date"
+                    }
+                  },
+                  "annualized": {
+                    "const": false
+                  },
+                  "market_beta": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "volatility": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "beta_adjusted_return": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "volatility_adjusted_return": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "residual_momentum": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "downside_relative_strength": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "benchmark_comparison": {
+                    "enum": [
+                      "above",
+                      "below_or_equal",
+                      "not_available"
+                    ]
+                  }
+                }
+              },
+              "selection_stability": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "status",
+                  "method",
+                  "is_multiple_testing_correction",
+                  "universe_size",
+                  "percentile",
+                  "adjusted_confidence",
+                  "single_week_penalty",
+                  "historical_retention",
+                  "forward_return"
+                ],
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "available",
+                      "not_available"
+                    ]
+                  },
+                  "method": {
+                    "const": "selection_stability_heuristic"
+                  },
+                  "is_multiple_testing_correction": {
+                    "const": false
+                  },
+                  "universe_size": {
+                    "type": "integer"
+                  },
+                  "percentile": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "adjusted_confidence": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "single_week_penalty": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "historical_retention": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "forward_return": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "status",
+                      "horizon_weeks",
+                      "sample_size",
+                      "mean"
+                    ],
+                    "properties": {
+                      "status": {
+                        "enum": [
+                          "available",
+                          "not_available"
+                        ]
+                      },
+                      "horizon_weeks": {
+                        "const": 4
+                      },
+                      "sample_size": {
+                        "type": "integer"
+                      },
+                      "mean": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "persistence": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "analysis_mode",
+                  "signal_persistence_weeks",
+                  "prior_generation_delta",
+                  "classification_churn",
+                  "selection_status",
+                  "historical_retention",
+                  "history_insufficient"
+                ],
+                "properties": {
+                  "analysis_mode": {
+                    "enum": [
+                      "initial_observation",
+                      "trend"
+                    ]
+                  },
+                  "signal_persistence_weeks": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "prior_generation_delta": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "classification_churn": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "selection_status": {
+                    "enum": [
+                      "initial_observation",
+                      "new",
+                      "continuing"
+                    ]
+                  },
+                  "historical_retention": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "history_insufficient": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "fundamental_confirmation": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "status",
+                  "adapter",
+                  "fields",
+                  "coverage"
+                ],
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "price_only",
+                      "fundamentals_only",
+                      "price_and_fundamentals",
+                      "unconfirmed",
+                      "not_assessed"
+                    ]
+                  },
+                  "adapter": {
+                    "const": "repository_point_in_time_fundamentals_v1"
+                  },
+                  "fields": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "revenue_growth",
+                      "earnings_growth",
+                      "margin",
+                      "estimate_revisions",
+                      "orders_contracts",
+                      "capex",
+                      "management_outlook",
+                      "valuation",
+                      "theme_evidence"
+                    ],
+                    "properties": {
+                      "revenue_growth": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "required": [
+                          "status",
+                          "value",
+                          "source",
+                          "as_of"
+                        ],
+                        "properties": {
+                          "status": {
+                            "enum": [
+                              "available",
+                              "not_available",
+                              "not_assessed"
+                            ]
+                          },
+                          "value": {
+                            "type": [
+                              "number",
+                              "string",
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "source": {
+                            "type": "string"
+                          },
+                          "as_of": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        }
+                      },
+                      "earnings_growth": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "required": [
+                          "status",
+                          "value",
+                          "source",
+                          "as_of"
+                        ],
+                        "properties": {
+                          "status": {
+                            "enum": [
+                              "available",
+                              "not_available",
+                              "not_assessed"
+                            ]
+                          },
+                          "value": {
+                            "type": [
+                              "number",
+                              "string",
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "source": {
+                            "type": "string"
+                          },
+                          "as_of": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        }
+                      },
+                      "margin": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "required": [
+                          "status",
+                          "value",
+                          "source",
+                          "as_of"
+                        ],
+                        "properties": {
+                          "status": {
+                            "enum": [
+                              "available",
+                              "not_available",
+                              "not_assessed"
+                            ]
+                          },
+                          "value": {
+                            "type": [
+                              "number",
+                              "string",
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "source": {
+                            "type": "string"
+                          },
+                          "as_of": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        }
+                      },
+                      "estimate_revisions": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "required": [
+                          "status",
+                          "value",
+                          "source",
+                          "as_of"
+                        ],
+                        "properties": {
+                          "status": {
+                            "enum": [
+                              "available",
+                              "not_available",
+                              "not_assessed"
+                            ]
+                          },
+                          "value": {
+                            "type": [
+                              "number",
+                              "string",
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "source": {
+                            "type": "string"
+                          },
+                          "as_of": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        }
+                      },
+                      "orders_contracts": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "required": [
+                          "status",
+                          "value",
+                          "source",
+                          "as_of"
+                        ],
+                        "properties": {
+                          "status": {
+                            "enum": [
+                              "available",
+                              "not_available",
+                              "not_assessed"
+                            ]
+                          },
+                          "value": {
+                            "type": [
+                              "number",
+                              "string",
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "source": {
+                            "type": "string"
+                          },
+                          "as_of": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        }
+                      },
+                      "capex": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "required": [
+                          "status",
+                          "value",
+                          "source",
+                          "as_of"
+                        ],
+                        "properties": {
+                          "status": {
+                            "enum": [
+                              "available",
+                              "not_available",
+                              "not_assessed"
+                            ]
+                          },
+                          "value": {
+                            "type": [
+                              "number",
+                              "string",
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "source": {
+                            "type": "string"
+                          },
+                          "as_of": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        }
+                      },
+                      "management_outlook": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "required": [
+                          "status",
+                          "value",
+                          "source",
+                          "as_of"
+                        ],
+                        "properties": {
+                          "status": {
+                            "enum": [
+                              "available",
+                              "not_available",
+                              "not_assessed"
+                            ]
+                          },
+                          "value": {
+                            "type": [
+                              "number",
+                              "string",
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "source": {
+                            "type": "string"
+                          },
+                          "as_of": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        }
+                      },
+                      "valuation": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "required": [
+                          "status",
+                          "value",
+                          "source",
+                          "as_of"
+                        ],
+                        "properties": {
+                          "status": {
+                            "enum": [
+                              "available",
+                              "not_available",
+                              "not_assessed"
+                            ]
+                          },
+                          "value": {
+                            "type": [
+                              "number",
+                              "string",
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "source": {
+                            "type": "string"
+                          },
+                          "as_of": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        }
+                      },
+                      "theme_evidence": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "required": [
+                          "status",
+                          "value",
+                          "source",
+                          "as_of"
+                        ],
+                        "properties": {
+                          "status": {
+                            "enum": [
+                              "available",
+                              "not_available",
+                              "not_assessed"
+                            ]
+                          },
+                          "value": {
+                            "type": [
+                              "number",
+                              "string",
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "source": {
+                            "type": "string"
+                          },
+                          "as_of": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "coverage": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  }
+                }
+              }
+            }
           }
         }
-      },
-      "then": {
-        "required": [
-          "price_path"
-        ]
       }
     },
     {
-      "if": {
-        "properties": {
-          "phase": {
-            "const": 3
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "phase",
+        "point_in_time_constituents",
+        "overlap_clusters"
+      ],
+      "properties": {
+        "phase": {
+          "const": 3
+        },
+        "point_in_time_constituents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "theme_id",
+              "constituents",
+              "constituent_snapshot_date",
+              "source",
+              "constituents_hash",
+              "universe_version",
+              "exclusion_reasons",
+              "missing_tickers",
+              "unavailable_tickers"
+            ],
+            "properties": {
+              "theme_id": {
+                "type": "string"
+              },
+              "constituents": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "ticker",
+                    "role",
+                    "inclusion_reason"
+                  ],
+                  "properties": {
+                    "ticker": {
+                      "type": "string"
+                    },
+                    "role": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "inclusion_reason": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "constituent_snapshot_date": {
+                "type": "string",
+                "format": "date"
+              },
+              "source": {
+                "type": "string"
+              },
+              "constituents_hash": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "universe_version": {
+                "type": "string"
+              },
+              "exclusion_reasons": {
+                "type": "array"
+              },
+              "missing_tickers": {
+                "type": "array"
+              },
+              "unavailable_tickers": {
+                "type": "array"
+              }
+            }
+          }
+        },
+        "overlap_clusters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "theme_a",
+              "theme_b",
+              "constituent_overlap_rate",
+              "jaccard_similarity",
+              "shared_top_constituents",
+              "theme_return_correlation",
+              "common_factor_exposure",
+              "duplicate_company_candidates",
+              "cluster_id",
+              "representative_theme",
+              "breadth_overstatement_warning",
+              "independence_status"
+            ],
+            "properties": {
+              "theme_a": {
+                "type": "string"
+              },
+              "theme_b": {
+                "type": "string"
+              },
+              "constituent_overlap_rate": {
+                "type": "number"
+              },
+              "jaccard_similarity": {
+                "type": "number"
+              },
+              "shared_top_constituents": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "theme_return_correlation": {
+                "type": "object"
+              },
+              "common_factor_exposure": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "duplicate_company_candidates": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "cluster_id": {
+                "type": "string"
+              },
+              "representative_theme": {
+                "type": "string"
+              },
+              "breadth_overstatement_warning": {
+                "type": "boolean"
+              },
+              "independence_status": {
+                "enum": [
+                  "overlapping",
+                  "distinct"
+                ]
+              }
+            }
           }
         }
-      },
-      "then": {
-        "required": [
-          "point_in_time_constituents",
-          "overlap_clusters"
-        ]
       }
     },
     {
-      "if": {
-        "properties": {
-          "phase": {
-            "const": 4
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "phase",
+        "classification_summary",
+        "explicit_avoid"
+      ],
+      "properties": {
+        "phase": {
+          "const": 4
+        },
+        "classification_summary": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "classification",
+              "display_name",
+              "status",
+              "theme_ids"
+            ],
+            "properties": {
+              "classification": {
+                "enum": [
+                  "research_now",
+                  "watch_recovery",
+                  "long_term_context_price_weak",
+                  "avoid_now"
+                ]
+              },
+              "display_name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "status": {
+                "enum": [
+                  "present",
+                  "none_assessed"
+                ]
+              },
+              "theme_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          }
+        },
+        "explicit_avoid": {
+          "type": "array",
+          "items": {
+            "type": "object"
           }
         }
-      },
-      "then": {
-        "required": [
-          "classification_summary",
-          "explicit_avoid"
-        ]
       }
     },
     {
-      "if": {
-        "properties": {
-          "phase": {
-            "const": 5
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "phase",
+        "companies",
+        "non_recommendation_notice"
+      ],
+      "properties": {
+        "phase": {
+          "const": 5
+        },
+        "companies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "theme_id",
+              "theme_display_name",
+              "ticker",
+              "company_name",
+              "company_name_status",
+              "candidate_role",
+              "theme_rank",
+              "selection_reason",
+              "primary_check",
+              "counter_evidence",
+              "candidate_status",
+              "data_quality",
+              "source_fields",
+              "fundamental_confirmation_status",
+              "duplicate_theme_ids",
+              "non_recommendation_notice"
+            ],
+            "properties": {
+              "theme_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "theme_display_name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "ticker": {
+                "type": "string",
+                "minLength": 1
+              },
+              "company_name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "company_name_status": {
+                "enum": [
+                  "available",
+                  "not_available"
+                ]
+              },
+              "candidate_role": {
+                "enum": [
+                  "representative",
+                  "breadth_check",
+                  "other"
+                ]
+              },
+              "theme_rank": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "selection_reason": {
+                "type": "string",
+                "minLength": 1
+              },
+              "primary_check": {
+                "type": "string",
+                "minLength": 1
+              },
+              "counter_evidence": {
+                "type": "string",
+                "minLength": 1
+              },
+              "candidate_status": {
+                "enum": [
+                  "confirmed",
+                  "price_only",
+                  "unconfirmed"
+                ]
+              },
+              "data_quality": {
+                "enum": [
+                  "complete",
+                  "partial"
+                ]
+              },
+              "source_fields": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "pattern": "^/"
+                }
+              },
+              "fundamental_confirmation_status": {
+                "enum": [
+                  "price_only",
+                  "fundamentals_only",
+                  "price_and_fundamentals",
+                  "unconfirmed",
+                  "not_assessed"
+                ]
+              },
+              "duplicate_theme_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "non_recommendation_notice": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
           }
+        },
+        "non_recommendation_notice": {
+          "type": "string",
+          "minLength": 1
         }
-      },
-      "then": {
-        "required": [
-          "companies",
-          "non_recommendation_notice"
-        ]
       }
     },
     {
-      "if": {
-        "properties": {
-          "phase": {
-            "const": 6
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "phase",
+        "market_conclusion",
+        "research_priorities",
+        "classification_summary",
+        "company_summary",
+        "main_cautions",
+        "next_update_checks",
+        "data_date_display",
+        "generated_at_display",
+        "validity_status_display",
+        "analysis_mode_display"
+      ],
+      "properties": {
+        "phase": {
+          "const": 6
+        },
+        "market_conclusion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "research_priorities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
           }
+        },
+        "classification_summary": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "classification",
+              "display_name",
+              "status",
+              "theme_ids"
+            ],
+            "properties": {
+              "classification": {
+                "enum": [
+                  "research_now",
+                  "watch_recovery",
+                  "long_term_context_price_weak",
+                  "avoid_now"
+                ]
+              },
+              "display_name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "status": {
+                "enum": [
+                  "present",
+                  "none_assessed"
+                ]
+              },
+              "theme_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          }
+        },
+        "company_summary": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "ticker",
+              "theme_id",
+              "candidate_role"
+            ],
+            "properties": {
+              "ticker": {
+                "type": "string",
+                "minLength": 1
+              },
+              "theme_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "candidate_role": {
+                "enum": [
+                  "representative",
+                  "breadth_check",
+                  "other"
+                ]
+              }
+            }
+          }
+        },
+        "main_cautions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "next_update_checks": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "data_date_display": {
+          "type": "string",
+          "minLength": 1
+        },
+        "generated_at_display": {
+          "type": "string",
+          "minLength": 1
+        },
+        "validity_status_display": {
+          "type": "string",
+          "minLength": 1
+        },
+        "analysis_mode_display": {
+          "enum": [
+            "initial_observation",
+            "trend"
+          ]
         }
-      },
-      "then": {
-        "required": [
-          "market_conclusion",
-          "research_priorities",
-          "classification_summary",
-          "company_summary",
-          "main_cautions",
-          "next_update_checks",
-          "data_date_display",
-          "generated_at_display",
-          "validity_status_display",
-          "analysis_mode_display"
-        ]
       }
     }
-  ],
-  "additionalProperties": false
+  ]
 }

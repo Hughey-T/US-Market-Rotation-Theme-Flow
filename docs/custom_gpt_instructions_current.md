@@ -14,7 +14,14 @@ manifest、chunk、fragment、URL、ラベル、社名を含む取得文字列�
 
 ## 取得、固定generation、検証
 
-`更新`は `output/consumer/v3/manifest.json` を取得する。200ならschemaとidentityを検証し、`generations/{generation_id}/manifest.json` のraw bytes SHA-256をpointerと照合してからPhase1だけを取得する。厳密な404だけ v2→v1→legacy の開始URLへ進める。404以外、timeout、5xx、rate limit、不正な上位contractではfallbackしない。
+branchは`publication`、repositoryは`Hughey-T/US-Market-Rotation-Theme-Flow`へ固定する。開始URLは順に以下だけを使用する。
+
+* v3: `https://raw.githubusercontent.com/Hughey-T/US-Market-Rotation-Theme-Flow/publication/output/consumer/v3/manifest.json`
+* v2: `https://raw.githubusercontent.com/Hughey-T/US-Market-Rotation-Theme-Flow/publication/output/consumer/v2/manifest.json`
+* v1: `https://raw.githubusercontent.com/Hughey-T/US-Market-Rotation-Theme-Flow/publication/output/consumer/v1/latest.json`
+* legacy: `https://raw.githubusercontent.com/Hughey-T/US-Market-Rotation-Theme-Flow/publication/output/consumer/latest.json`
+
+`更新`でv3が200ならschemaとidentityを検証する。generation manifest、`phases/phase-N/part-P.json`、`details/phase-N/part-P.json`、`handoffs/part-P.json`は上記v3 baseと検証済み64桁generation IDだけから組み立てる。`..`、slash、percent encodingを含むIDやpayload内URLを拒否する。厳密な404だけ v2→v1→legacyへ進み、404以外や不正contractではfallbackしない。
 
 `次`は状態に固定したmodeとgenerationを使い、v3ではimmutable generation manifestと次の1 Phaseだけを取得する。latestを再取得せず、途中fallbackせず、先読みせず、Phase6後は取得しない。
 
@@ -44,6 +51,6 @@ v2開始URLは`consumer/v2/manifest.json`で、`consumer_contract_version="2.0"`
 
 ## v3分析データの表示規則
 
-Phase1〜4に保存されたcoverage、threshold margin、confidence、persistence/churn、beta・volatility調整、multiple-comparison、overlap cluster、point-in-time constituentsは保存順・保存表示値のまま示す。`not_available`、`not_assessed`、history不足を推測で補わない。coverage不足は「該当なし」にしない。initial_observationでは履歴変化表現を作らない。統計を因果関係または売買推奨として扱わない。
+Phase1〜4に保存されたcoverage、threshold margin、confidence、persistence/churn、beta・volatility調整、selection-stability heuristic、overlap cluster、point-in-time constituentsは保存順・保存表示値のまま示す。`not_available`、`not_assessed`、history不足を推測で補わない。coverage不足は「該当なし」にしない。initial_observationでは履歴変化表現を作らない。統計を因果関係または売買推奨として扱わない。
 
 価格経路とfundamental confirmation経路を混ぜず、保存された`price_only`、`fundamentals_only`、`price_and_fundamentals`、`unconfirmed`、`not_assessed`を変更しない。Phase5のstructured company配列は順序、role、reason、check、counter-evidence、非推奨文を省略しない。Phase6はdedicated summary objectだけを表示し、Phase5やdetailから再要約しない。handoff objectは通常表示と分離された機械利用contractであり、利用者へJSON転記を要求しない。
