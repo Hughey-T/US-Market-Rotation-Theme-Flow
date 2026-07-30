@@ -83,8 +83,10 @@ def selection_stability(score, universe_scores: list[float], persistence_weeks=N
                 "percentile":None, "adjusted_confidence":None, "single_week_penalty":None,
                 "historical_retention":retention, "forward_return":{"status":"not_available","horizon_weeks":4,"sample_size":0,"mean":None}}
     percentile = sum(x <= score for x in usable) / len(usable)
-    penalty = .15 if persistence_weeks in (None, 1) else 0
-    adjusted = max(0, percentile - penalty) * (retention if isinstance(retention, (int,float)) else 1)
+    # An absent history is not evidence of a one-week signal or 100% retention.
+    penalty = None if persistence_weeks is None else .15 if persistence_weeks == 1 else 0
+    adjusted = (None if penalty is None or not isinstance(retention, (int, float))
+                else max(0, percentile - penalty) * retention)
     samples = [x for x in (forward_samples or []) if isinstance(x,dict) and x.get("outcome_date") and (data_date is None or x["outcome_date"] <= data_date)]
     if any(x.get("outcome_date", "") > (data_date or "9999-12-31") for x in forward_samples or []):
         raise ValueError("future forward-return outcome is forbidden")
@@ -249,12 +251,14 @@ def build_authoritative_v3(snapshot: dict, *, evaluation_at: str | None = None) 
     assessments=[]
     for rank,(tid,theme) in enumerate(sorted(themes,key=lambda x:((x[1].get("metrics") or {}).get("equal_weight_rel_spy_4w") is None,-((x[1].get("metrics") or {}).get("equal_weight_rel_spy_4w") or 0),x[0])),1):
         metric=(theme.get("metrics") or {}).get("equal_weight_rel_spy_4w")
+        persistence=persistence_statistics(str((theme.get("decision") or {}).get("candidate_bucket","unconfirmed")),metric,
+            ((inputs.get("themes",{}).get(tid) or {}).get("history") or []) if mode == "trend" else [])
+        stability=selection_stability(metric,scores,persistence["signal_persistence_weeks"],persistence["historical_retention"],
+            (inputs.get("themes",{}).get(tid) or {}).get("forward_samples"),snapshot["meta"]["data_date"])
         assessments.append({"theme_id":tid,"theme_display_name":theme.get("label",tid),"display_metric":display_percent(metric,rank=rank,threshold=.05),
             "threshold_assessment":threshold_assessment(metric,.05,(theme.get("quality") or {}).get("status","unknown")),"price_signal":price_signals[tid],
             "risk_adjustment":risk_adjusted_metrics((inputs.get("themes",{}).get(tid) or {}).get("theme_returns") or [],(inputs.get("themes",{}).get(tid) or {}).get("benchmark_returns") or []),
-            "selection_stability":selection_stability(metric,scores,1,None,(inputs.get("themes",{}).get(tid) or {}).get("forward_samples"),snapshot["meta"]["data_date"]),
-            "persistence":persistence_statistics(str((theme.get("decision") or {}).get("candidate_bucket","unconfirmed")),metric,
-                ((inputs.get("themes",{}).get(tid) or {}).get("history") or []) if mode == "trend" else []),
+            "selection_stability":stability,"persistence":persistence,
             "fundamental_confirmation":fundamentals[tid]})
     candidates=[]
     theme_counts={}; ticker_themes={}
@@ -284,11 +288,18 @@ def build_authoritative_v3(snapshot: dict, *, evaluation_at: str | None = None) 
         "main_cautions":[FLOW_NOTICE]+([cov["warning"]] if cov["warning"] else []),"next_update_checks":["相対強度、breadth、threshold marginの変化"],
         "data_date_display":meta["data_date"],"generated_at_display":meta["generated_at"],
         "analysis_mode_display":mode}
-    handoffs=[{"handoff_contract_version":"1.0","generation_id":snapshot.get("meta",{}).get("source_snapshot","").split("/")[-2],
-        "data_date":meta["data_date"],"theme_id":c["theme_id"],"theme_status":"research_candidate","ticker":c["ticker"],
+    handoffs=[]
+    for c in candidates:
+        signal=price_signals[c["theme_id"]]
+        signal_status="not_available" if not signal["data_available"] else "confirmed" if signal["confirmed"] else "unconfirmed"
+        handoffs.append({"handoff_contract_version":"1.0","generation_id":snapshot.get("meta",{}).get("source_snapshot","").split("/")[-2],
+        "data_date":meta["data_date"],"theme_id":c["theme_id"],"theme_status":signal["candidate_bucket"],"ticker":c["ticker"],
         "candidate_role":c["candidate_role"],"selection_reason":c["selection_reason"],"primary_checks":[c["primary_check"]],
-        "counter_evidence":[c["counter_evidence"]],"price_signal_status":"available","fundamental_confirmation_status":c["fundamental_confirmation_status"],
-        "data_quality":c["data_quality"],"warnings":[c["non_recommendation_notice"]]} for c in candidates]
+        "counter_evidence":[c["counter_evidence"]],"price_signal_status":signal_status,
+        "price_data_available":signal["data_available"],"threshold_pass":signal["threshold_pass"],
+        "breadth_pass":signal["breadth_pass"],"quality_pass":signal["quality_pass"],"candidate_bucket":signal["candidate_bucket"],
+        "fundamental_confirmation_status":c["fundamental_confirmation_status"],"data_quality":c["data_quality"],
+        "warnings":[c["non_recommendation_notice"]]})
     common={"data_date_display":meta["data_date"],"generated_at_display":meta["generated_at"],"analysis_mode_display":mode,"flow_notice":FLOW_NOTICE}
     phases={1:{"phase":1,**common,"coverage":cov,"theme_assessments":assessments},2:{"phase":2,"price_path":assessments},
             3:{"phase":3,"point_in_time_constituents":constituents,"overlap_clusters":overlaps},

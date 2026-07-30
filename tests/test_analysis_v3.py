@@ -35,6 +35,16 @@ class AnalysisV3Tests(unittest.TestCase):
         self.assertEqual(result["single_week_penalty"],.15)
         self.assertEqual(result["forward_return"]["status"],"available")
 
+    def test_selection_stability_uses_persistence_and_retention(self):
+        one=selection_stability(.4,[.1,.2,.3,.4],1,.8)
+        continuing=selection_stability(.4,[.1,.2,.3,.4],2,.5)
+        initial=selection_stability(.4,[.1,.2,.3,.4],None,None)
+        self.assertEqual(one["single_week_penalty"],.15)
+        self.assertEqual(continuing["single_week_penalty"],0)
+        self.assertEqual(continuing["adjusted_confidence"],.5)
+        self.assertIsNone(initial["single_week_penalty"])
+        self.assertIsNone(initial["adjusted_confidence"])
+
     def test_classification_persistence_and_churn(self):
         history=[{"data_date":"2026-07-03","classification_version":"candidate_bucket_v3","candidate_bucket":"watch_recovery","value":.01},{"data_date":"2026-07-10","classification_version":"candidate_bucket_v3","candidate_bucket":"research_now","value":.04}]
         result=persistence_statistics("research_now",.06,history)
@@ -83,6 +93,8 @@ class AnalysisV3Tests(unittest.TestCase):
         self.assertIsInstance(projection["phases"][5]["companies"],list)
         self.assertNotIn("companies",projection["phases"][6])
         self.assertNotEqual(projection["phases"][6],projection["phases"][5])
+        self.assertEqual(projection["phases"][1]["theme_assessments"][0]["selection_stability"],
+                         projection["phases"][2]["price_path"][0]["selection_stability"])
         pointer,manifest,phases,details,handoffs=build_consumer_v3(snapshot)
         validate_consumer_v3(pointer,manifest,phases,details,handoffs)
         self.assertIn("handoff_inventory",manifest)

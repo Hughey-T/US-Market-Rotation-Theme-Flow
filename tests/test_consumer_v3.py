@@ -4,7 +4,7 @@ from rotation.consumer_v3 import build_consumer_v3, reconstruct_fragments, valid
 from rotation.validation import ContractError
 from rotation.provenance import canonical_bytes
 from rotation.validation import load_json, validate_schema
-from rotation.consumer_v3 import PHASE_SCHEMA, POINTER_SCHEMA
+from rotation.consumer_v3 import HANDOFF_SCHEMA, PHASE_SCHEMA, POINTER_SCHEMA
 from scripts.export_consumer_v3 import export_consumer_v3
 from tests.test_publication_contract import generation
 from rotation.publication import publish_generation
@@ -108,5 +108,13 @@ class ConsumerV3Tests(unittest.TestCase):
         ):
             changed=copy.deepcopy(values[1]); target=changed["theme_assessments"][0]["fundamental_confirmation"]["fields"]["revenue_growth"]; mutation(target)
             with self.assertRaises(ContractError): validate_schema(changed,PHASE_SCHEMA,"phase1 fundamental")
+
+    def test_handoff_schema_rejects_arbitrary_statuses(self):
+        from rotation.analysis_v3 import build_authoritative_v3
+        handoff=copy.deepcopy(build_authoritative_v3(self.latest)["handoffs"][0])
+        for field in ("theme_status","price_signal_status","data_quality","candidate_bucket"):
+            changed=copy.deepcopy(handoff); changed[field]="arbitrary"
+            with self.subTest(field=field), self.assertRaises(ContractError):
+                validate_schema(changed,HANDOFF_SCHEMA,"handoff")
 
 if __name__ == "__main__": unittest.main()

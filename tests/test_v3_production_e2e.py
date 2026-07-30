@@ -3,7 +3,7 @@ from pathlib import Path
 
 from rotation.pipeline import build_snapshot
 from rotation.analysis_v3 import build_authoritative_v3
-from rotation.consumer_v3 import build_consumer_v3, load_and_validate_consumer_v3
+from rotation.consumer_v3 import build_consumer_v3, load_and_validate_consumer_v3, reconstruct_fragments
 from rotation.publication import publish_generation
 from scripts.export_consumer_v3 import export_consumer_v3
 from scripts.generate_weekly import history_item
@@ -41,6 +41,11 @@ class V3ProductionE2E(unittest.TestCase):
         self.assertFalse(assessment["persistence"]["history_insufficient"])
         self.assertEqual(assessment["fundamental_confirmation"]["status"],"price_and_fundamentals")
         self.assertEqual(assessment["selection_stability"]["forward_return"]["status"],"available")
+        handoff=projection["handoffs"][0]; signal=assessment["price_signal"]
+        self.assertEqual(handoff["price_signal_status"],"confirmed")
+        self.assertEqual({k:handoff[k] for k in ("price_data_available","threshold_pass","breadth_pass","quality_pass","candidate_bucket")},
+                         {"price_data_available":signal["data_available"],"threshold_pass":signal["threshold_pass"],
+                          "breadth_pass":signal["breadth_pass"],"quality_pass":signal["quality_pass"],"candidate_bucket":signal["candidate_bucket"]})
         sample=snapshot["v3_inputs"]["themes"]["fixture_theme"]["forward_samples"][0]
         self.assertAlmostEqual(sample["theme_realized_return"],.07); self.assertAlmostEqual(sample["forward_excess_return"],.052)
         self.assertNotIn("companies",projection["phases"][6]); self.assertEqual(len(projection["phases"][4]["classification_summary"]),4)
@@ -51,10 +56,24 @@ class V3ProductionE2E(unittest.TestCase):
             destination=root/"consumer"/"v3"; export_consumer_v3(root/"output",destination)
             pointer,manifest,phases,details,handoffs=load_and_validate_consumer_v3(destination)
             self.assertEqual(pointer["identity"],manifest["identity"]); self.assertEqual(manifest["presentation"]["analysis_mode"],"trend")
+            restored_handoff=reconstruct_fragments([fragment for chunk in handoffs for fragment in chunk["fragments"]])["handoffs"][0]
+            self.assertEqual(restored_handoff["price_signal_status"],handoff["price_signal_status"])
+            self.assertEqual(restored_handoff["threshold_pass"],handoff["threshold_pass"])
             export_consumer_v3(root/"output",destination)
             part=destination/pointer["generation_manifest_path"].replace("manifest.json","phases/phase-1/part-1.json")
             part.write_bytes(part.read_bytes().replace(b"theme_assessments",b"themeXassessments",1))
             with self.assertRaises(Exception): load_and_validate_consumer_v3(destination)
+
+    def test_handoff_price_signal_unconfirmed_and_missing(self):
+        snapshot=self.production_snapshot(); theme=snapshot["themes"]["fixture_theme"]
+        theme["metrics"]["equal_weight_rel_spy_4w"]=.04
+        unconfirmed=build_authoritative_v3(snapshot)["handoffs"][0]
+        self.assertEqual(unconfirmed["price_signal_status"],"unconfirmed")
+        self.assertFalse(unconfirmed["threshold_pass"])
+        snapshot=self.production_snapshot(); snapshot["themes"]["fixture_theme"]["metrics"]["equal_weight_rel_spy_4w"]=None
+        missing=build_authoritative_v3(snapshot)["handoffs"][0]
+        self.assertEqual(missing["price_signal_status"],"not_available")
+        self.assertFalse(missing["price_data_available"])
 
     def test_future_forward_outcome_is_rejected(self):
         snapshot=self.production_snapshot()

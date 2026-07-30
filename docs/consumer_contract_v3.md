@@ -46,12 +46,20 @@ sum of the latest 20 centered regression residuals, so the two definitions are
 not aliases. Zero benchmark variance and insufficient data are `not_available`.
 
 `selection_stability_heuristic` uses an empirical universe percentile, a 0.15
-single-week penalty, and optional historical retention. It explicitly declares
-that it is not a multiple-testing correction or statistical confidence.
+single-week penalty only when saved classification history establishes one
+week of persistence, and saved historical retention. Unknown history leaves
+both the penalty and adjusted score unavailable rather than assuming either
+value. It explicitly declares that it is not a multiple-testing correction or
+statistical confidence.
 Four-week forward outcomes store the realized theme return from prediction date
 to the four-week outcome, the matching SPY return, their excess, the prediction
 constituent hash, and availability. Only outcomes dated on/before generation
 data date are used; five matured samples are required and future outcomes fail.
+
+The separate handoff contract copies the authoritative per-theme price signal
+without recalculation. `price_signal_status` distinguishes `confirmed`,
+`unconfirmed`, and `not_available`; availability, threshold, breadth, quality,
+and four-class bucket fields make the result auditable after reconstruction.
 
 The production adapter reads optional `data/fundamentals/{data_date}.json` during
 weekly generation. Its path, as-of, adapter version and raw SHA-256 are bound into

@@ -28,7 +28,7 @@ The production path is `generate_weekly.ticker_observation/load_fundamental_bund
 |22|fundamentals|`data/fundamentals/{data_date}.json`; hash-bound bundle|snapshot v3 input / fundamental object|available production E2E|as-of mismatch/missing fields|full discovery / snapshot validation|implemented and verified|
 |23|point-in-time constituents|effective master membership|Phase3 constituent object|generation projection|membership boundaries|full discovery / schema reload|implemented and verified|
 |24|coverage|core coverage plus explicit optional not-assessed paths|coverage object|coverage E2E|low coverage warning|full discovery / schema reload|implemented and verified|
-|25|handoff|structured Phase5 candidates|handoff v1|remote handoff reload|identity/schema tamper|full discovery / v3 reload|implemented and verified|
+|25|handoff|structured Phase5 candidates plus canonical `price_signals`|closed handoff v1|remote reload and signal equality|identity/schema/arbitrary-status tamper|full discovery / v3 reload|implemented and verified|
 |26|traceability|authoritative `/themes`, `/v3_inputs`, `/meta` paths|detail oneOf|detail reload|self-reference/extra field|full discovery / schema reload|implemented and verified|
 |27|Phase layout|authoritative six objects|Phase oneOf|all six positive|Phase mixing|full discovery / schema reload|implemented and verified|
 |28|fetch/fallback|fixed publication raw URLs|instructions|URL contract|arbitrary/path-traversal prohibition|full discovery / instruction audit|implemented and verified|
