@@ -168,6 +168,13 @@ class PipelineContractTests(unittest.TestCase):
         self.assertLessEqual(len(text), 8000)
         for required in ("更新", "次", "詳細", "用語", "再評価", "consumer/v2/manifest.json", "consumer_contract_version=\"2.0\"", "phase_inventory", "detail_inventory", "part_count", "fragments", "user_view.phases", "consumer_contract_version=\"1.0\"", "source_identity.analysis_id", "source_identity.generation_id", "initial_observation", "資金流入・流出と断定しない", "不完全JSON", "前回キャッシュ"):
             self.assertIn(required, text)
+        for url in (
+            "https://raw.githubusercontent.com/Hughey-T/US-Market-Rotation-Theme-Flow/publication/output/consumer/v3/manifest.json",
+            "https://raw.githubusercontent.com/Hughey-T/US-Market-Rotation-Theme-Flow/publication/output/consumer/v2/manifest.json",
+            "https://raw.githubusercontent.com/Hughey-T/US-Market-Rotation-Theme-Flow/publication/output/consumer/v1/latest.json",
+            "https://raw.githubusercontent.com/Hughey-T/US-Market-Rotation-Theme-Flow/publication/output/consumer/latest.json",
+        ):
+            self.assertIn(url, text)
 
     def test_daily_screen_contract_is_not_present(self):
         current = (ROOT / "schemas" / "rotation_snapshot.schema.json").read_text(encoding="utf-8")

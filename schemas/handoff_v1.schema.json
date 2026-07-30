@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "handoff_contract_version",
+    "generation_id",
+    "data_date",
+    "theme_id",
+    "theme_status",
+    "ticker",
+    "candidate_role",
+    "selection_reason",
+    "primary_checks",
+    "counter_evidence",
+    "price_signal_status",
+    "price_data_available",
+    "threshold_pass",
+    "breadth_pass",
+    "quality_pass",
+    "candidate_bucket",
+    "fundamental_confirmation_status",
+    "data_quality",
+    "warnings"
+  ],
+  "properties": {
+    "handoff_contract_version": {
+      "const": "1.0"
+    },
+    "generation_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "data_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "theme_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "theme_status": {
+      "enum": [
+        "research_now",
+        "watch_recovery",
+        "long_term_context_price_weak",
+        "avoid_now"
+      ]
+    },
+    "ticker": {
+      "type": "string",
+      "minLength": 1
+    },
+    "candidate_role": {
+      "enum": [
+        "representative",
+        "breadth_check",
+        "other"
+      ]
+    },
+    "selection_reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "primary_checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "counter_evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "price_signal_status": {
+      "enum": [
+        "confirmed",
+        "unconfirmed",
+        "not_available"
+      ]
+    },
+    "price_data_available": {
+      "type": "boolean"
+    },
+    "threshold_pass": {
+      "type": "boolean"
+    },
+    "breadth_pass": {
+      "type": "boolean"
+    },
+    "quality_pass": {
+      "type": "boolean"
+    },
+    "candidate_bucket": {
+      "enum": [
+        "research_now",
+        "watch_recovery",
+        "long_term_context_price_weak",
+        "avoid_now"
+      ]
+    },
+    "fundamental_confirmation_status": {
+      "enum": [
+        "price_only",
+        "fundamentals_only",
+        "price_and_fundamentals",
+        "unconfirmed",
+        "not_assessed"
+      ]
+    },
+    "data_quality": {
+      "enum": [
+        "complete",
+        "partial"
+      ]
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

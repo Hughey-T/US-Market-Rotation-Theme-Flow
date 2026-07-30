@@ -4,85 +4,574 @@
   "title": "US Market Rotation latest.json 1.2 (reads 1.1 legacy snapshots)",
   "type": "object",
   "additionalProperties": false,
-  "required": ["meta", "not_implemented", "market_regime", "style_factor", "sectors", "industries", "themes", "theme_shortlist", "history_weekly", "previous_judgments"],
+  "required": [
+    "meta",
+    "not_implemented",
+    "market_regime",
+    "style_factor",
+    "sectors",
+    "industries",
+    "themes",
+    "theme_shortlist",
+    "history_weekly",
+    "previous_judgments"
+  ],
   "properties": {
-    "meta": {"$ref": "#/$defs/meta"},
-    "not_implemented": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
-    "market_regime": {"$ref": "#/$defs/marketRegime"},
-    "style_factor": {"type": "object", "additionalProperties": {"$ref": "#/$defs/etfMetric"}},
-    "sectors": {"$ref": "#/$defs/rankedEtfGroup"},
-    "industries": {"$ref": "#/$defs/rankedEtfGroup"},
-    "themes": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/theme"}},
-    "theme_shortlist": {"$ref": "#/$defs/themeShortlist"},
-    "dynamic_discovery": {"$ref": "#/$defs/dynamicDiscovery"},
-    "candidate_buckets": {"$ref": "#/$defs/candidateBuckets"},
-    "company_candidates": {"type": "array", "items": {"$ref": "#/$defs/companyCandidate"}},
-    "user_view": {"$ref": "#/$defs/userView"},
-    "history_weekly": {"type": "array", "maxItems": 12, "items": {"$ref": "#/$defs/historyItem"}},
-    "previous_judgments": {"$ref": "#/$defs/previousJudgments"}
+    "meta": {
+      "$ref": "#/$defs/meta"
+    },
+    "not_implemented": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "market_regime": {
+      "$ref": "#/$defs/marketRegime"
+    },
+    "style_factor": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/etfMetric"
+      }
+    },
+    "sectors": {
+      "$ref": "#/$defs/rankedEtfGroup"
+    },
+    "industries": {
+      "$ref": "#/$defs/rankedEtfGroup"
+    },
+    "themes": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/$defs/theme"
+      }
+    },
+    "theme_shortlist": {
+      "$ref": "#/$defs/themeShortlist"
+    },
+    "dynamic_discovery": {
+      "$ref": "#/$defs/dynamicDiscovery"
+    },
+    "candidate_buckets": {
+      "$ref": "#/$defs/candidateBuckets"
+    },
+    "company_candidates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/companyCandidate"
+      }
+    },
+    "user_view": {
+      "$ref": "#/$defs/userView"
+    },
+    "history_weekly": {
+      "type": "array",
+      "maxItems": 12,
+      "items": {
+        "$ref": "#/$defs/historyItem"
+      }
+    },
+    "previous_judgments": {
+      "$ref": "#/$defs/previousJudgments"
+    },
+    "v3_inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input_version",
+        "data_date",
+        "risk_window",
+        "benchmark",
+        "themes",
+        "fundamentals"
+      ],
+      "properties": {
+        "input_version": {
+          "const": "1.0"
+        },
+        "data_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "risk_window": {
+          "const": "daily_60_observations"
+        },
+        "benchmark": {
+          "const": "SPY"
+        },
+        "themes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "theme_returns",
+              "benchmark_returns",
+              "history",
+              "forward_samples",
+              "factor_exposures",
+              "membership"
+            ],
+            "properties": {
+              "theme_returns": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "date",
+                    "return"
+                  ],
+                  "properties": {
+                    "date": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "return": {
+                      "type": "number"
+                    }
+                  }
+                }
+              },
+              "benchmark_returns": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "date",
+                    "return"
+                  ],
+                  "properties": {
+                    "date": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "return": {
+                      "type": "number"
+                    }
+                  }
+                }
+              },
+              "history": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data_date",
+                    "value",
+                    "candidate_bucket",
+                    "price_signal",
+                    "classification_version",
+                    "quality_status"
+                  ],
+                  "properties": {
+                    "data_date": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "value": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "candidate_bucket": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "price_signal": {
+                      "type": [
+                        "object",
+                        "null"
+                      ]
+                    },
+                    "classification_version": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "quality_status": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              },
+              "forward_samples": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "prediction_date",
+                    "outcome_date",
+                    "theme_realized_return",
+                    "benchmark_realized_return",
+                    "forward_excess_return",
+                    "constituents_hash",
+                    "availability"
+                  ],
+                  "properties": {
+                    "prediction_date": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "outcome_date": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "theme_realized_return": {
+                      "type": "number"
+                    },
+                    "benchmark_realized_return": {
+                      "type": "number"
+                    },
+                    "forward_excess_return": {
+                      "type": "number"
+                    },
+                    "constituents_hash": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    },
+                    "availability": {
+                      "const": "available"
+                    }
+                  }
+                }
+              },
+              "factor_exposures": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uniqueItems": true
+              },
+              "membership": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "ticker",
+                    "active",
+                    "effective",
+                    "reason",
+                    "data_available"
+                  ],
+                  "properties": {
+                    "ticker": {
+                      "type": "string"
+                    },
+                    "active": {
+                      "type": "boolean"
+                    },
+                    "effective": {
+                      "type": "boolean"
+                    },
+                    "reason": {
+                      "enum": [
+                        "included",
+                        "inactive",
+                        "outside_validity_window"
+                      ]
+                    },
+                    "data_available": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "fundamentals": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "adapter_version",
+            "as_of",
+            "source",
+            "source_sha256",
+            "themes"
+          ],
+          "properties": {
+            "adapter_version": {
+              "const": "1.0"
+            },
+            "as_of": {
+              "type": "string",
+              "format": "date"
+            },
+            "source": {
+              "type": "string",
+              "minLength": 1
+            },
+            "source_sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "themes": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    }
   },
   "$defs": {
-    "nullableNumber": {"type": ["number", "null"]},
-    "nullableInteger": {"type": ["integer", "null"]},
-    "conditionList": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "nullableNumber": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "nullableInteger": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "conditionList": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
     "structuralContext": {
-      "type": "object", "additionalProperties": false,
-      "required": ["version", "status", "as_of", "summary", "source_category"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "status",
+        "as_of",
+        "summary",
+        "source_category"
+      ],
       "properties": {
-        "version": {"type": "string", "minLength": 1},
-        "status": {"enum": ["supported", "uncertain", "unsupported", "not_assessed"]},
-        "as_of": {"type": ["string", "null"], "format": "date"},
-        "summary": {"type": "string", "minLength": 1},
-        "source_category": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "supported",
+            "uncertain",
+            "unsupported",
+            "not_assessed"
+          ]
+        },
+        "as_of": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date"
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_category": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
       }
     },
     "meta": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["schema_version", "methodology_version", "generated_at", "data_date", "valid_until", "hard_stop_after", "run_id", "source_commit", "source_snapshot", "source_sha256", "status", "failure_reason", "universe_definition", "periods", "global_quality"],
+      "required": [
+        "schema_version",
+        "methodology_version",
+        "generated_at",
+        "data_date",
+        "valid_until",
+        "hard_stop_after",
+        "run_id",
+        "source_commit",
+        "source_snapshot",
+        "source_sha256",
+        "status",
+        "failure_reason",
+        "universe_definition",
+        "periods",
+        "global_quality"
+      ],
       "properties": {
-        "schema_version": {"enum": ["1.1", "1.2"]},
-        "methodology_version": {"enum": ["1.1.0", "1.2.0"]},
-        "generated_at": {"type": "string", "format": "date-time"},
-        "data_date": {"type": "string", "format": "date"},
-        "valid_until": {"type": "string", "format": "date-time"},
-        "hard_stop_after": {"type": "string", "format": "date-time"},
-        "run_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-        "source_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-        "source_snapshot": {"type": "string", "minLength": 1},
-        "source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-        "status": {"enum": ["success", "failed"]},
-        "failure_reason": {"type": ["string", "null"]},
+        "schema_version": {
+          "enum": [
+            "1.1",
+            "1.2"
+          ]
+        },
+        "methodology_version": {
+          "enum": [
+            "1.1.0",
+            "1.2.0"
+          ]
+        },
+        "generated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "data_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "valid_until": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "hard_stop_after": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "run_id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "source_commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "source_snapshot": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "status": {
+          "enum": [
+            "success",
+            "failed"
+          ]
+        },
+        "failure_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "universe_definition": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["theme_master_schema_version", "theme_master_version", "universe_hash", "theme_count", "unique_constituent_count", "overlap_policy"],
+          "required": [
+            "theme_master_schema_version",
+            "theme_master_version",
+            "universe_hash",
+            "theme_count",
+            "unique_constituent_count",
+            "overlap_policy"
+          ],
           "properties": {
-            "theme_master_schema_version": {"const": "1.0"},
-            "theme_master_version": {"type": "string", "minLength": 1},
-            "universe_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-            "theme_count": {"type": "integer", "minimum": 1},
-            "unique_constituent_count": {"type": "integer", "minimum": 1},
-            "overlap_policy": {"const": "allow_with_warning"}
+            "theme_master_schema_version": {
+              "const": "1.0"
+            },
+            "theme_master_version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "universe_hash": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "theme_count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "unique_constituent_count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "overlap_policy": {
+              "const": "allow_with_warning"
+            }
           }
         },
         "periods": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["1w", "4w", "13w"],
-          "properties": {"1w": {"const": 5}, "4w": {"const": 21}, "13w": {"const": 63}}
+          "required": [
+            "1w",
+            "4w",
+            "13w"
+          ],
+          "properties": {
+            "1w": {
+              "const": 5
+            },
+            "4w": {
+              "const": 21
+            },
+            "13w": {
+              "const": 63
+            }
+          }
         },
         "global_quality": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["requested_ticker_count", "usable_ticker_count", "coverage_ratio", "critical_missing", "missing_tickers", "warnings"],
+          "required": [
+            "requested_ticker_count",
+            "usable_ticker_count",
+            "coverage_ratio",
+            "critical_missing",
+            "missing_tickers",
+            "warnings"
+          ],
           "properties": {
-            "requested_ticker_count": {"type": "integer", "minimum": 1},
-            "usable_ticker_count": {"type": "integer", "minimum": 0},
-            "coverage_ratio": {"type": "number", "minimum": 0, "maximum": 1},
-            "critical_missing": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
-            "missing_tickers": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
-            "warnings": {"type": "array", "items": {"type": "string"}}
+            "requested_ticker_count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "usable_ticker_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "coverage_ratio": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "critical_missing": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            },
+            "missing_tickers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            },
+            "warnings": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           }
         }
       }
@@ -90,94 +579,292 @@
     "etfMetric": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["label", "return_1w", "return_4w", "return_13w", "rel_spy_1w", "rel_spy_4w", "rel_spy_13w", "above_50dma", "above_200dma", "within_5pct_52w_high", "volume_ratio_20d_60d", "last_date"],
+      "required": [
+        "label",
+        "return_1w",
+        "return_4w",
+        "return_13w",
+        "rel_spy_1w",
+        "rel_spy_4w",
+        "rel_spy_13w",
+        "above_50dma",
+        "above_200dma",
+        "within_5pct_52w_high",
+        "volume_ratio_20d_60d",
+        "last_date"
+      ],
       "properties": {
-        "label": {"type": "string"},
-        "return_1w": {"$ref": "#/$defs/nullableNumber"},
-        "return_4w": {"$ref": "#/$defs/nullableNumber"},
-        "return_13w": {"$ref": "#/$defs/nullableNumber"},
-        "rel_spy_1w": {"$ref": "#/$defs/nullableNumber"},
-        "rel_spy_4w": {"$ref": "#/$defs/nullableNumber"},
-        "rel_spy_13w": {"$ref": "#/$defs/nullableNumber"},
-        "above_50dma": {"type": ["boolean", "null"]},
-        "above_200dma": {"type": ["boolean", "null"]},
-        "within_5pct_52w_high": {"type": ["boolean", "null"]},
-        "volume_ratio_20d_60d": {"$ref": "#/$defs/nullableNumber"},
-        "last_date": {"type": ["string", "null"], "format": "date"}
+        "label": {
+          "type": "string"
+        },
+        "return_1w": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "return_4w": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "return_13w": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "rel_spy_1w": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "rel_spy_4w": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "rel_spy_13w": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "above_50dma": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "above_200dma": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "within_5pct_52w_high": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "volume_ratio_20d_60d": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "last_date": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date"
+        }
       }
     },
     "rankedEtfGroup": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["etfs", "rank_by_rel_spy_4w"],
+      "required": [
+        "etfs",
+        "rank_by_rel_spy_4w"
+      ],
       "properties": {
-        "etfs": {"type": "object", "additionalProperties": {"$ref": "#/$defs/etfMetric"}},
-        "rank_by_rel_spy_4w": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+        "etfs": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/etfMetric"
+          }
+        },
+        "rank_by_rel_spy_4w": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
       }
     },
     "regimeCandidate": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["eligible", "full_match", "matched_conditions", "unmatched_conditions", "contrary_evidence"],
+      "required": [
+        "eligible",
+        "full_match",
+        "matched_conditions",
+        "unmatched_conditions",
+        "contrary_evidence"
+      ],
       "properties": {
-        "eligible": {"type": "boolean"},
-        "full_match": {"type": ["boolean", "null"]},
-        "matched_conditions": {"$ref": "#/$defs/conditionList"},
-        "unmatched_conditions": {"$ref": "#/$defs/conditionList"},
-        "contrary_evidence": {"$ref": "#/$defs/conditionList"}
+        "eligible": {
+          "type": "boolean"
+        },
+        "full_match": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "matched_conditions": {
+          "$ref": "#/$defs/conditionList"
+        },
+        "unmatched_conditions": {
+          "$ref": "#/$defs/conditionList"
+        },
+        "contrary_evidence": {
+          "$ref": "#/$defs/conditionList"
+        }
       }
     },
     "marketRegime": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["inputs", "candidate_flags", "classification"],
+      "required": [
+        "inputs",
+        "candidate_flags",
+        "classification"
+      ],
       "properties": {
         "inputs": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["spy_r_4w", "qqq_rel_spy_4w", "rsp_minus_spy_4w", "iwm_minus_spy_4w", "sector_advance_ratio_4w", "defensive_basket_rel_spy_4w", "cyclical_basket_rel_spy_4w", "dbc_rel_spy_4w", "gld_rel_spy_4w", "xle_rel_spy_4w", "hyg_minus_lqd_4w", "vix_change_4w", "uup_r_4w", "rsp_minus_spy_4w_trend_3w", "iwm_minus_spy_4w_trend_3w", "dbc_rel_spy_4w_trend_3w"],
+          "required": [
+            "spy_r_4w",
+            "qqq_rel_spy_4w",
+            "rsp_minus_spy_4w",
+            "iwm_minus_spy_4w",
+            "sector_advance_ratio_4w",
+            "defensive_basket_rel_spy_4w",
+            "cyclical_basket_rel_spy_4w",
+            "dbc_rel_spy_4w",
+            "gld_rel_spy_4w",
+            "xle_rel_spy_4w",
+            "hyg_minus_lqd_4w",
+            "vix_change_4w",
+            "uup_r_4w",
+            "rsp_minus_spy_4w_trend_3w",
+            "iwm_minus_spy_4w_trend_3w",
+            "dbc_rel_spy_4w_trend_3w"
+          ],
           "properties": {
-            "spy_r_4w": {"$ref": "#/$defs/nullableNumber"},
-            "qqq_rel_spy_4w": {"$ref": "#/$defs/nullableNumber"},
-            "rsp_minus_spy_4w": {"$ref": "#/$defs/nullableNumber"},
-            "iwm_minus_spy_4w": {"$ref": "#/$defs/nullableNumber"},
-            "sector_advance_ratio_4w": {"$ref": "#/$defs/nullableNumber"},
-            "defensive_basket_rel_spy_4w": {"$ref": "#/$defs/nullableNumber"},
-            "cyclical_basket_rel_spy_4w": {"$ref": "#/$defs/nullableNumber"},
-            "dbc_rel_spy_4w": {"$ref": "#/$defs/nullableNumber"},
-            "gld_rel_spy_4w": {"$ref": "#/$defs/nullableNumber"},
-            "xle_rel_spy_4w": {"$ref": "#/$defs/nullableNumber"},
-            "hyg_minus_lqd_4w": {"$ref": "#/$defs/nullableNumber"},
-            "vix_change_4w": {"$ref": "#/$defs/nullableNumber"},
-            "uup_r_4w": {"$ref": "#/$defs/nullableNumber"},
-            "rsp_minus_spy_4w_trend_3w": {"$ref": "#/$defs/trendState"},
-            "iwm_minus_spy_4w_trend_3w": {"$ref": "#/$defs/trendState"},
-            "dbc_rel_spy_4w_trend_3w": {"$ref": "#/$defs/trendState"}
+            "spy_r_4w": {
+              "$ref": "#/$defs/nullableNumber"
+            },
+            "qqq_rel_spy_4w": {
+              "$ref": "#/$defs/nullableNumber"
+            },
+            "rsp_minus_spy_4w": {
+              "$ref": "#/$defs/nullableNumber"
+            },
+            "iwm_minus_spy_4w": {
+              "$ref": "#/$defs/nullableNumber"
+            },
+            "sector_advance_ratio_4w": {
+              "$ref": "#/$defs/nullableNumber"
+            },
+            "defensive_basket_rel_spy_4w": {
+              "$ref": "#/$defs/nullableNumber"
+            },
+            "cyclical_basket_rel_spy_4w": {
+              "$ref": "#/$defs/nullableNumber"
+            },
+            "dbc_rel_spy_4w": {
+              "$ref": "#/$defs/nullableNumber"
+            },
+            "gld_rel_spy_4w": {
+              "$ref": "#/$defs/nullableNumber"
+            },
+            "xle_rel_spy_4w": {
+              "$ref": "#/$defs/nullableNumber"
+            },
+            "hyg_minus_lqd_4w": {
+              "$ref": "#/$defs/nullableNumber"
+            },
+            "vix_change_4w": {
+              "$ref": "#/$defs/nullableNumber"
+            },
+            "uup_r_4w": {
+              "$ref": "#/$defs/nullableNumber"
+            },
+            "rsp_minus_spy_4w_trend_3w": {
+              "$ref": "#/$defs/trendState"
+            },
+            "iwm_minus_spy_4w_trend_3w": {
+              "$ref": "#/$defs/trendState"
+            },
+            "dbc_rel_spy_4w_trend_3w": {
+              "$ref": "#/$defs/trendState"
+            }
           }
         },
         "candidate_flags": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["broad_risk_on", "large_growth_concentration", "defensive_shift", "real_asset_leadership", "cyclical_recovery_expectation", "liquidity_contraction"],
+          "required": [
+            "broad_risk_on",
+            "large_growth_concentration",
+            "defensive_shift",
+            "real_asset_leadership",
+            "cyclical_recovery_expectation",
+            "liquidity_contraction"
+          ],
           "properties": {
-            "broad_risk_on": {"$ref": "#/$defs/regimeCandidate"},
-            "large_growth_concentration": {"$ref": "#/$defs/regimeCandidate"},
-            "defensive_shift": {"$ref": "#/$defs/regimeCandidate"},
-            "real_asset_leadership": {"$ref": "#/$defs/regimeCandidate"},
-            "cyclical_recovery_expectation": {"$ref": "#/$defs/regimeCandidate"},
-            "liquidity_contraction": {"$ref": "#/$defs/regimeCandidate"}
+            "broad_risk_on": {
+              "$ref": "#/$defs/regimeCandidate"
+            },
+            "large_growth_concentration": {
+              "$ref": "#/$defs/regimeCandidate"
+            },
+            "defensive_shift": {
+              "$ref": "#/$defs/regimeCandidate"
+            },
+            "real_asset_leadership": {
+              "$ref": "#/$defs/regimeCandidate"
+            },
+            "cyclical_recovery_expectation": {
+              "$ref": "#/$defs/regimeCandidate"
+            },
+            "liquidity_contraction": {
+              "$ref": "#/$defs/regimeCandidate"
+            }
           }
         },
         "classification": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["primary_regime", "secondary_regimes", "confidence", "matched_conditions", "contrary_evidence"],
+          "required": [
+            "primary_regime",
+            "secondary_regimes",
+            "confidence",
+            "matched_conditions",
+            "contrary_evidence"
+          ],
           "properties": {
-            "primary_regime": {"enum": ["broad_risk_on", "large_growth_concentration", "defensive_shift", "real_asset_leadership", "cyclical_recovery_expectation", "liquidity_contraction", "mixed", "directionless", "unclassifiable"]},
-            "secondary_regimes": {"type": "array", "items": {"enum": ["broad_risk_on", "large_growth_concentration", "defensive_shift", "real_asset_leadership", "cyclical_recovery_expectation", "liquidity_contraction"]}, "maxItems": 6, "uniqueItems": true},
-            "confidence": {"enum": ["high", "medium", "low", "unclassifiable"]},
-            "matched_conditions": {"$ref": "#/$defs/conditionList"},
-            "contrary_evidence": {"$ref": "#/$defs/conditionList"}
+            "primary_regime": {
+              "enum": [
+                "broad_risk_on",
+                "large_growth_concentration",
+                "defensive_shift",
+                "real_asset_leadership",
+                "cyclical_recovery_expectation",
+                "liquidity_contraction",
+                "mixed",
+                "directionless",
+                "unclassifiable"
+              ]
+            },
+            "secondary_regimes": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "broad_risk_on",
+                  "large_growth_concentration",
+                  "defensive_shift",
+                  "real_asset_leadership",
+                  "cyclical_recovery_expectation",
+                  "liquidity_contraction"
+                ]
+              },
+              "maxItems": 6,
+              "uniqueItems": true
+            },
+            "confidence": {
+              "enum": [
+                "high",
+                "medium",
+                "low",
+                "unclassifiable"
+              ]
+            },
+            "matched_conditions": {
+              "$ref": "#/$defs/conditionList"
+            },
+            "contrary_evidence": {
+              "$ref": "#/$defs/conditionList"
+            }
           }
         }
       }
@@ -185,328 +872,1346 @@
     "themeQuality": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["classification_eligible", "phase_initial_diffusion_eligible", "phase_overheat_eligible", "direction_eligible", "evidence_eligible", "constituent_count", "valid_constituent_count", "coverage_ratio", "history_weeks", "role_valid_counts", "metric_valid_counts", "missing_required_fields", "quality_reasons"],
+      "required": [
+        "classification_eligible",
+        "phase_initial_diffusion_eligible",
+        "phase_overheat_eligible",
+        "direction_eligible",
+        "evidence_eligible",
+        "constituent_count",
+        "valid_constituent_count",
+        "coverage_ratio",
+        "history_weeks",
+        "role_valid_counts",
+        "metric_valid_counts",
+        "missing_required_fields",
+        "quality_reasons"
+      ],
       "properties": {
-        "classification_eligible": {"type": "boolean"},
-        "phase_initial_diffusion_eligible": {"type": "boolean"},
-        "phase_overheat_eligible": {"type": "boolean"},
-        "direction_eligible": {"type": "boolean"},
-        "evidence_eligible": {"type": "boolean"},
-        "constituent_count": {"type": "integer", "minimum": 0},
-        "valid_constituent_count": {"type": "integer", "minimum": 0},
-        "coverage_ratio": {"type": "number", "minimum": 0, "maximum": 1},
-        "history_weeks": {"type": "integer", "minimum": 0, "maximum": 12},
-        "role_valid_counts": {"type": "object", "additionalProperties": false, "required": ["core", "beneficiary", "peripheral"], "properties": {"core": {"type": "integer", "minimum": 0}, "beneficiary": {"type": "integer", "minimum": 0}, "peripheral": {"type": "integer", "minimum": 0}}},
-        "metric_valid_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
-        "missing_required_fields": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
-        "quality_reasons": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+        "classification_eligible": {
+          "type": "boolean"
+        },
+        "phase_initial_diffusion_eligible": {
+          "type": "boolean"
+        },
+        "phase_overheat_eligible": {
+          "type": "boolean"
+        },
+        "direction_eligible": {
+          "type": "boolean"
+        },
+        "evidence_eligible": {
+          "type": "boolean"
+        },
+        "constituent_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "valid_constituent_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "coverage_ratio": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "history_weeks": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 12
+        },
+        "role_valid_counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "core",
+            "beneficiary",
+            "peripheral"
+          ],
+          "properties": {
+            "core": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "beneficiary": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "peripheral": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "metric_valid_counts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "missing_required_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "quality_reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
       }
     },
     "themeMetrics": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["equal_weight_return_1w", "equal_weight_return_4w", "equal_weight_return_13w", "equal_weight_rel_spy_1w", "equal_weight_rel_spy_4w", "equal_weight_rel_spy_13w", "market_cap_weight_rel_spy_4w", "weighting_divergence_4w", "advance_count_4w", "advance_ratio_4w", "above_50dma_count", "pct_above_50dma", "pct_within_5pct_52w_high", "volume_ratio_20d_60d", "top1_contribution_ratio", "top3_contribution_ratio", "single_name_concentrated", "market_cap_led", "equal_weight_led"],
+      "required": [
+        "equal_weight_return_1w",
+        "equal_weight_return_4w",
+        "equal_weight_return_13w",
+        "equal_weight_rel_spy_1w",
+        "equal_weight_rel_spy_4w",
+        "equal_weight_rel_spy_13w",
+        "market_cap_weight_rel_spy_4w",
+        "weighting_divergence_4w",
+        "advance_count_4w",
+        "advance_ratio_4w",
+        "above_50dma_count",
+        "pct_above_50dma",
+        "pct_within_5pct_52w_high",
+        "volume_ratio_20d_60d",
+        "top1_contribution_ratio",
+        "top3_contribution_ratio",
+        "single_name_concentrated",
+        "market_cap_led",
+        "equal_weight_led"
+      ],
       "properties": {
-        "equal_weight_return_1w": {"$ref": "#/$defs/nullableNumber"},
-        "equal_weight_return_4w": {"$ref": "#/$defs/nullableNumber"},
-        "equal_weight_return_13w": {"$ref": "#/$defs/nullableNumber"},
-        "equal_weight_rel_spy_1w": {"$ref": "#/$defs/nullableNumber"},
-        "equal_weight_rel_spy_4w": {"$ref": "#/$defs/nullableNumber"},
-        "equal_weight_rel_spy_13w": {"$ref": "#/$defs/nullableNumber"},
-        "equal_weight_rel_spy_previous_3w": {"$ref": "#/$defs/nullableNumber"},
-        "equal_weight_rel_spy_previous_9w": {"$ref": "#/$defs/nullableNumber"},
-        "market_cap_weight_rel_spy_4w": {"$ref": "#/$defs/nullableNumber"},
-        "median_rel_spy_4w": {"$ref": "#/$defs/nullableNumber"},
-        "winsorized_equal_weight_rel_spy_4w": {"$ref": "#/$defs/nullableNumber"},
-        "liquidity_weight_rel_spy_4w": {"$ref": "#/$defs/nullableNumber"},
-        "weighting_divergence_4w": {"$ref": "#/$defs/nullableNumber"},
-        "advance_count_4w": {"$ref": "#/$defs/nullableInteger"},
-        "advance_ratio_4w": {"$ref": "#/$defs/nullableNumber"},
-        "above_50dma_count": {"$ref": "#/$defs/nullableInteger"},
-        "pct_above_50dma": {"$ref": "#/$defs/nullableNumber"},
-        "pct_within_5pct_52w_high": {"$ref": "#/$defs/nullableNumber"},
-        "volume_ratio_20d_60d": {"$ref": "#/$defs/nullableNumber"},
-        "top1_contribution_ratio": {"$ref": "#/$defs/nullableNumber"},
-        "top3_contribution_ratio": {"$ref": "#/$defs/nullableNumber"},
-        "contribution_hhi": {"$ref": "#/$defs/nullableNumber"},
-        "effective_contributor_count": {"$ref": "#/$defs/nullableNumber"},
-        "unique_constituent_count": {"type": "integer", "minimum": 0},
-        "single_name_concentrated": {"type": ["boolean", "null"]},
-        "market_cap_led": {"type": ["boolean", "null"]},
-        "equal_weight_led": {"type": ["boolean", "null"]}
+        "equal_weight_return_1w": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "equal_weight_return_4w": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "equal_weight_return_13w": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "equal_weight_rel_spy_1w": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "equal_weight_rel_spy_4w": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "equal_weight_rel_spy_13w": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "equal_weight_rel_spy_previous_3w": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "equal_weight_rel_spy_previous_9w": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "market_cap_weight_rel_spy_4w": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "median_rel_spy_4w": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "winsorized_equal_weight_rel_spy_4w": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "liquidity_weight_rel_spy_4w": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "weighting_divergence_4w": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "advance_count_4w": {
+          "$ref": "#/$defs/nullableInteger"
+        },
+        "advance_ratio_4w": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "above_50dma_count": {
+          "$ref": "#/$defs/nullableInteger"
+        },
+        "pct_above_50dma": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "pct_within_5pct_52w_high": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "volume_ratio_20d_60d": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "top1_contribution_ratio": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "top3_contribution_ratio": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "contribution_hhi": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "effective_contributor_count": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "unique_constituent_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "single_name_concentrated": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "market_cap_led": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "equal_weight_led": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
       }
     },
     "themeTrends": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["rel_spy_4w_change_1w", "rel_spy_4w_slope_3w", "rel_spy_4w_slope_4w", "rel_spy_4w_trend_3w", "rel_spy_4w_trend_4w", "advance_count_change_1w", "advance_count_change_3w", "above_50dma_count_change_1w", "above_50dma_count_change_3w", "advance_breadth_trend_3w", "above_50dma_breadth_trend_3w", "volume_ratio_change_1w"],
+      "required": [
+        "rel_spy_4w_change_1w",
+        "rel_spy_4w_slope_3w",
+        "rel_spy_4w_slope_4w",
+        "rel_spy_4w_trend_3w",
+        "rel_spy_4w_trend_4w",
+        "advance_count_change_1w",
+        "advance_count_change_3w",
+        "above_50dma_count_change_1w",
+        "above_50dma_count_change_3w",
+        "advance_breadth_trend_3w",
+        "above_50dma_breadth_trend_3w",
+        "volume_ratio_change_1w"
+      ],
       "properties": {
-        "rel_spy_4w_change_1w": {"$ref": "#/$defs/nullableNumber"},
-        "rel_spy_4w_slope_3w": {"$ref": "#/$defs/nullableNumber"},
-        "rel_spy_4w_slope_4w": {"$ref": "#/$defs/nullableNumber"},
-        "rel_spy_4w_trend_3w": {"$ref": "#/$defs/trendState"},
-        "rel_spy_4w_trend_4w": {"$ref": "#/$defs/trendState"},
-        "advance_count_change_1w": {"$ref": "#/$defs/nullableInteger"},
-        "advance_count_change_3w": {"$ref": "#/$defs/nullableInteger"},
-        "above_50dma_count_change_1w": {"$ref": "#/$defs/nullableInteger"},
-        "above_50dma_count_change_3w": {"$ref": "#/$defs/nullableInteger"},
-        "advance_breadth_trend_3w": {"$ref": "#/$defs/trendState"},
-        "above_50dma_breadth_trend_3w": {"$ref": "#/$defs/trendState"},
-        "volume_ratio_change_1w": {"$ref": "#/$defs/nullableNumber"}
+        "rel_spy_4w_change_1w": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "rel_spy_4w_slope_3w": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "rel_spy_4w_slope_4w": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "rel_spy_4w_trend_3w": {
+          "$ref": "#/$defs/trendState"
+        },
+        "rel_spy_4w_trend_4w": {
+          "$ref": "#/$defs/trendState"
+        },
+        "advance_count_change_1w": {
+          "$ref": "#/$defs/nullableInteger"
+        },
+        "advance_count_change_3w": {
+          "$ref": "#/$defs/nullableInteger"
+        },
+        "above_50dma_count_change_1w": {
+          "$ref": "#/$defs/nullableInteger"
+        },
+        "above_50dma_count_change_3w": {
+          "$ref": "#/$defs/nullableInteger"
+        },
+        "advance_breadth_trend_3w": {
+          "$ref": "#/$defs/trendState"
+        },
+        "above_50dma_breadth_trend_3w": {
+          "$ref": "#/$defs/trendState"
+        },
+        "volume_ratio_change_1w": {
+          "$ref": "#/$defs/nullableNumber"
+        }
       }
     },
-    "trendState": {"enum": ["improving", "flat", "worsening", "insufficient"]},
+    "trendState": {
+      "enum": [
+        "improving",
+        "flat",
+        "worsening",
+        "insufficient"
+      ]
+    },
     "conditionFlags": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["phase_initial", "phase_diffusion", "phase_price_overheat", "direction_improving", "direction_worsening", "direction_outflow_signal", "broad_concentration_pass", "overheat_breadth_weak", "matched_conditions", "unmatched_conditions", "contrary_evidence"],
+      "required": [
+        "phase_initial",
+        "phase_diffusion",
+        "phase_price_overheat",
+        "direction_improving",
+        "direction_worsening",
+        "direction_outflow_signal",
+        "broad_concentration_pass",
+        "overheat_breadth_weak",
+        "matched_conditions",
+        "unmatched_conditions",
+        "contrary_evidence"
+      ],
       "properties": {
-        "phase_initial": {"type": ["boolean", "null"]},
-        "phase_diffusion": {"type": ["boolean", "null"]},
-        "phase_price_overheat": {"type": ["boolean", "null"]},
-        "direction_improving": {"type": ["boolean", "null"]},
-        "direction_worsening": {"type": ["boolean", "null"]},
-        "direction_outflow_signal": {"type": ["boolean", "null"]},
-        "broad_concentration_pass": {"type": ["boolean", "null"]},
-        "overheat_breadth_weak": {"type": ["boolean", "null"]},
-        "matched_conditions": {"$ref": "#/$defs/conditionList"},
-        "unmatched_conditions": {"$ref": "#/$defs/conditionList"},
-        "contrary_evidence": {"$ref": "#/$defs/conditionList"}
+        "phase_initial": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "phase_diffusion": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "phase_price_overheat": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "direction_improving": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "direction_worsening": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "direction_outflow_signal": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "broad_concentration_pass": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "overheat_breadth_weak": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "matched_conditions": {
+          "$ref": "#/$defs/conditionList"
+        },
+        "unmatched_conditions": {
+          "$ref": "#/$defs/conditionList"
+        },
+        "contrary_evidence": {
+          "$ref": "#/$defs/conditionList"
+        }
       }
     },
     "evidence": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["level", "direction", "positioning_hypothesis", "direct_flow_data_available", "matched_conditions"],
+      "required": [
+        "level",
+        "direction",
+        "positioning_hypothesis",
+        "direct_flow_data_available",
+        "matched_conditions"
+      ],
       "properties": {
-        "level": {"enum": ["direct_flow_confirmed", "flow_suggested", "relative_preference_suggested", "price_only", "insufficient"]},
-        "direction": {"enum": ["inflow", "outflow", "up", "down", "unknown"]},
-        "positioning_hypothesis": {"enum": ["possible_short_term_adjustment", "not_supported", "not_assessable"]},
-        "direct_flow_data_available": {"type": "boolean"},
-        "matched_conditions": {"$ref": "#/$defs/conditionList"}
+        "level": {
+          "enum": [
+            "direct_flow_confirmed",
+            "flow_suggested",
+            "relative_preference_suggested",
+            "price_only",
+            "insufficient"
+          ]
+        },
+        "direction": {
+          "enum": [
+            "inflow",
+            "outflow",
+            "up",
+            "down",
+            "unknown"
+          ]
+        },
+        "positioning_hypothesis": {
+          "enum": [
+            "possible_short_term_adjustment",
+            "not_supported",
+            "not_assessable"
+          ]
+        },
+        "direct_flow_data_available": {
+          "type": "boolean"
+        },
+        "matched_conditions": {
+          "$ref": "#/$defs/conditionList"
+        }
       }
     },
     "classifications": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["phase", "direction", "evidence", "research_priority", "research_priority_rule", "timing_status", "timing_rule"],
+      "required": [
+        "phase",
+        "direction",
+        "evidence",
+        "research_priority",
+        "research_priority_rule",
+        "timing_status",
+        "timing_rule"
+      ],
       "properties": {
-        "phase": {"enum": ["initial", "diffusion", "price_overheat", "unclassifiable"]},
-        "direction": {"enum": ["improving", "flat", "worsening", "outflow_signal", "unclassifiable"]},
-        "evidence": {"$ref": "#/$defs/evidence"},
-        "research_priority": {"enum": ["dd_priority", "dd_candidate", "watch", "low_priority", "unclassifiable"]},
-        "research_priority_rule": {"enum": ["P0", "P1", "P2", "P3", "P4", "P5", "fallback"]},
-        "timing_status": {"enum": ["favorable", "early_unconfirmed", "price_overheat", "deteriorating", "unclassifiable"]},
-        "timing_rule": {"enum": ["T0", "T1", "T2", "T3", "T4", "fallback"]}
+        "phase": {
+          "enum": [
+            "initial",
+            "diffusion",
+            "price_overheat",
+            "unclassifiable"
+          ]
+        },
+        "direction": {
+          "enum": [
+            "improving",
+            "flat",
+            "worsening",
+            "outflow_signal",
+            "unclassifiable"
+          ]
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        },
+        "research_priority": {
+          "enum": [
+            "dd_priority",
+            "dd_candidate",
+            "watch",
+            "low_priority",
+            "unclassifiable"
+          ]
+        },
+        "research_priority_rule": {
+          "enum": [
+            "P0",
+            "P1",
+            "P2",
+            "P3",
+            "P4",
+            "P5",
+            "fallback"
+          ]
+        },
+        "timing_status": {
+          "enum": [
+            "favorable",
+            "early_unconfirmed",
+            "price_overheat",
+            "deteriorating",
+            "unclassifiable"
+          ]
+        },
+        "timing_rule": {
+          "enum": [
+            "T0",
+            "T1",
+            "T2",
+            "T3",
+            "T4",
+            "fallback"
+          ]
+        }
       }
     },
     "roleMetric": {
-      "type": ["object", "null"],
+      "type": [
+        "object",
+        "null"
+      ],
       "additionalProperties": false,
-      "required": ["valid_count", "equal_weight_rel_spy_4w", "advance_ratio_4w"],
+      "required": [
+        "valid_count",
+        "equal_weight_rel_spy_4w",
+        "advance_ratio_4w"
+      ],
       "properties": {
-        "valid_count": {"type": "integer", "minimum": 2},
-        "equal_weight_rel_spy_4w": {"$ref": "#/$defs/nullableNumber"},
-        "advance_ratio_4w": {"$ref": "#/$defs/nullableNumber"}
+        "valid_count": {
+          "type": "integer",
+          "minimum": 2
+        },
+        "equal_weight_rel_spy_4w": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "advance_ratio_4w": {
+          "$ref": "#/$defs/nullableNumber"
+        }
       }
     },
     "constituent": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["ticker", "role", "valid", "return_4w", "rel_spy_4w", "market_cap", "positive_contribution_ratio", "overlap_theme_count"],
+      "required": [
+        "ticker",
+        "role",
+        "valid",
+        "return_4w",
+        "rel_spy_4w",
+        "market_cap",
+        "positive_contribution_ratio",
+        "overlap_theme_count"
+      ],
       "properties": {
-        "ticker": {"type": "string", "minLength": 1},
-        "role": {"enum": ["core", "beneficiary", "peripheral"]},
-        "valid": {"type": "boolean"},
-        "return_4w": {"$ref": "#/$defs/nullableNumber"},
-        "rel_spy_4w": {"$ref": "#/$defs/nullableNumber"},
-        "market_cap": {"$ref": "#/$defs/nullableNumber"},
-        "dollar_volume_20d": {"$ref": "#/$defs/nullableNumber"},
-        "positive_contribution_ratio": {"$ref": "#/$defs/nullableNumber"},
-        "overlap_theme_count": {"type": "integer", "minimum": 1}
+        "ticker": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "enum": [
+            "core",
+            "beneficiary",
+            "peripheral"
+          ]
+        },
+        "valid": {
+          "type": "boolean"
+        },
+        "return_4w": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "rel_spy_4w": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "market_cap": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "dollar_volume_20d": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "positive_contribution_ratio": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "overlap_theme_count": {
+          "type": "integer",
+          "minimum": 1
+        }
       }
     },
     "theme": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["theme_id", "label", "quality", "metrics", "trends", "condition_flags", "classifications", "relative_strength_rank_4w", "selected_for_deep_dive", "shortlist_rank", "shortlist_reason_codes", "by_role", "constituents"],
+      "required": [
+        "theme_id",
+        "label",
+        "quality",
+        "metrics",
+        "trends",
+        "condition_flags",
+        "classifications",
+        "relative_strength_rank_4w",
+        "selected_for_deep_dive",
+        "shortlist_rank",
+        "shortlist_reason_codes",
+        "by_role",
+        "constituents"
+      ],
       "properties": {
-        "theme_id": {"type": "string", "minLength": 1},
-        "label": {"type": "string", "minLength": 1},
-        "structural_context": {"$ref": "#/$defs/structuralContext"},
-        "quality": {"$ref": "#/$defs/themeQuality"},
-        "metrics": {"$ref": "#/$defs/themeMetrics"},
-        "trends": {"$ref": "#/$defs/themeTrends"},
-        "condition_flags": {"$ref": "#/$defs/conditionFlags"},
-        "classifications": {"$ref": "#/$defs/classifications"},
-        "relative_strength_rank_4w": {"type": ["integer", "null"], "minimum": 1},
-        "selected_for_deep_dive": {"type": "boolean"},
-        "shortlist_rank": {"type": ["integer", "null"], "minimum": 1, "maximum": 5},
-        "shortlist_reason_codes": {"$ref": "#/$defs/conditionList"},
-        "by_role": {"type": "object", "additionalProperties": false, "required": ["core", "beneficiary", "peripheral"], "properties": {"core": {"$ref": "#/$defs/roleMetric"}, "beneficiary": {"$ref": "#/$defs/roleMetric"}, "peripheral": {"$ref": "#/$defs/roleMetric"}}},
-        "constituents": {"type": "array", "items": {"$ref": "#/$defs/constituent"}}
-        ,"decision": {"$ref": "#/$defs/themeDecision"}
+        "theme_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "structural_context": {
+          "$ref": "#/$defs/structuralContext"
+        },
+        "quality": {
+          "$ref": "#/$defs/themeQuality"
+        },
+        "metrics": {
+          "$ref": "#/$defs/themeMetrics"
+        },
+        "trends": {
+          "$ref": "#/$defs/themeTrends"
+        },
+        "condition_flags": {
+          "$ref": "#/$defs/conditionFlags"
+        },
+        "classifications": {
+          "$ref": "#/$defs/classifications"
+        },
+        "relative_strength_rank_4w": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "selected_for_deep_dive": {
+          "type": "boolean"
+        },
+        "shortlist_rank": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 5
+        },
+        "shortlist_reason_codes": {
+          "$ref": "#/$defs/conditionList"
+        },
+        "by_role": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "core",
+            "beneficiary",
+            "peripheral"
+          ],
+          "properties": {
+            "core": {
+              "$ref": "#/$defs/roleMetric"
+            },
+            "beneficiary": {
+              "$ref": "#/$defs/roleMetric"
+            },
+            "peripheral": {
+              "$ref": "#/$defs/roleMetric"
+            }
+          }
+        },
+        "constituents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/constituent"
+          }
+        },
+        "decision": {
+          "$ref": "#/$defs/themeDecision"
+        }
       }
     },
     "themeShortlist": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["selection_version", "max_themes", "minimum_preferred_themes", "selected_theme_ids", "quality_reasons"],
+      "required": [
+        "selection_version",
+        "max_themes",
+        "minimum_preferred_themes",
+        "selected_theme_ids",
+        "quality_reasons"
+      ],
       "properties": {
-        "selection_version": {"const": "1.0"},
-        "max_themes": {"const": 5},
-        "minimum_preferred_themes": {"const": 3},
-        "selected_theme_ids": {"type": "array", "maxItems": 5, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
-        "quality_reasons": {"$ref": "#/$defs/conditionList"}
+        "selection_version": {
+          "const": "1.0"
+        },
+        "max_themes": {
+          "const": 5
+        },
+        "minimum_preferred_themes": {
+          "const": 3
+        },
+        "selected_theme_ids": {
+          "type": "array",
+          "maxItems": 5,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "quality_reasons": {
+          "$ref": "#/$defs/conditionList"
+        }
       }
     },
     "themeDecision": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["candidate_bucket", "price_preference", "direct_flow_confirmation", "analysis_mode", "weeks_until_trend", "time_profile"],
+      "required": [
+        "candidate_bucket",
+        "price_preference",
+        "direct_flow_confirmation",
+        "analysis_mode",
+        "weeks_until_trend",
+        "time_profile"
+      ],
       "properties": {
-        "candidate_bucket": {"enum": ["research_now", "watch_recovery", "long_term_context_price_weak", "avoid_now"]},
-        "price_preference": {"enum": ["positive", "negative", "mixed", "unavailable"]},
-        "direct_flow_confirmation": {"enum": ["confirmed", "not_confirmed", "unavailable"]},
-        "analysis_mode": {"enum": ["initial_observation", "trend"]},
-        "weeks_until_trend": {"type": "integer", "minimum": 0, "maximum": 2},
-        "time_profile": {"enum": ["strengthening", "weakening", "mixed", "unavailable"]}
+        "candidate_bucket": {
+          "enum": [
+            "research_now",
+            "watch_recovery",
+            "long_term_context_price_weak",
+            "avoid_now"
+          ]
+        },
+        "price_preference": {
+          "enum": [
+            "positive",
+            "negative",
+            "mixed",
+            "unavailable"
+          ]
+        },
+        "direct_flow_confirmation": {
+          "enum": [
+            "confirmed",
+            "not_confirmed",
+            "unavailable"
+          ]
+        },
+        "analysis_mode": {
+          "enum": [
+            "initial_observation",
+            "trend"
+          ]
+        },
+        "weeks_until_trend": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "time_profile": {
+          "enum": [
+            "strengthening",
+            "weakening",
+            "mixed",
+            "unavailable"
+          ]
+        }
       }
     },
     "candidateRef": {
-      "type": "object", "additionalProperties": false,
-      "required": ["id", "label", "source"],
-      "properties": {"id": {"type": "string"}, "label": {"type": "string"}, "source": {"enum": ["fixed_theme", "dynamic_industry"]}, "classification_reason": {"enum": ["research_now", "watch_recovery", "long_term_context_price_weak", "avoid_now", "research_capacity_limit"]}}
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "label",
+        "source"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "source": {
+          "enum": [
+            "fixed_theme",
+            "dynamic_industry"
+          ]
+        },
+        "classification_reason": {
+          "enum": [
+            "research_now",
+            "watch_recovery",
+            "long_term_context_price_weak",
+            "avoid_now",
+            "research_capacity_limit"
+          ]
+        }
+      }
     },
     "candidateBuckets": {
-      "type": "object", "additionalProperties": false,
-      "required": ["selection_version", "max_research_items", "research_now", "watch_recovery", "avoid_now"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "selection_version",
+        "max_research_items",
+        "research_now",
+        "watch_recovery",
+        "avoid_now"
+      ],
       "properties": {
-        "selection_version": {"enum": ["2.0", "3.0"]}, "max_research_items": {"const": 5},
-        "research_now": {"type": "array", "maxItems": 5, "items": {"$ref": "#/$defs/candidateRef"}},
-        "watch_recovery": {"type": "array", "items": {"$ref": "#/$defs/candidateRef"}},
-        "long_term_context_price_weak": {"type": "array", "items": {"$ref": "#/$defs/candidateRef"}},
-        "avoid_now": {"type": "array", "items": {"$ref": "#/$defs/candidateRef"}}
+        "selection_version": {
+          "enum": [
+            "2.0",
+            "3.0"
+          ]
+        },
+        "max_research_items": {
+          "const": 5
+        },
+        "research_now": {
+          "type": "array",
+          "maxItems": 5,
+          "items": {
+            "$ref": "#/$defs/candidateRef"
+          }
+        },
+        "watch_recovery": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/candidateRef"
+          }
+        },
+        "long_term_context_price_weak": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/candidateRef"
+          }
+        },
+        "avoid_now": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/candidateRef"
+          }
+        }
       }
     },
     "dynamicConstituent": {
-      "type": "object", "additionalProperties": false,
-      "required": ["ticker", "return_4w", "rel_spy_4w", "above_50dma", "positive_contribution_ratio", "dollar_volume_20d"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ticker",
+        "return_4w",
+        "rel_spy_4w",
+        "above_50dma",
+        "positive_contribution_ratio",
+        "dollar_volume_20d"
+      ],
       "properties": {
-        "ticker": {"type": "string"}, "return_4w": {"$ref": "#/$defs/nullableNumber"},
-        "rel_spy_4w": {"$ref": "#/$defs/nullableNumber"}, "above_50dma": {"type": ["boolean", "null"]},
-        "positive_contribution_ratio": {"$ref": "#/$defs/nullableNumber"}, "dollar_volume_20d": {"$ref": "#/$defs/nullableNumber"}
+        "ticker": {
+          "type": "string"
+        },
+        "return_4w": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "rel_spy_4w": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "above_50dma": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "positive_contribution_ratio": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "dollar_volume_20d": {
+          "$ref": "#/$defs/nullableNumber"
+        }
       }
     },
     "dynamicCandidate": {
-      "type": "object", "additionalProperties": false,
-      "required": ["candidate_id", "label", "source", "reference_etf", "reference_etf_rel_spy_4w", "metrics", "constituents"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_id",
+        "label",
+        "source",
+        "reference_etf",
+        "reference_etf_rel_spy_4w",
+        "metrics",
+        "constituents"
+      ],
       "properties": {
-        "candidate_id": {"type": "string"}, "label": {"type": "string"}, "source": {"const": "dynamic_industry"},
-        "reference_etf": {"type": "string"}, "reference_etf_rel_spy_4w": {"$ref": "#/$defs/nullableNumber"}, "eligible": {"type": "boolean"}, "rejection_reasons": {"$ref": "#/$defs/conditionList"}, "structural_context": {"$ref": "#/$defs/structuralContext"}, "metrics": {"$ref": "#/$defs/themeMetrics"},
-        "constituents": {"type": "array", "items": {"$ref": "#/$defs/dynamicConstituent"}}
+        "candidate_id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "source": {
+          "const": "dynamic_industry"
+        },
+        "reference_etf": {
+          "type": "string"
+        },
+        "reference_etf_rel_spy_4w": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "eligible": {
+          "type": "boolean"
+        },
+        "rejection_reasons": {
+          "$ref": "#/$defs/conditionList"
+        },
+        "structural_context": {
+          "$ref": "#/$defs/structuralContext"
+        },
+        "metrics": {
+          "$ref": "#/$defs/themeMetrics"
+        },
+        "constituents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dynamicConstituent"
+          }
+        }
       }
     },
     "dynamicDiscovery": {
-      "type": "object", "additionalProperties": false,
-      "required": ["discovery_version", "thresholds", "candidate_ids", "candidates", "rejected"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "discovery_version",
+        "thresholds",
+        "candidate_ids",
+        "candidates",
+        "rejected"
+      ],
       "properties": {
-        "discovery_version": {"enum": ["1.0", "2.0"]},
-        "thresholds": {"type": "object", "additionalProperties": {"type": ["number", "integer"]}},
-        "candidate_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
-        "candidates": {"type": "object", "additionalProperties": {"$ref": "#/$defs/dynamicCandidate"}},
-        "rejected": {"type": "object", "additionalProperties": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}}
+        "discovery_version": {
+          "enum": [
+            "1.0",
+            "2.0"
+          ]
+        },
+        "thresholds": {
+          "type": "object",
+          "additionalProperties": {
+            "type": [
+              "number",
+              "integer"
+            ]
+          }
+        },
+        "candidate_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "candidates": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/dynamicCandidate"
+          }
+        },
+        "rejected": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          }
+        }
       }
     },
     "companyCandidate": {
-      "type": "object", "additionalProperties": false,
-      "required": ["theme_id", "theme_label", "source", "ticker", "selection_role", "why", "key_check", "counter_evidence"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "theme_id",
+        "theme_label",
+        "source",
+        "ticker",
+        "selection_role",
+        "why",
+        "key_check",
+        "counter_evidence"
+      ],
       "properties": {
-        "theme_id": {"type": "string"}, "theme_label": {"type": "string"}, "source": {"enum": ["fixed_theme", "dynamic_industry"]},
-        "ticker": {"type": "string"}, "selection_role": {"enum": ["representative", "breadth_check"]},
-        "why": {"type": "string"}, "key_check": {"type": "string"}, "counter_evidence": {"type": "string"}, "research_lens_source": {"type": "string", "minLength": 1}
+        "theme_id": {
+          "type": "string"
+        },
+        "theme_label": {
+          "type": "string"
+        },
+        "source": {
+          "enum": [
+            "fixed_theme",
+            "dynamic_industry"
+          ]
+        },
+        "ticker": {
+          "type": "string"
+        },
+        "selection_role": {
+          "enum": [
+            "representative",
+            "breadth_check"
+          ]
+        },
+        "why": {
+          "type": "string"
+        },
+        "key_check": {
+          "type": "string"
+        },
+        "counter_evidence": {
+          "type": "string"
+        },
+        "research_lens_source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "company_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "company_name_source": {
+          "enum": [
+            "config.company_names",
+            "not_available"
+          ]
+        }
       }
     },
     "userPhase": {
-      "type": "object", "additionalProperties": false,
-      "required": ["conclusion", "investment_meaning", "cautions", "next_checks"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "conclusion",
+        "investment_meaning",
+        "cautions",
+        "next_checks"
+      ],
       "properties": {
-        "conclusion": {"type": "string", "minLength": 1}, "investment_meaning": {"type": "string", "minLength": 1},
-        "cautions": {"type": "array", "items": {"type": "string", "minLength": 1}},
-        "next_checks": {"type": "array", "items": {"type": "string", "minLength": 1}}
+        "conclusion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "investment_meaning": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cautions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "next_checks": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
       }
     },
     "userView": {
-      "type": "object", "additionalProperties": false,
-      "required": ["presentation_version", "analysis_mode", "phases"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "presentation_version",
+        "analysis_mode",
+        "phases"
+      ],
       "properties": {
-        "presentation_version": {"enum": ["1.0", "1.1", "1.2"]}, "analysis_mode": {"enum": ["initial_observation", "trend"]},
-        "phases": {"type": "array", "minItems": 6, "maxItems": 6, "items": {"$ref": "#/$defs/userPhase"}}
+        "presentation_version": {
+          "enum": [
+            "1.0",
+            "1.1",
+            "1.2"
+          ]
+        },
+        "analysis_mode": {
+          "enum": [
+            "initial_observation",
+            "trend"
+          ]
+        },
+        "phases": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "items": {
+            "$ref": "#/$defs/userPhase"
+          }
+        }
       }
     },
     "historyTheme": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["equal_weight_rel_spy_4w", "advance_count_4w", "pct_above_50dma", "volume_ratio_20d_60d"],
+      "required": [
+        "equal_weight_rel_spy_4w",
+        "advance_count_4w",
+        "pct_above_50dma",
+        "volume_ratio_20d_60d"
+      ],
       "properties": {
-        "equal_weight_rel_spy_4w": {"$ref": "#/$defs/nullableNumber"},
-        "advance_count_4w": {"$ref": "#/$defs/nullableInteger"},
-        "above_50dma_count": {"$ref": "#/$defs/nullableInteger"},
-        "pct_above_50dma": {"$ref": "#/$defs/nullableNumber"},
-        "volume_ratio_20d_60d": {"$ref": "#/$defs/nullableNumber"}
+        "equal_weight_rel_spy_4w": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "advance_count_4w": {
+          "$ref": "#/$defs/nullableInteger"
+        },
+        "above_50dma_count": {
+          "$ref": "#/$defs/nullableInteger"
+        },
+        "pct_above_50dma": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "volume_ratio_20d_60d": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "theme_return_4w": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "spy_return_4w": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "candidate_bucket": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "price_signal": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "classification_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "quality_status": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "constituents_hash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
       }
     },
     "historyItem": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["data_date", "schema_version", "methodology_version", "theme_master_version", "themes"],
+      "required": [
+        "data_date",
+        "schema_version",
+        "methodology_version",
+        "theme_master_version",
+        "themes"
+      ],
       "properties": {
-        "data_date": {"type": "string", "format": "date"},
-        "schema_version": {"enum": ["1.1", "1.2"]},
-        "methodology_version": {"enum": ["1.1.0", "1.2.0"]},
-        "theme_master_version": {"type": "string"},
-        "themes": {"type": "object", "additionalProperties": {"$ref": "#/$defs/historyTheme"}}
+        "data_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "schema_version": {
+          "enum": [
+            "1.1",
+            "1.2"
+          ]
+        },
+        "methodology_version": {
+          "enum": [
+            "1.1.0",
+            "1.2.0"
+          ]
+        },
+        "theme_master_version": {
+          "type": "string"
+        },
+        "themes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/historyTheme"
+          }
+        }
       }
     },
     "withdrawalEvaluation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["condition_id", "status", "observed_weeks"],
+      "required": [
+        "condition_id",
+        "status",
+        "observed_weeks"
+      ],
       "properties": {
-        "condition_id": {"type": "string"},
-        "status": {"enum": ["triggered", "not_triggered", "unknown"]},
-        "observed_weeks": {"type": "integer", "minimum": 0}
+        "condition_id": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "triggered",
+            "not_triggered",
+            "unknown"
+          ]
+        },
+        "observed_weeks": {
+          "type": "integer",
+          "minimum": 0
+        }
       }
     },
     "previousJudgmentProjection": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["judgment_id", "data_date", "theme_id", "phase", "direction", "research_priority", "research_priority_rule", "timing_status", "timing_rule", "selected_for_deep_dive", "shortlist_rank", "shortlist_reason_codes", "withdrawal_evaluations"],
+      "required": [
+        "judgment_id",
+        "data_date",
+        "theme_id",
+        "phase",
+        "direction",
+        "research_priority",
+        "research_priority_rule",
+        "timing_status",
+        "timing_rule",
+        "selected_for_deep_dive",
+        "shortlist_rank",
+        "shortlist_reason_codes",
+        "withdrawal_evaluations"
+      ],
       "properties": {
-        "judgment_id": {"type": "string"},
-        "data_date": {"type": "string", "format": "date"},
-        "theme_id": {"type": "string"},
-        "phase": {"enum": ["initial", "diffusion", "price_overheat", "unclassifiable"]},
-        "direction": {"enum": ["improving", "flat", "worsening", "outflow_signal", "unclassifiable"]},
-        "research_priority": {"enum": ["dd_priority", "dd_candidate", "watch", "low_priority", "unclassifiable"]},
-        "research_priority_rule": {"enum": ["P0", "P1", "P2", "P3", "P4", "P5", "fallback"]},
-        "timing_status": {"enum": ["favorable", "early_unconfirmed", "price_overheat", "deteriorating", "unclassifiable"]},
-        "timing_rule": {"enum": ["T0", "T1", "T2", "T3", "T4", "fallback"]},
-        "selected_for_deep_dive": {"type": "boolean"},
-        "shortlist_rank": {"type": ["integer", "null"], "minimum": 1, "maximum": 5},
-        "shortlist_reason_codes": {"$ref": "#/$defs/conditionList"},
-        "withdrawal_evaluations": {"type": "array", "items": {"$ref": "#/$defs/withdrawalEvaluation"}}
+        "judgment_id": {
+          "type": "string"
+        },
+        "data_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "theme_id": {
+          "type": "string"
+        },
+        "phase": {
+          "enum": [
+            "initial",
+            "diffusion",
+            "price_overheat",
+            "unclassifiable"
+          ]
+        },
+        "direction": {
+          "enum": [
+            "improving",
+            "flat",
+            "worsening",
+            "outflow_signal",
+            "unclassifiable"
+          ]
+        },
+        "research_priority": {
+          "enum": [
+            "dd_priority",
+            "dd_candidate",
+            "watch",
+            "low_priority",
+            "unclassifiable"
+          ]
+        },
+        "research_priority_rule": {
+          "enum": [
+            "P0",
+            "P1",
+            "P2",
+            "P3",
+            "P4",
+            "P5",
+            "fallback"
+          ]
+        },
+        "timing_status": {
+          "enum": [
+            "favorable",
+            "early_unconfirmed",
+            "price_overheat",
+            "deteriorating",
+            "unclassifiable"
+          ]
+        },
+        "timing_rule": {
+          "enum": [
+            "T0",
+            "T1",
+            "T2",
+            "T3",
+            "T4",
+            "fallback"
+          ]
+        },
+        "selected_for_deep_dive": {
+          "type": "boolean"
+        },
+        "shortlist_rank": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 5
+        },
+        "shortlist_reason_codes": {
+          "$ref": "#/$defs/conditionList"
+        },
+        "withdrawal_evaluations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/withdrawalEvaluation"
+          }
+        }
       }
     },
     "previousJudgments": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["source", "available", "latest_data_date", "records"],
+      "required": [
+        "source",
+        "available",
+        "latest_data_date",
+        "records"
+      ],
       "properties": {
-        "source": {"const": "output/judgments/index.json"},
-        "available": {"type": "boolean"},
-        "latest_data_date": {"type": ["string", "null"], "format": "date"},
-        "records": {"type": "array", "items": {"$ref": "#/$defs/previousJudgmentProjection"}}
+        "source": {
+          "const": "output/judgments/index.json"
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "latest_data_date": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date"
+        },
+        "records": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/previousJudgmentProjection"
+          }
+        }
       }
     }
   }
