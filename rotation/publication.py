@@ -20,6 +20,7 @@ from .consumer_v2 import (
     validate_consumer_v2_payloads,
 )
 from .consumer_v3 import load_and_validate_consumer_v3
+from .analysis_v3 import price_signal
 from .identity import safe_generation_path, validate_safe_id
 from .judgments import StableJsonChangedError, StableJsonSnapshot, validate_index_records
 from .provenance import atomic_write_json, canonical_bytes, stable_hash
@@ -110,18 +111,21 @@ def _generation_id(snapshot: dict) -> str:
 
 
 def _expected_history(latest: dict) -> dict:
+    def theme_history(theme: dict) -> dict:
+        value = {"equal_weight_rel_spy_4w": theme["metrics"]["equal_weight_rel_spy_4w"],
+            "advance_count_4w": theme["metrics"]["advance_count_4w"],"above_50dma_count": theme["metrics"]["above_50dma_count"],
+            "pct_above_50dma": theme["metrics"]["pct_above_50dma"],"volume_ratio_20d_60d": theme["metrics"]["volume_ratio_20d_60d"]}
+        if theme.get("decision"):
+            value.update(theme_return_4w=theme["metrics"]["equal_weight_return_4w"],spy_return_4w=latest["market_regime"]["inputs"]["spy_r_4w"],
+                candidate_bucket=theme["decision"]["candidate_bucket"],price_signal=price_signal(theme),classification_version="candidate_bucket_v3",
+                quality_status="eligible" if theme["quality"]["classification_eligible"] else "ineligible",constituents_hash=stable_hash(theme["constituents"]))
+        return value
     return {
         "data_date": latest["meta"]["data_date"],
         "schema_version": latest["meta"]["schema_version"],
         "methodology_version": latest["meta"]["methodology_version"],
         "theme_master_version": latest["meta"]["universe_definition"]["theme_master_version"],
-        "themes": {theme_id: {
-            "equal_weight_rel_spy_4w": theme["metrics"]["equal_weight_rel_spy_4w"],
-            "advance_count_4w": theme["metrics"]["advance_count_4w"],
-            "above_50dma_count": theme["metrics"]["above_50dma_count"],
-            "pct_above_50dma": theme["metrics"]["pct_above_50dma"],
-            "volume_ratio_20d_60d": theme["metrics"]["volume_ratio_20d_60d"],
-        } for theme_id, theme in latest["themes"].items()},
+        "themes": {theme_id: theme_history(theme) for theme_id, theme in latest["themes"].items()},
     }
 
 

@@ -8,6 +8,7 @@ from rotation.publication import publish_generation
 from scripts.export_consumer_v3 import export_consumer_v3
 from scripts.generate_weekly import history_item
 from tests.test_pipeline_contract import synthetic_inputs
+from rotation.provenance import stable_hash
 
 
 class V3ProductionE2E(unittest.TestCase):
@@ -19,6 +20,9 @@ class V3ProductionE2E(unittest.TestCase):
         for index,date in enumerate(dates):
             item=copy.deepcopy(template); item["data_date"]=date
             item["themes"]["fixture_theme"]["equal_weight_rel_spy_4w"]=.01+index*.005
+            row=item["themes"]["fixture_theme"]; row.update(theme_return_4w=.03+index*.01,spy_return_4w=.01+index*.002,
+                candidate_bucket="research_now" if index>=4 else "watch_recovery",classification_version="candidate_bucket_v3",
+                price_signal={"confirmed":index>=4},quality_status="eligible",constituents_hash=stable_hash({"date":date}))
             history.append(item)
         daily_dates=[(dt.date(2026,5,29)+dt.timedelta(days=i)).isoformat() for i in range(42) if (dt.date(2026,5,29)+dt.timedelta(days=i)).weekday()<5]
         for ticker,row in observations.items():
@@ -37,7 +41,11 @@ class V3ProductionE2E(unittest.TestCase):
         self.assertFalse(assessment["persistence"]["history_insufficient"])
         self.assertEqual(assessment["fundamental_confirmation"]["status"],"price_and_fundamentals")
         self.assertEqual(assessment["selection_stability"]["forward_return"]["status"],"available")
+        sample=snapshot["v3_inputs"]["themes"]["fixture_theme"]["forward_samples"][0]
+        self.assertAlmostEqual(sample["theme_realized_return"],.07); self.assertAlmostEqual(sample["forward_excess_return"],.052)
         self.assertNotIn("companies",projection["phases"][6]); self.assertEqual(len(projection["phases"][4]["classification_summary"]),4)
+        constituents=projection["phases"][3]["point_in_time_constituents"][0]
+        self.assertNotEqual(constituents["theme_master_version"],"unknown"); self.assertTrue(constituents["universe_hash"])
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory); publish_generation(root/"output",snapshot,history_item(snapshot),{"index_version":"1.0","records":[]})
             destination=root/"consumer"/"v3"; export_consumer_v3(root/"output",destination)
@@ -51,7 +59,32 @@ class V3ProductionE2E(unittest.TestCase):
     def test_future_forward_outcome_is_rejected(self):
         snapshot=self.production_snapshot()
         snapshot["v3_inputs"]["themes"]["fixture_theme"]["forward_samples"].append(
-            {"prediction_date":"2026-07-03","outcome_date":"2026-08-01","return":.1})
+            {"prediction_date":"2026-07-03","outcome_date":"2026-08-01","theme_realized_return":.2,"benchmark_realized_return":.1,
+             "forward_excess_return":.1,"constituents_hash":"a"*64,"availability":"available"})
         with self.assertRaisesRegex(ValueError,"future"): build_authoritative_v3(snapshot)
+        snapshot=self.production_snapshot(); snapshot["v3_inputs"]["fundamentals"]["themes"]["fixture_theme"]["revenue_growth"]["as_of"]="2026-08-01"
+        with self.assertRaisesRegex(ValueError,"future fundamental"): build_authoritative_v3(snapshot)
+
+    def test_success_generation_requires_universe_identity(self):
+        snapshot=self.production_snapshot(); snapshot["meta"]["universe_definition"].pop("universe_hash")
+        with self.assertRaisesRegex(ValueError,"universe identity"): build_authoritative_v3(snapshot)
+
+    def test_unconfigured_optional_inputs_warn_but_do_not_make_core_critical(self):
+        config,master,observations,history,previous=synthetic_inputs()
+        snapshot=build_snapshot(config=config,theme_master=master,observations=observations,history=history,previous_judgments=previous,
+            generated_at=dt.datetime(2026,7,11,tzinfo=dt.timezone.utc),data_date="2026-07-10",source_commit="a"*40)
+        coverage=build_authoritative_v3(snapshot)["coverage"]
+        self.assertEqual(coverage["optional_input_status"],"not_assessed_or_partial")
+        self.assertEqual(coverage["status"],"warning")
+
+    def test_constituent_exclusion_missing_and_unavailable_are_distinct(self):
+        snapshot=self.production_snapshot(); membership=snapshot["v3_inputs"]["themes"]["fixture_theme"]["membership"]
+        membership[0].update(active=False,effective=False,reason="inactive")
+        membership[1].update(effective=True,data_available=False)
+        membership.append({"ticker":"MISSING","active":True,"effective":True,"reason":"included","data_available":False})
+        item=build_authoritative_v3(snapshot)["constituent_snapshots"][0]
+        self.assertIn({"ticker":membership[0]["ticker"],"reason":"inactive"},item["exclusion_reasons"])
+        self.assertIn(membership[1]["ticker"],item["unavailable_tickers"])
+        self.assertIn("MISSING",item["missing_tickers"])
 
 if __name__=="__main__": unittest.main()

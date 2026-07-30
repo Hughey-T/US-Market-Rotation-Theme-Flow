@@ -39,31 +39,24 @@
       }
     },
     "phase_inventory": {
-      "$ref": "#/$defs/inventory"
+      "$ref": "#/$defs/phaseInventory"
     },
     "detail_inventory": {
-      "$ref": "#/$defs/inventory"
+      "$ref": "#/$defs/detailInventory"
     },
     "handoff_inventory": {
-      "$ref": "#/$defs/inventoryItem"
+      "$ref": "#/$defs/handoffInventoryItem"
     },
     "validity": {
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "evaluation_at",
         "generated_at",
         "valid_until",
         "hard_stop_after",
-        "timezone",
-        "status",
-        "status_display"
+        "timezone"
       ],
       "properties": {
-        "evaluation_at": {
-          "type": "string",
-          "format": "date-time"
-        },
         "generated_at": {
           "type": "string",
           "format": "date-time"
@@ -78,17 +71,6 @@
         },
         "timezone": {
           "const": "UTC"
-        },
-        "status": {
-          "enum": [
-            "fresh",
-            "stale_but_displayable",
-            "hard_stop"
-          ]
-        },
-        "status_display": {
-          "type": "string",
-          "minLength": 1
         }
       }
     },
@@ -269,6 +251,220 @@
       }
     },
     "inventoryItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "phase",
+        "part_count",
+        "fragment_count",
+        "total_bytes",
+        "reconstructed_sha256",
+        "parts"
+      ],
+      "properties": {
+        "phase": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6
+        },
+        "part_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32
+        },
+        "fragment_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "total_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 131072
+        },
+        "reconstructed_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "parts": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "part",
+              "bytes",
+              "sha256"
+            ],
+            "properties": {
+              "part": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 32
+              },
+              "bytes": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 131072
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          }
+        }
+      }
+    },
+    "phaseInventory": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "phase",
+          "part_count",
+          "fragment_count",
+          "total_bytes",
+          "reconstructed_sha256",
+          "parts"
+        ],
+        "properties": {
+          "phase": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 6
+          },
+          "part_count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 8
+          },
+          "fragment_count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "total_bytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 131072
+          },
+          "reconstructed_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "parts": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "part",
+                "bytes",
+                "sha256"
+              ],
+              "properties": {
+                "part": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 8
+                },
+                "bytes": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 131072
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "detailInventory": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "phase",
+          "part_count",
+          "fragment_count",
+          "total_bytes",
+          "reconstructed_sha256",
+          "parts"
+        ],
+        "properties": {
+          "phase": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 6
+          },
+          "part_count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 32
+          },
+          "fragment_count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "total_bytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 131072
+          },
+          "reconstructed_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "parts": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 32,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "part",
+                "bytes",
+                "sha256"
+              ],
+              "properties": {
+                "part": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 32
+                },
+                "bytes": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 131072
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "handoffInventoryItem": {
       "type": "object",
       "additionalProperties": false,
       "required": [

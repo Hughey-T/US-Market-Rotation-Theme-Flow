@@ -94,19 +94,12 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "evaluation_at",
         "generated_at",
         "valid_until",
         "hard_stop_after",
-        "timezone",
-        "status",
-        "status_display"
+        "timezone"
       ],
       "properties": {
-        "evaluation_at": {
-          "type": "string",
-          "format": "date-time"
-        },
         "generated_at": {
           "type": "string",
           "format": "date-time"
@@ -121,17 +114,6 @@
         },
         "timezone": {
           "const": "UTC"
-        },
-        "status": {
-          "enum": [
-            "fresh",
-            "stale_but_displayable",
-            "hard_stop"
-          ]
-        },
-        "status_display": {
-          "type": "string",
-          "minLength": 1
         }
       }
     }

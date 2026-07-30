@@ -17,6 +17,10 @@ fragments. Reconstruction requires valid JSON Pointers, dense zero-based arrays,
 adjacent string continuation only, and rejects duplicate scalar, root/child, and
 scalar/container conflicts.
 
+Immutable files store only `generated_at`, `valid_until`, `hard_stop_after` and
+UTC. A consumer applies the time-dependent `fresh`, `stale_but_displayable`, or
+`hard_stop` safety gate at display time; that gate does not alter analysis bytes.
+
 ## Authoritative presentation
 
 `rotation.analysis_v3.build_authoritative_v3` creates the six objects before
@@ -44,8 +48,10 @@ not aliases. Zero benchmark variance and insufficient data are `not_available`.
 `selection_stability_heuristic` uses an empirical universe percentile, a 0.15
 single-week penalty, and optional historical retention. It explicitly declares
 that it is not a multiple-testing correction or statistical confidence.
-Four-week forward return uses only outcomes dated on/before the generation data
-date and needs five matured samples; a future outcome fails generation.
+Four-week forward outcomes store the realized theme return from prediction date
+to the four-week outcome, the matching SPY return, their excess, the prediction
+constituent hash, and availability. Only outcomes dated on/before generation
+data date are used; five matured samples are required and future outcomes fail.
 
 The production adapter reads optional `data/fundamentals/{data_date}.json` during
 weekly generation. Its path, as-of, adapter version and raw SHA-256 are bound into
@@ -57,10 +63,10 @@ is `price_only`, `fundamentals_only`, `price_and_fundamentals`, `unconfirmed`, o
 
 Constituent snapshots are fixed to `data_date` with source, universe version,
 canonical hash, inclusion/exclusion reasons, missing and unavailable tickers.
-Coverage separates configured, evaluated, partial, unavailable and missing
-themes and applies 0.75/0.50 thresholds to the minimum of constituent, price,
-fundamental, risk-adjustment, persistence, and overlap-correlation coverage.
-Low coverage emits a warning or critical missing and cannot become “none found.”
+Coverage applies 0.75/0.50 core thresholds to constituent and price paths.
+Unconfigured fundamentals, factors, history, risk, or correlation are explicit
+`not_assessed_or_partial` and cause a warning, not a false critical failure.
+Core coverage below 0.50 is critical. Neither state becomes “none found.”
 
 Overlap analysis reports pairwise overlap rate, Jaccard similarity, shared top
 constituents, return-correlation availability, common factors, deterministic

@@ -19,7 +19,8 @@ from rotation.judgments import build_index, project_previous_judgments
 from rotation.membership import member_is_effective
 from rotation.pipeline import build_snapshot
 from rotation.fundamentals import load_fundamental_bundle
-from rotation.provenance import snapshot_source_hash
+from rotation.analysis_v3 import price_signal
+from rotation.provenance import snapshot_source_hash, stable_hash
 from rotation.publication import (
     PublicationStartState, classify_publication_start_state, committed_history,
     enforce_publication_start_state, load_current_generation, publish_generation,
@@ -190,17 +191,26 @@ def load_judgment_source(record: dict) -> dict:
 
 
 def history_item(snapshot: dict) -> dict:
+    def theme_history(theme: dict) -> dict:
+        value = {
+            "equal_weight_rel_spy_4w": theme["metrics"]["equal_weight_rel_spy_4w"],
+            "advance_count_4w": theme["metrics"]["advance_count_4w"],
+            "above_50dma_count": theme["metrics"]["above_50dma_count"],
+            "pct_above_50dma": theme["metrics"]["pct_above_50dma"],
+            "volume_ratio_20d_60d": theme["metrics"]["volume_ratio_20d_60d"],
+        }
+        if theme.get("decision"):
+            value.update(theme_return_4w=theme["metrics"]["equal_weight_return_4w"],
+                spy_return_4w=snapshot["market_regime"]["inputs"]["spy_r_4w"],candidate_bucket=theme["decision"]["candidate_bucket"],
+                price_signal=price_signal(theme),classification_version="candidate_bucket_v3",
+                quality_status="eligible" if theme["quality"]["classification_eligible"] else "ineligible",
+                constituents_hash=stable_hash(theme["constituents"]))
+        return value
     return {
         "data_date": snapshot["meta"]["data_date"], "schema_version": snapshot["meta"]["schema_version"], "methodology_version": snapshot["meta"]["methodology_version"],
         "theme_master_version": snapshot["meta"]["universe_definition"]["theme_master_version"],
         "themes": {
-            theme_id: {
-                "equal_weight_rel_spy_4w": theme["metrics"]["equal_weight_rel_spy_4w"],
-                "advance_count_4w": theme["metrics"]["advance_count_4w"],
-                "above_50dma_count": theme["metrics"]["above_50dma_count"],
-                "pct_above_50dma": theme["metrics"]["pct_above_50dma"],
-                "volume_ratio_20d_60d": theme["metrics"]["volume_ratio_20d_60d"],
-            }
+            theme_id: theme_history(theme)
             for theme_id, theme in snapshot["themes"].items()
         },
     }

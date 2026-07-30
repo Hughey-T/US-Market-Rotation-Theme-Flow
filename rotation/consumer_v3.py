@@ -11,7 +11,7 @@ import hashlib
 from pathlib import Path
 
 from .consumer import build_consumer_snapshot
-from .analysis_v3 import build_authoritative_v3
+from .analysis_v3 import build_authoritative_v3, evaluate_validity
 from .consumer_v2 import _flatten_fragments
 from .provenance import canonical_bytes
 from .validation import ContractError, load_json, validate_schema
@@ -156,9 +156,19 @@ def _inventory(phase: int, chunks: list[dict], reconstructed: dict) -> dict:
             "parts": [{"part": i, "bytes": len(raw), "sha256": sha256(raw)} for i, raw in enumerate(raws, 1)]}
 
 
-def build_consumer_v3(authoritative: dict, *, evaluation_at: str | None = None):
-    snapshot = build_consumer_snapshot(authoritative); projection = build_authoritative_v3(authoritative, evaluation_at=evaluation_at)
-    if projection["validity"]["status"] == "hard_stop": raise ContractError("E_HARD_STOP")
+def _validate_inventory_limits(phase_inventory: list[dict], detail_inventory: list[dict], handoff_inventory: dict | None = None) -> None:
+    for phase, detail in zip(phase_inventory, detail_inventory):
+        if phase["part_count"] > MAX_PHASE_PARTS or len(phase["parts"]) > MAX_PHASE_PARTS or any(x["part"] > MAX_PHASE_PARTS for x in phase["parts"]):
+            raise ContractError("phase part limit exceeded")
+        if detail["part_count"] > MAX_DETAIL_PARTS or len(detail["parts"]) > MAX_DETAIL_PARTS or any(x["part"] > MAX_DETAIL_PARTS for x in detail["parts"]):
+            raise ContractError("detail part limit exceeded")
+        if phase["total_bytes"] + detail["total_bytes"] > MAX_PHASE_BYTES: raise ContractError("combined phase byte limit exceeded")
+        if phase["fragment_count"] + detail["fragment_count"] > MAX_PHASE_FRAGMENTS: raise ContractError("combined phase fragment limit exceeded")
+    if handoff_inventory and handoff_inventory["part_count"] > MAX_DETAIL_PARTS: raise ContractError("handoff part limit exceeded")
+
+
+def build_consumer_v3(authoritative: dict):
+    snapshot = build_consumer_snapshot(authoritative); projection = build_authoritative_v3(authoritative)
     identity = _identity(snapshot); phases = {}; detail_chunks = {}; phase_inv = []; detail_inv = []
     for phase in PHASES:
         view = projection["phases"][phase]
@@ -169,15 +179,14 @@ def build_consumer_v3(authoritative: dict, *, evaluation_at: str | None = None):
         phases[phase] = _chunks(view, identity, "phase", phase)
         detail_chunks[phase] = _chunks(detail, identity, "detail", phase)
         phase_inv.append(_inventory(phase, phases[phase], view)); detail_inv.append(_inventory(phase, detail_chunks[phase], detail))
-        if phase_inv[-1]["total_bytes"] + detail_inv[-1]["total_bytes"] > MAX_PHASE_BYTES: raise ContractError("phase payload limit exceeded")
-        if phase_inv[-1]["fragment_count"] + detail_inv[-1]["fragment_count"] > MAX_PHASE_FRAGMENTS: raise ContractError("combined phase fragment limit exceeded")
     for index, handoff in enumerate(projection["handoffs"], 1):
         validate_schema(handoff, HANDOFF_SCHEMA, f"v3 handoff {index}")
         if handoff["generation_id"] != identity["generation_id"]: raise ContractError("E_GENERATION_IDENTITY")
     handoff_chunks = _chunks({"handoffs": projection["handoffs"]}, identity, "handoff", 6)
     handoff_inventory = _inventory(6, handoff_chunks, {"handoffs": projection["handoffs"]})
+    _validate_inventory_limits(phase_inv, detail_inv, handoff_inventory)
     manifest = {"consumer_contract_version": CONTRACT_VERSION, "identity": identity,
-                "presentation": {"presentation_version": "1.2", "analysis_mode": snapshot["user_view"]["analysis_mode"]},
+                "presentation": {"presentation_version": "1.2", "analysis_mode": projection["analysis_mode"]},
                 "validity": projection["validity"], "fundamental_identity": projection["fundamental_identity"],
                 "phase_inventory": phase_inv, "detail_inventory": detail_inv, "handoff_inventory": handoff_inventory}
     validate_schema(manifest, MANIFEST_SCHEMA, "v3 generation manifest")
@@ -197,9 +206,11 @@ def validate_consumer_v3(pointer, manifest, phases, details, handoffs=None) -> N
     if pointer["identity"] != manifest["identity"] or pointer["generation_id"] != manifest["identity"]["generation_id"]:
         raise ContractError("E_GENERATION_IDENTITY")
     if pointer["validity"] != manifest["validity"]: raise ContractError("E_GENERATION_IDENTITY")
+    if pointer["generation_manifest_path"] != f"generations/{pointer['generation_id']}/manifest.json": raise ContractError("E_GENERATION_IDENTITY")
     for field in ("generated_at","valid_until","hard_stop_after","timezone"):
         if manifest["validity"][field] != manifest["identity"][field]: raise ContractError("E_GENERATION_IDENTITY")
     if manifest["fundamental_identity"].get("as_of") not in (None, manifest["identity"]["data_date"]): raise ContractError("E_GENERATION_IDENTITY")
+    _validate_inventory_limits(manifest["phase_inventory"],manifest["detail_inventory"],manifest["handoff_inventory"])
     reconstructed = {}
     for kind, collection, inventory in (("phase", phases, manifest["phase_inventory"]), ("detail", details, manifest["detail_inventory"])):
         for item in inventory:
@@ -222,15 +233,10 @@ def validate_consumer_v3(pointer, manifest, phases, details, handoffs=None) -> N
             validate_schema(value, PHASE_SCHEMA if kind == "phase" else DETAIL_SCHEMA, f"remote v3 {kind} object")
             if sha256(canonical_bytes(value)) != item["reconstructed_sha256"]: raise ContractError("E_RECONSTRUCT_HASH")
             reconstructed[(kind,phase)] = value
-        for phase in PHASES:
-            phase_item=manifest["phase_inventory"][phase-1]; detail_item=manifest["detail_inventory"][phase-1]
-            if phase_item["fragment_count"] + detail_item["fragment_count"] > MAX_PHASE_FRAGMENTS: raise ContractError("E_RECONSTRUCT")
     mode=manifest["presentation"]["analysis_mode"]
     if reconstructed[("phase",1)]["analysis_mode_display"] != mode or reconstructed[("phase",6)]["analysis_mode_display"] != mode:
         raise ContractError("E_PRESENTATION_CONTRACT")
     if any(item["persistence"]["analysis_mode"] != mode for item in reconstructed[("phase",1)]["theme_assessments"]):
-        raise ContractError("E_PRESENTATION_CONTRACT")
-    if reconstructed[("phase",1)]["validity_status_display"] != manifest["validity"]["status_display"] or reconstructed[("phase",6)]["validity_status_display"] != manifest["validity"]["status_display"]:
         raise ContractError("E_PRESENTATION_CONTRACT")
     if handoffs is not None:
         item = manifest["handoff_inventory"]
@@ -268,6 +274,7 @@ def load_and_validate_consumer_v3(root: Path):
     if generations.is_symlink() or pointer["generation_id"] not in generation_names or any(len(name)!=64 or any(c not in "0123456789abcdef" for c in name) for name in generation_names):
         raise ContractError("consumer v3 generation inventory mismatch")
     manifest_path=generation/"manifest.json"; manifest=read(manifest_path)
+    if generation.name != pointer["generation_id"] or manifest["identity"]["generation_id"] != generation.name: raise ContractError("E_GENERATION_IDENTITY")
     if sha256(manifest_path.read_bytes()) != pointer["generation_manifest_sha256"]: raise ContractError("E_MANIFEST_HASH")
     def read_kind(kind, inventory):
         base=generation/kind; result={}
@@ -290,6 +297,7 @@ def load_and_validate_consumer_v3(root: Path):
         if generation.is_symlink() or set(x.name for x in generation.iterdir()) != {"manifest.json","phases","details","handoffs"}:
             raise ContractError("invalid retained immutable v3 generation")
         old_manifest=read(generation/"manifest.json")
+        if old_manifest["identity"]["generation_id"] != old_id: raise ContractError("E_GENERATION_IDENTITY")
         old_pointer={"consumer_contract_version":CONTRACT_VERSION,"generation_id":old_id,
             "generation_manifest_path":f"generations/{old_id}/manifest.json",
             "generation_manifest_sha256":sha256((generation/"manifest.json").read_bytes()),
@@ -302,3 +310,8 @@ def load_and_validate_consumer_v3(root: Path):
         old_handoffs=[read(old_dir/f"part-{i}.json") for i in range(1,old_item["part_count"]+1)]
         validate_consumer_v3(old_pointer,old_manifest,old_phases,old_details,old_handoffs)
     return pointer,manifest,phases,details,handoffs
+
+
+def evaluate_generation_gate(manifest: dict, evaluation_at: str) -> dict:
+    """Time-dependent safety gate; never changes immutable generation bytes."""
+    return evaluate_validity(manifest["validity"], evaluation_at)

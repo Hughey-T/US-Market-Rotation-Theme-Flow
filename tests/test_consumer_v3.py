@@ -1,6 +1,6 @@
 import copy, tempfile, unittest
 from pathlib import Path
-from rotation.consumer_v3 import build_consumer_v3, reconstruct_fragments, validate_consumer_v3, canonical_file_bytes, sha256
+from rotation.consumer_v3 import build_consumer_v3, reconstruct_fragments, validate_consumer_v3, canonical_file_bytes, sha256, evaluate_generation_gate
 from rotation.validation import ContractError
 from rotation.provenance import canonical_bytes
 from rotation.validation import load_json, validate_schema
@@ -56,17 +56,14 @@ class ConsumerV3Tests(unittest.TestCase):
         with self.assertRaises(ContractError): validate_schema(bad,POINTER_SCHEMA,"pointer")
         phase6=copy.deepcopy(self.phases[6]); phase6[0]["fragments"].append({"field":"/companies","value":[]})
         with self.assertRaises(ContractError): validate_consumer_v3(self.pointer,self.manifest,{**self.phases,6:phase6},self.details,self.handoffs)
-        manifest=copy.deepcopy(self.manifest); manifest["presentation"]["analysis_mode"]="initial_observation"
+        manifest=copy.deepcopy(self.manifest); manifest["presentation"]["analysis_mode"]="trend"
         pointer=copy.deepcopy(self.pointer); pointer["generation_manifest_sha256"]=sha256(canonical_file_bytes(manifest))
         with self.assertRaises(ContractError): validate_consumer_v3(pointer,manifest,self.phases,self.details,self.handoffs)
 
     def test_validity_boundaries_and_hard_stop(self):
-        stale="2026-07-23T00:00:00Z"
-        pointer,manifest,phases,details,handoffs=build_consumer_v3(self.latest,evaluation_at=stale)
-        self.assertEqual(manifest["validity"]["status"],"stale_but_displayable")
-        validate_consumer_v3(pointer,manifest,phases,details,handoffs)
-        with self.assertRaisesRegex(ContractError,"E_HARD_STOP"):
-            build_consumer_v3(self.latest,evaluation_at="2026-07-25T00:00:01Z")
+        self.assertEqual(evaluate_generation_gate(self.manifest,"2026-07-20T00:00:00Z")["status"],"fresh")
+        self.assertEqual(evaluate_generation_gate(self.manifest,"2026-07-23T00:00:00Z")["status"],"stale_but_displayable")
+        self.assertEqual(evaluate_generation_gate(self.manifest,"2026-07-25T00:00:01Z")["status"],"hard_stop")
 
     def test_coordinated_manifest_and_chunk_tamper_still_fails_schema(self):
         manifest=copy.deepcopy(self.manifest); phases=copy.deepcopy(self.phases); pointer=copy.deepcopy(self.pointer)
@@ -76,6 +73,21 @@ class ConsumerV3Tests(unittest.TestCase):
         part.update(bytes=len(raw),sha256=sha256(raw))
         pointer["generation_manifest_sha256"]=sha256(canonical_file_bytes(manifest))
         with self.assertRaises(ContractError): validate_consumer_v3(pointer,manifest,phases,self.details,self.handoffs)
+
+    def test_remote_kind_part_and_combined_byte_limits(self):
+        manifest=copy.deepcopy(self.manifest); pointer=copy.deepcopy(self.pointer)
+        item=manifest["phase_inventory"][0]; item["part_count"]=9
+        item["parts"]=[{"part":i,"bytes":1,"sha256":"a"*64} for i in range(1,10)]
+        pointer["generation_manifest_sha256"]=sha256(canonical_file_bytes(manifest))
+        with self.assertRaises(ContractError): validate_consumer_v3(pointer,manifest,self.phases,self.details,self.handoffs)
+        manifest=copy.deepcopy(self.manifest); pointer=copy.deepcopy(self.pointer)
+        manifest["phase_inventory"][0]["total_bytes"]=80*1024; manifest["detail_inventory"][0]["total_bytes"]=60*1024
+        pointer["generation_manifest_sha256"]=sha256(canonical_file_bytes(manifest))
+        with self.assertRaisesRegex(ContractError,"combined phase byte"): validate_consumer_v3(pointer,manifest,self.phases,self.details,self.handoffs)
+
+    def test_pointer_path_must_match_generation_id(self):
+        pointer=copy.deepcopy(self.pointer); pointer["generation_manifest_path"]=f"generations/{'b'*64}/manifest.json"
+        with self.assertRaisesRegex(ContractError,"E_GENERATION_IDENTITY"): validate_consumer_v3(pointer,self.manifest,self.phases,self.details,self.handoffs)
 
     def test_phase_schema_rejects_missing_wrong_extra_and_cross_phase(self):
         from rotation.analysis_v3 import build_authoritative_v3
@@ -88,5 +100,13 @@ class ConsumerV3Tests(unittest.TestCase):
         ):
             changed=copy.deepcopy(values); mutation(changed)
             with self.assertRaises(ContractError): validate_schema(changed[phase],PHASE_SCHEMA,"phase")
+        assessment=copy.deepcopy(values[1]["theme_assessments"][0]); field=assessment["fundamental_confirmation"]["fields"]["revenue_growth"]
+        for mutation in (
+            lambda x:x.update(status="available",value=None,as_of=None,confirmation=True),
+            lambda x:x.update(status="not_available",confirmation=True),
+            lambda x:x.update(unknown=True),
+        ):
+            changed=copy.deepcopy(values[1]); target=changed["theme_assessments"][0]["fundamental_confirmation"]["fields"]["revenue_growth"]; mutation(target)
+            with self.assertRaises(ContractError): validate_schema(changed,PHASE_SCHEMA,"phase1 fundamental")
 
 if __name__ == "__main__": unittest.main()

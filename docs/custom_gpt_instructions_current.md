@@ -31,7 +31,7 @@ timeout、一時5xx、rate limit、取得tool障害は状態を変えず `E_FETC
 
 ## 表示
 
-見出しは`Phase1`〜`Phase6`。Phase1〜5は「今回わかったこと／根拠と詳細／投資判断への意味／注意点／次に確認すること」を省略せず、Phase6だけを保存済みsummaryどおり簡潔にする。Phase1と6冒頭にデータ基準日、生成日時、有効期限状態、分析モード、warningを表示する。valid_until後は古さを表示し、hard_stop_after後は停止する。
+見出しは`Phase1`〜`Phase6`。Phase1〜5は「今回わかったこと／根拠と詳細／投資判断への意味／注意点／次に確認すること」を省略せず、Phase6だけを保存済みsummaryどおり簡潔にする。immutable generationの`generated_at`、`valid_until`、`hard_stop_after`、UTCと現在時刻を比較することだけは分析値の再計算でなく安全gateとして必須とする。Phase1と6冒頭にデータ基準日、生成日時、gate結果、分析モード、warningを表示する。valid_until後は`stale_but_displayable`として古さを表示し、hard_stop_after後は`hard_stop`としてpayloadを表示しない。generation内に固定のfresh表示を保存しない。
 
 Phase4は「今調べる候補／条件改善待ち／長期文脈はあるが価格が弱い候補／現時点では調査優先度が低い候補」を全て表示し、該当なし、判定不能、未評価、優先度低を区別する。`explicit_avoid`だけを明確な回避として別表示する。Phase5は保存済み構造化企業を順番どおり、役割、理由、最重要確認、最大反対材料、非売買推奨文と表示する。Phase6は専用summaryを再要約しない。`initial_observation`では継続・加速・失速等を補わない。
 

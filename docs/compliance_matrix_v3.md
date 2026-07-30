@@ -12,7 +12,7 @@ The production path is `generate_weekly.ticker_observation/load_fundamental_bund
 |6|Phase5|weekly candidates; per-theme ranking|Phase5 oneOf|production E2E|missing/type/extra fields|full discovery / schema reload|implemented and verified|
 |7|Phase6|dedicated producer summary|Phase6 oneOf|no Phase5 duplication|cross-Phase company injection|full discovery / schema reload|implemented and verified|
 |8|display values|theme metrics; `display_percent`|assessment schema|margin synthetic|wrong type schema|full discovery / schema reload|implemented and verified|
-|9|dates/validity|snapshot meta + explicit evaluation time|pointer/manifest/Phase1/6|fresh/stale boundary|hard-stop boundary|full discovery / identity comparison|implemented and verified|
+|9|dates/validity|immutable snapshot times + consumer safety gate|pointer/manifest/Phase1/6|fresh/stale boundary|hard-stop boundary|full discovery / identity comparison|implemented and verified|
 |10|GPT boundary|v3 presentation fields|instructions|instruction contract|reserved prefix|full discovery / instruction audit|implemented and verified|
 |11|exact commands|`ConversationSession`|N/A|user experience|embedded commands|full discovery|implemented and verified|
 |12|state|pointer generation/hash/mode|pointer schema|mode identity|mode mismatch|full discovery / remote validator|implemented and verified|
@@ -21,13 +21,13 @@ The production path is `generate_weekly.ticker_observation/load_fundamental_bund
 |15|classification semantics|candidate buckets|Phase4|four buckets|cross-Phase schema|full discovery / schema reload|implemented and verified|
 |16|flow semantics|`FLOW_NOTICE`|Phase1/6|producer E2E|instruction audit|full discovery / validator|implemented and verified|
 |17|margin/confidence|theme metrics; `threshold_assessment`|assessment|synthetic boundary|missing observation|full discovery / schema reload|implemented and verified|
-|18|persistence/churn|identity-bound `history_weekly` in `v3_inputs`|persistence object|trend E2E|insufficient history|full discovery / remote reload|implemented and verified|
+|18|persistence/churn|saved candidate bucket/version/price status in `history_weekly`|persistence object|trend E2E|insufficient history|full discovery / remote reload|implemented and verified|
 |19|risk adjustment|date-keyed 60-day theme/SPY returns|risk object|available production E2E|date mismatch/zero variance|full discovery / schema reload|implemented and verified|
-|20|selection stability/forward|matured historical samples only|stability object|five-sample E2E|future leakage rejection|full discovery / schema reload|implemented and verified|
+|20|selection stability/forward|realized theme/SPY outcomes + constituent hash|stability object|five-sample E2E|future leakage rejection|full discovery / schema reload|implemented and verified|
 |21|overlap|constituents, dated returns, configured factors|Phase3 pair objects|deterministic cluster/correlation|insufficient dates|full discovery / schema reload|implemented and verified|
 |22|fundamentals|`data/fundamentals/{data_date}.json`; hash-bound bundle|snapshot v3 input / fundamental object|available production E2E|as-of mismatch/missing fields|full discovery / snapshot validation|implemented and verified|
 |23|point-in-time constituents|effective master membership|Phase3 constituent object|generation projection|membership boundaries|full discovery / schema reload|implemented and verified|
-|24|coverage|all six analytical paths|coverage object|coverage E2E|low coverage warning|full discovery / schema reload|implemented and verified|
+|24|coverage|core coverage plus explicit optional not-assessed paths|coverage object|coverage E2E|low coverage warning|full discovery / schema reload|implemented and verified|
 |25|handoff|structured Phase5 candidates|handoff v1|remote handoff reload|identity/schema tamper|full discovery / v3 reload|implemented and verified|
 |26|traceability|authoritative `/themes`, `/v3_inputs`, `/meta` paths|detail oneOf|detail reload|self-reference/extra field|full discovery / schema reload|implemented and verified|
 |27|Phase layout|authoritative six objects|Phase oneOf|all six positive|Phase mixing|full discovery / schema reload|implemented and verified|

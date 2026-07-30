@@ -88,7 +88,7 @@ def selection_stability(score, universe_scores: list[float], persistence_weeks=N
     samples = [x for x in (forward_samples or []) if isinstance(x,dict) and x.get("outcome_date") and (data_date is None or x["outcome_date"] <= data_date)]
     if any(x.get("outcome_date", "") > (data_date or "9999-12-31") for x in forward_samples or []):
         raise ValueError("future forward-return outcome is forbidden")
-    forward = [x.get("return") for x in samples if isinstance(x.get("return"),(int,float)) and math.isfinite(x["return"])]
+    forward = [x.get("forward_excess_return") for x in samples if x.get("availability")=="available" and isinstance(x.get("forward_excess_return"),(int,float)) and math.isfinite(x["forward_excess_return"])]
     return {"status":"available", "method":"selection_stability_heuristic", "is_multiple_testing_correction":False, "universe_size":len(usable),
             "percentile":percentile, "adjusted_confidence":adjusted, "single_week_penalty":penalty,
             "historical_retention":retention,
@@ -97,12 +97,12 @@ def selection_stability(score, universe_scores: list[float], persistence_weeks=N
 
 
 def persistence_statistics(current_classification: str, current_value, history: list[dict]) -> dict:
-    ordered = sorted(history, key=lambda x: x.get("data_date", ""))
+    ordered = sorted((x for x in history if x.get("classification_version") == "candidate_bucket_v3" and x.get("candidate_bucket")), key=lambda x: x.get("data_date", ""))
     if not ordered:
         return {"analysis_mode":"initial_observation","signal_persistence_weeks":None,"prior_generation_delta":None,
                 "classification_churn":None,"selection_status":"initial_observation","historical_retention":None,"history_insufficient":True}
     prior=ordered[-1]
-    classes=[x.get("classification") or ("research_now" if isinstance(x.get("value"),(int,float)) and x["value"] >= .05 else "watch_recovery") for x in ordered]+[current_classification]
+    classes=[x["candidate_bucket"] for x in ordered]+[current_classification]
     churn=sum(a!=b for a,b in zip(classes,classes[1:]))/max(1,len(classes)-1)
     persistence=1
     for classification in reversed(classes[:-1]):
@@ -113,6 +113,17 @@ def persistence_statistics(current_classification: str, current_value, history: 
     return {"analysis_mode":"trend","signal_persistence_weeks":persistence,"prior_generation_delta":delta,
             "classification_churn":churn,"selection_status":"continuing" if persistence>1 else "new",
             "historical_retention":retained,"history_insufficient":False}
+
+
+def price_signal(theme: dict) -> dict:
+    metrics=theme.get("metrics") or {}; quality=theme.get("quality") or {}; bucket=(theme.get("decision") or {}).get("candidate_bucket")
+    available=all(isinstance(metrics.get(k),(int,float)) for k in ("equal_weight_rel_spy_4w","advance_ratio_4w","pct_above_50dma"))
+    threshold_pass=available and metrics["equal_weight_rel_spy_4w"] >= .05 - 1e-12
+    breadth_pass=available and metrics["advance_ratio_4w"] >= .60 and metrics["pct_above_50dma"] >= .50
+    quality_pass=quality.get("classification_eligible") is True
+    confirmed=bool(bucket=="research_now" and threshold_pass and breadth_pass and quality_pass)
+    return {"data_available":available,"confirmed":confirmed,"candidate_bucket":bucket or "unavailable",
+            "threshold_pass":threshold_pass,"breadth_pass":breadth_pass,"quality_pass":quality_pass}
 
 
 def fundamental_confirmation(record: dict | None, price_confirmed: bool | None) -> dict:
@@ -128,14 +139,13 @@ def fundamental_confirmation(record: dict | None, price_confirmed: bool | None) 
             "coverage": len(assessed)/len(FUNDAMENTAL_FIELDS)}
 
 
-def validity(meta: dict, evaluation_at: str) -> dict:
+def evaluate_validity(meta: dict, evaluation_at: str) -> dict:
     evaluated = dt.datetime.fromisoformat(evaluation_at.replace("Z", "+00:00"))
     valid_until = dt.datetime.fromisoformat(meta["valid_until"].replace("Z", "+00:00"))
     hard_stop = dt.datetime.fromisoformat(meta["hard_stop_after"].replace("Z", "+00:00"))
     status = "fresh" if evaluated <= valid_until else "stale_but_displayable" if evaluated <= hard_stop else "hard_stop"
     labels = {"fresh":"有効期間内", "stale_but_displayable":"データが古いため注意", "hard_stop":"表示停止"}
-    return {"evaluation_at": evaluation_at, "generated_at": meta["generated_at"], "valid_until": meta["valid_until"],
-            "hard_stop_after": meta["hard_stop_after"], "timezone":"UTC", "status":status, "status_display":labels[status]}
+    return {"evaluation_at": evaluation_at, "status":status, "status_display":labels[status]}
 
 
 def _themes(snapshot: dict) -> list[tuple[str, dict]]:
@@ -148,11 +158,16 @@ def point_in_time_constituents(snapshot: dict) -> list[dict]:
     for theme_id, theme in _themes(snapshot):
         rows=[{"ticker":r.get("ticker"), "role":r.get("role"), "inclusion_reason":"effective_on_data_date"}
               for r in theme.get("constituents") or [] if r.get("ticker")]
+        membership=(snapshot.get("v3_inputs",{}).get("themes",{}).get(theme_id) or {}).get("membership") or []
+        required=("theme_master_version","theme_master_schema_version","universe_hash")
+        if any(not universe.get(k) for k in required): raise ValueError("successful generation requires complete universe identity")
         output.append({"theme_id":theme_id, "constituents":rows, "constituent_snapshot_date":date,
                        "source":"authoritative_generation", "constituents_hash":hashlib.sha256(canonical_bytes(rows)).hexdigest(),
-                       "universe_version":str(universe.get("version") or universe.get("config_version") or "unknown"),
-                       "exclusion_reasons":[], "missing_tickers":[],
-                       "unavailable_tickers":[r.get("ticker") for r in theme.get("constituents") or [] if r.get("valid") is False]})
+                       "theme_master_version":universe["theme_master_version"],"theme_master_schema_version":universe["theme_master_schema_version"],
+                       "universe_hash":universe["universe_hash"],"source_identity":snapshot["meta"]["run_id"],
+                       "exclusion_reasons":[{"ticker":x["ticker"],"reason":x["reason"]} for x in membership if not x["effective"]],
+                       "missing_tickers":[x["ticker"] for x in membership if x["effective"] and x["ticker"] not in {r["ticker"] for r in rows}],
+                       "unavailable_tickers":[x["ticker"] for x in membership if x["effective"] and not x["data_available"]]})
     return output
 
 
@@ -181,9 +196,10 @@ def overlap_clusters(snapshot: dict) -> list[dict]:
             overlap=len(shared)/min(len(themes[a]),len(themes[b])) if themes[a] and themes[b] else 0
             inputs=snapshot.get("v3_inputs",{}).get("themes",{})
             corr=_correlation((inputs.get(a) or {}).get("theme_returns") or [],(inputs.get(b) or {}).get("theme_returns") or [])
+            factors_a=(inputs.get(a) or {}).get("factor_exposures") or []; factors_b=(inputs.get(b) or {}).get("factor_exposures") or []
             pairs.append({"theme_a":a,"theme_b":b,"constituent_overlap_rate":overlap,"jaccard_similarity":j,
                           "shared_top_constituents":shared[:5],"theme_return_correlation":corr,
-                          "common_factor_exposure":sorted(set((inputs.get(a) or {}).get("factor_exposures") or [])&set((inputs.get(b) or {}).get("factor_exposures") or [])),
+                          "common_factor_exposure":sorted(set(factors_a)&set(factors_b)),"factor_exposure_status":"assessed" if factors_a and factors_b else "not_assessed",
                           "duplicate_company_candidates":sorted(t for t,ids in candidate_tickers.items() if a in ids and b in ids)})
             if j>=.5: parent[find(b)]=find(a)
     groups={}
@@ -210,26 +226,31 @@ def coverage(snapshot: dict, fundamentals: dict, assessments: list[dict], overla
             "risk_adjustment":sum(x["risk_adjustment"]["status"]=="available" for x in assessments)/configured if configured else 0,
             "persistence":sum(not x["persistence"]["history_insufficient"] for x in assessments)/configured if configured else 0,
             "overlap_correlation":sum(x["theme_return_correlation"]["status"]=="available" for x in overlaps)/len(overlaps) if overlaps else 1}
-    minimum=min(ratios.values()) if ratios else 0
+    core_min=min(ratios["constituent"],ratios["price"]); optional_min=min(ratios[k] for k in ("fundamental","risk_adjustment","persistence","overlap_correlation"))
+    status="critical_missing" if core_min<.5 else "warning" if core_min<.75 or optional_min<.75 else "ok"
     return {"configured_theme_count":configured,"evaluated_theme_count":complete,"partial_theme_count":partial,
             "unavailable_theme_count":unavailable_count,"missing_themes":missing,
             "constituent_coverage":ratios["constituent"],"price_coverage":ratios["price"], "fundamental_coverage":ratios["fundamental"],
             "risk_adjustment_coverage":ratios["risk_adjustment"],"persistence_coverage":ratios["persistence"],"overlap_correlation_coverage":ratios["overlap_correlation"],
-            "thresholds":{"ok":.75,"warning":.5}, "status":"ok" if minimum>=.75 else "warning" if minimum>=.5 else "critical_missing",
-            "warning":None if minimum>=.75 else "coverage不足のため該当なしとは結論しません。"}
+            "thresholds":{"ok":.75,"warning":.5}, "optional_input_status":"assessed" if optional_min>=.75 else "not_assessed_or_partial", "status":status,
+            "warning":None if status=="ok" else "coverage不足または任意入力未設定のため該当なしとは結論しません。"}
 
 
 def build_authoritative_v3(snapshot: dict, *, evaluation_at: str | None = None) -> dict:
     themes=_themes(snapshot); scores=[(t.get("metrics") or {}).get("equal_weight_rel_spy_4w") for _,t in themes]
-    mode=(snapshot.get("user_view") or {}).get("analysis_mode","initial_observation")
+    compatible_history=[x for value in (snapshot.get("v3_inputs",{}).get("themes",{}) or {}).values() for x in value.get("history",[]) if x.get("classification_version")=="candidate_bucket_v3"]
+    mode="trend" if compatible_history else "initial_observation"
     inputs=snapshot.get("v3_inputs") or {}; fundamental_bundle=inputs.get("fundamentals") or {}; fundamental_records=fundamental_bundle.get("themes") or {}
-    fundamentals={tid:fundamental_confirmation(fundamental_records.get(tid),
-        isinstance((theme.get("metrics") or {}).get("equal_weight_rel_spy_4w"),(int,float))) for tid,theme in themes}
+    for record in fundamental_records.values():
+        for field in record.values():
+            if isinstance(field,dict) and field.get("as_of") and field["as_of"] > snapshot["meta"]["data_date"]: raise ValueError("future fundamental as_of is forbidden")
+    price_signals={tid:price_signal(theme) for tid,theme in themes}
+    fundamentals={tid:fundamental_confirmation(fundamental_records.get(tid),price_signals[tid]["confirmed"] if price_signals[tid]["data_available"] else None) for tid,theme in themes}
     assessments=[]
     for rank,(tid,theme) in enumerate(sorted(themes,key=lambda x:((x[1].get("metrics") or {}).get("equal_weight_rel_spy_4w") is None,-((x[1].get("metrics") or {}).get("equal_weight_rel_spy_4w") or 0),x[0])),1):
         metric=(theme.get("metrics") or {}).get("equal_weight_rel_spy_4w")
         assessments.append({"theme_id":tid,"theme_display_name":theme.get("label",tid),"display_metric":display_percent(metric,rank=rank,threshold=.05),
-            "threshold_assessment":threshold_assessment(metric,.05,(theme.get("quality") or {}).get("status","unknown")),
+            "threshold_assessment":threshold_assessment(metric,.05,(theme.get("quality") or {}).get("status","unknown")),"price_signal":price_signals[tid],
             "risk_adjustment":risk_adjusted_metrics((inputs.get("themes",{}).get(tid) or {}).get("theme_returns") or [],(inputs.get("themes",{}).get(tid) or {}).get("benchmark_returns") or []),
             "selection_stability":selection_stability(metric,scores,1,None,(inputs.get("themes",{}).get(tid) or {}).get("forward_samples"),snapshot["meta"]["data_date"]),
             "persistence":persistence_statistics(str((theme.get("decision") or {}).get("candidate_bucket","unconfirmed")),metric,
@@ -253,7 +274,6 @@ def build_authoritative_v3(snapshot: dict, *, evaluation_at: str | None = None) 
             "non_recommendation_notice":"テーマ検証の観測候補であり、売買推奨ではありません。"})
     constituents=point_in_time_constituents(snapshot); overlaps=overlap_clusters(snapshot); cov=coverage(snapshot,fundamentals,assessments,overlaps)
     meta=snapshot["meta"]
-    valid=validity(meta,evaluation_at or meta["generated_at"])
     classification=[]
     buckets=snapshot.get("candidate_buckets") or {}
     labels={"research_now":"今調べる候補","watch_recovery":"条件改善待ち","long_term_context_price_weak":"長期文脈はあるが価格が弱い候補","avoid_now":"現時点では調査優先度が低い候補"}
@@ -262,14 +282,14 @@ def build_authoritative_v3(snapshot: dict, *, evaluation_at: str | None = None) 
         "research_priorities":[c["theme_id"] for c in candidates[:3]],"classification_summary":classification,
         "company_summary":[{"ticker":c["ticker"],"theme_id":c["theme_id"],"candidate_role":c["candidate_role"]} for c in candidates[:6]],
         "main_cautions":[FLOW_NOTICE]+([cov["warning"]] if cov["warning"] else []),"next_update_checks":["相対強度、breadth、threshold marginの変化"],
-        "data_date_display":meta["data_date"],"generated_at_display":meta["generated_at"],"validity_status_display":valid["status_display"],
+        "data_date_display":meta["data_date"],"generated_at_display":meta["generated_at"],
         "analysis_mode_display":mode}
     handoffs=[{"handoff_contract_version":"1.0","generation_id":snapshot.get("meta",{}).get("source_snapshot","").split("/")[-2],
         "data_date":meta["data_date"],"theme_id":c["theme_id"],"theme_status":"research_candidate","ticker":c["ticker"],
         "candidate_role":c["candidate_role"],"selection_reason":c["selection_reason"],"primary_checks":[c["primary_check"]],
         "counter_evidence":[c["counter_evidence"]],"price_signal_status":"available","fundamental_confirmation_status":c["fundamental_confirmation_status"],
         "data_quality":c["data_quality"],"warnings":[c["non_recommendation_notice"]]} for c in candidates]
-    common={"data_date_display":meta["data_date"],"generated_at_display":meta["generated_at"],"validity_status_display":valid["status_display"],"analysis_mode_display":mode,"flow_notice":FLOW_NOTICE}
+    common={"data_date_display":meta["data_date"],"generated_at_display":meta["generated_at"],"analysis_mode_display":mode,"flow_notice":FLOW_NOTICE}
     phases={1:{"phase":1,**common,"coverage":cov,"theme_assessments":assessments},2:{"phase":2,"price_path":assessments},
             3:{"phase":3,"point_in_time_constituents":constituents,"overlap_clusters":overlaps},
             4:{"phase":4,"classification_summary":classification,"explicit_avoid":[]},
@@ -278,4 +298,5 @@ def build_authoritative_v3(snapshot: dict, *, evaluation_at: str | None = None) 
     details={i:{"phase":i,"traceability":{"source_fields":["/themes","/v3_inputs","/meta"]},"methodology":{"methodology_id":f"phase_{i}_authoritative_v3","notes":["producer_generated"]}} for i in range(1,6)}
     details[6]={"phase":6,"traceability":{"source_fields":["/market_regime","/candidate_buckets","/company_candidates","/meta"]},"methodology":{"methodology_id":"dedicated_summary_v3","notes":["no_phase5_duplication"]}}
     return {"phases":phases,"details":details,"handoffs":handoffs,"coverage":cov,"constituent_snapshots":constituents,"overlap_clusters":overlaps,
-            "analysis_mode":mode,"validity":valid,"fundamental_identity":{k:fundamental_bundle.get(k) for k in ("adapter_version","as_of","source","source_sha256")}}
+            "analysis_mode":mode,"validity":{"generated_at":meta["generated_at"],"valid_until":meta["valid_until"],"hard_stop_after":meta["hard_stop_after"],"timezone":"UTC"},
+            "fundamental_identity":{k:fundamental_bundle.get(k) for k in ("adapter_version","as_of","source","source_sha256")}}

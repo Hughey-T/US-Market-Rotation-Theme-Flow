@@ -112,7 +112,8 @@
               "benchmark_returns",
               "history",
               "forward_samples",
-              "factor_exposures"
+              "factor_exposures",
+              "membership"
             ],
             "properties": {
               "theme_returns": {
@@ -162,7 +163,11 @@
                   "additionalProperties": false,
                   "required": [
                     "data_date",
-                    "value"
+                    "value",
+                    "candidate_bucket",
+                    "price_signal",
+                    "classification_version",
+                    "quality_status"
                   ],
                   "properties": {
                     "data_date": {
@@ -172,6 +177,30 @@
                     "value": {
                       "type": [
                         "number",
+                        "null"
+                      ]
+                    },
+                    "candidate_bucket": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "price_signal": {
+                      "type": [
+                        "object",
+                        "null"
+                      ]
+                    },
+                    "classification_version": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "quality_status": {
+                      "type": [
+                        "string",
                         "null"
                       ]
                     }
@@ -186,7 +215,11 @@
                   "required": [
                     "prediction_date",
                     "outcome_date",
-                    "return"
+                    "theme_realized_return",
+                    "benchmark_realized_return",
+                    "forward_excess_return",
+                    "constituents_hash",
+                    "availability"
                   ],
                   "properties": {
                     "prediction_date": {
@@ -197,8 +230,21 @@
                       "type": "string",
                       "format": "date"
                     },
-                    "return": {
+                    "theme_realized_return": {
                       "type": "number"
+                    },
+                    "benchmark_realized_return": {
+                      "type": "number"
+                    },
+                    "forward_excess_return": {
+                      "type": "number"
+                    },
+                    "constituents_hash": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    },
+                    "availability": {
+                      "const": "available"
                     }
                   }
                 }
@@ -210,6 +256,41 @@
                   "minLength": 1
                 },
                 "uniqueItems": true
+              },
+              "membership": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "ticker",
+                    "active",
+                    "effective",
+                    "reason",
+                    "data_available"
+                  ],
+                  "properties": {
+                    "ticker": {
+                      "type": "string"
+                    },
+                    "active": {
+                      "type": "boolean"
+                    },
+                    "effective": {
+                      "type": "boolean"
+                    },
+                    "reason": {
+                      "enum": [
+                        "included",
+                        "inactive",
+                        "outside_validity_window"
+                      ]
+                    },
+                    "data_available": {
+                      "type": "boolean"
+                    }
+                  }
+                }
               }
             }
           }
@@ -1887,6 +1968,48 @@
         },
         "volume_ratio_20d_60d": {
           "$ref": "#/$defs/nullableNumber"
+        },
+        "theme_return_4w": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "spy_return_4w": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "candidate_bucket": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "price_signal": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "classification_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "quality_status": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "constituents_hash": {
+          "type": [
+            "string",
+            "null"
+          ]
         }
       }
     },
