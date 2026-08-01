@@ -3,3 +3,5 @@
 Consumer v3 now retains any JSON object or array whose canonical fragment is at most 9 KiB as one exact subtree fragment. Oversized containers continue through the established leaf projection. Reconstruction remains lossless and deterministic.
 
 The existing limits remain unchanged: 1,000 combined fragments per phase, eight phase parts, 32 detail parts, and 128 KiB combined phase/detail bytes. Limit failures now identify the payload kind, phase number, observed count, and configured maximum.
+
+Regression coverage verifies that a production-sized Phase 1 payload exceeds the old leaf-fragment ceiling, remains within the existing limits after compaction, and reconstructs to the exact source JSON. Temporary Git repositories used by workflow-contract tests also disable automatic maintenance and tolerate cleanup races after all assertions complete.
