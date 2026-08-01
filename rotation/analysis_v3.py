@@ -283,7 +283,7 @@ def build_authoritative_v3(snapshot: dict, *, evaluation_at: str | None = None) 
     labels={"research_now":"今調べる候補","watch_recovery":"条件改善待ち","long_term_context_price_weak":"長期文脈はあるが価格が弱い候補","avoid_now":"現時点では調査優先度が低い候補"}
     for key,label in labels.items(): classification.append({"classification":key,"display_name":label,"status":"present" if buckets.get(key) else "none_assessed","theme_ids":[x.get("id") for x in buckets.get(key) or []]})
     summary={"market_conclusion":f"市場分類: {((snapshot.get('market_regime') or {}).get('classification') or {}).get('primary_regime','判定不能')}",
-        "research_priorities":[c["theme_id"] for c in candidates[:3]],"classification_summary":classification,
+        "research_priorities":list(dict.fromkeys(c["theme_id"] for c in candidates))[:3],"classification_summary":classification,
         "company_summary":[{"ticker":c["ticker"],"theme_id":c["theme_id"],"candidate_role":c["candidate_role"]} for c in candidates[:6]],
         "main_cautions":[FLOW_NOTICE]+([cov["warning"]] if cov["warning"] else []),"next_update_checks":["相対強度、breadth、threshold marginの変化"],
         "data_date_display":meta["data_date"],"generated_at_display":meta["generated_at"],
