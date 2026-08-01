@@ -38,6 +38,7 @@ class V3SummaryDisplayHygieneTests(unittest.TestCase):
         priorities = build_authoritative_v3(snapshot)["phases"][6]["research_priorities"]
         self.assertEqual(priorities, [theme_id])
         self.assertEqual(len(priorities), len(set(priorities)))
+        self.assertLessEqual(len(priorities), 3)
 
     def test_instructions_hide_transport_and_long_trace_values_by_default(self):
         text = (ROOT / "docs" / "custom_gpt_instructions_current.md").read_text(encoding="utf-8")
