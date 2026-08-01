@@ -14,58 +14,6 @@ defaults:
     shell: bash
 
 jobs:
-  apply-test-cleanup-hardening:
-    if: github.event_name == 'pull_request' && github.head_ref == 'fix/consumer-v3-fragment-compaction'
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: fix/consumer-v3-fragment-compaction
-          fetch-depth: 0
-      - name: Patch cleanup and remove this temporary job
-        shell: bash
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-
-          path = Path("tests/test_lock_and_workflow_contract.py")
-          text = path.read_text(encoding="utf-8")
-          temporary_line = (
-              "temporary = tempfile.TemporaryDirectory(); "
-              "repo = Path(temporary.name)"
-          )
-          replacement_line = (
-              "temporary = tempfile.TemporaryDirectory("
-              "ignore_cleanup_errors=True); "
-              "repo = Path(temporary.name)"
-          )
-          init_line = 'self.git(repo, "init", "-b", "main")'
-          init_replacement = "\n".join(
-              (
-                  init_line,
-                  '        self.git(repo, "config", "gc.auto", "0")',
-                  '        self.git(repo, "config", "maintenance.auto", "false")',
-              )
-          )
-          if text.count(temporary_line) != 1:
-              raise SystemExit("temporary repository line not unique")
-          if text.count(init_line) != 1:
-              raise SystemExit("temporary repository init line not unique")
-          text = text.replace(temporary_line, replacement_line, 1)
-          text = text.replace(init_line, init_replacement, 1)
-          path.write_text(text, encoding="utf-8")
-          PY
-          git fetch origin main
-          git checkout origin/main -- .github/workflows/test.yml
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add tests/test_lock_and_workflow_contract.py .github/workflows/test.yml
-          git commit -m "Harden temporary Git test cleanup"
-          git push origin HEAD:fix/consumer-v3-fragment-compaction
-
   schema-and-canonical-fixtures:
     runs-on: ubuntu-latest
     timeout-minutes: 10
