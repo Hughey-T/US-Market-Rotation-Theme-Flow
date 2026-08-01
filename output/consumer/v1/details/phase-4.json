@@ -1,13 +1,13 @@
 {
   "details_contract_version": "1.0",
   "source_identity": {
-    "analysis_id": "1358de247d71e84230463f25033c42fedb81cdae8ba307bafaf9719dfecf525f",
-    "generation_id": "b3a39afecf11c4cb04695f854bdb47d39a67d56f07c7d52d589d4503dd90a563"
+    "analysis_id": "ddd12cd862d8798a69811acf9d711c6d25b9b22820369c3e8481914e50c33253",
+    "generation_id": "981172bcedb346c7d1199450631dd4995234e54afe560cf60ce47d63bddeb25f"
   },
   "meta": {
-    "run_id": "1358de247d71e84230463f25033c42fedb81cdae8ba307bafaf9719dfecf525f",
-    "source_commit": "2784c3f9e22f27396e9412498f6966e9b81e8c32",
-    "source_sha256": "8e2e9f686dc9da9f180a37f714c3a876b0be2ddeebe77ca97aee96f674c88d84",
+    "run_id": "ddd12cd862d8798a69811acf9d711c6d25b9b22820369c3e8481914e50c33253",
+    "source_commit": "2c79c9ffb6dbda122ad8fc1ef17ccb626567b30c",
+    "source_sha256": "a303de70af28eaa996e57ca61be7215c27655252ebfe0a10094ac74858b46230",
     "data_date": "2026-07-31",
     "status": "success"
   },
@@ -62,18 +62,6 @@
             "structural_context_status": "not_assessed",
             "recovery_condition": "相対強度と上昇銘柄の広がりが同時に改善するかを次回確認します。",
             "largest_counter_evidence": "反対条件が検出されています。次回の価格と広がりで再確認します。"
-          },
-          {
-            "id": "cybersecurity",
-            "label": "サイバーセキュリティ",
-            "source": "fixed_theme",
-            "classification_explanation": "中期の強さを残す一方、直近の回復確認が必要です。",
-            "relative_strength_4w": 0.028060722165999512,
-            "breadth_above_50dma": 1.0,
-            "concentration_top1": 0.4862504288413052,
-            "structural_context_status": "not_assessed",
-            "recovery_condition": "相対強度と上昇銘柄の広がりが同時に改善するかを次回確認します。",
-            "largest_counter_evidence": "直接的な資金フロー確認はありません。"
           },
           {
             "id": "semi_equipment",
@@ -168,6 +156,18 @@
             "relative_strength_4w": 0.0394428375805183,
             "breadth_above_50dma": 0.7142857142857143,
             "concentration_top1": 0.5325124773064013,
+            "structural_context_status": "not_assessed",
+            "recovery_condition": "相対強度と上昇銘柄の広がりが同時に改善するかを次回確認します。",
+            "largest_counter_evidence": "直接的な資金フロー確認はありません。"
+          },
+          {
+            "id": "cybersecurity",
+            "label": "サイバーセキュリティ",
+            "source": "fixed_theme",
+            "classification_explanation": "現在の価格、広がり、集中度または反対材料から、調査優先度を下げています。",
+            "relative_strength_4w": 0.028060722165999512,
+            "breadth_above_50dma": 1.0,
+            "concentration_top1": 0.4862504288413052,
             "structural_context_status": "not_assessed",
             "recovery_condition": "相対強度と上昇銘柄の広がりが同時に改善するかを次回確認します。",
             "largest_counter_evidence": "直接的な資金フロー確認はありません。"

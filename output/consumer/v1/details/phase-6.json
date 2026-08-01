@@ -1,13 +1,13 @@
 {
   "details_contract_version": "1.0",
   "source_identity": {
-    "analysis_id": "1358de247d71e84230463f25033c42fedb81cdae8ba307bafaf9719dfecf525f",
-    "generation_id": "b3a39afecf11c4cb04695f854bdb47d39a67d56f07c7d52d589d4503dd90a563"
+    "analysis_id": "ddd12cd862d8798a69811acf9d711c6d25b9b22820369c3e8481914e50c33253",
+    "generation_id": "981172bcedb346c7d1199450631dd4995234e54afe560cf60ce47d63bddeb25f"
   },
   "meta": {
-    "run_id": "1358de247d71e84230463f25033c42fedb81cdae8ba307bafaf9719dfecf525f",
-    "source_commit": "2784c3f9e22f27396e9412498f6966e9b81e8c32",
-    "source_sha256": "8e2e9f686dc9da9f180a37f714c3a876b0be2ddeebe77ca97aee96f674c88d84",
+    "run_id": "ddd12cd862d8798a69811acf9d711c6d25b9b22820369c3e8481914e50c33253",
+    "source_commit": "2c79c9ffb6dbda122ad8fc1ef17ccb626567b30c",
+    "source_sha256": "a303de70af28eaa996e57ca61be7215c27655252ebfe0a10094ac74858b46230",
     "data_date": "2026-07-31",
     "status": "success"
   },
@@ -21,12 +21,12 @@
     ],
     "bucket_counts": {
       "research_now": 1,
-      "watch_recovery": 4,
+      "watch_recovery": 3,
       "long_term_context_price_weak": 0,
-      "avoid_now": 10
+      "avoid_now": 11
     },
     "company_count": 2,
-    "analysis_mode": "trend",
+    "analysis_mode": "initial_observation",
     "constraints": [
       "OVERLAP:CEG",
       "OVERLAP:PLTR",
