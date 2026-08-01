@@ -12,7 +12,7 @@ class CustomGPTSequentialFetchBudgetTests(unittest.TestCase):
         )
         self.assertLessEqual(len(text), 8000)
         for required in (
-            "正本指示 1.7.3",
+            "正本指示 1.8.0",
             "1 tool callにつき1 URL",
             "複数URLの同時open、並列取得、batch取得を禁止",
             "current→latest manifest→immutable generation manifest",
