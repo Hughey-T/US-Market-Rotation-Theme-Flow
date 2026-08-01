@@ -15,3 +15,10 @@ from . import analysis_v3_compat as _analysis_v3_compat
 _analysis_v3.build_authoritative_v3 = (
     _analysis_v3_compat.build_authoritative_v3
 )
+
+# Retain the immutable consumer v3 implementation while replacing only its
+# fragmentation strategy and limit diagnostics.
+from . import consumer_v3 as _consumer_v3
+from . import consumer_v3_compact as _consumer_v3_compact
+
+_consumer_v3_compact.install(_consumer_v3)
