@@ -32,6 +32,7 @@ class StaleConsumerV2PruningTests(unittest.TestCase):
                 "-m",
                 "track stale generated chunk",
             )
+            stale.unlink()
 
             helper.advance(repo, "prune-stale-v2")
             self.assertFalse(stale.exists())
@@ -68,6 +69,7 @@ class StaleConsumerV2PruningTests(unittest.TestCase):
                 "-m",
                 "track unknown consumer path",
             )
+            unknown.unlink()
 
             helper.advance(repo, "reject-unknown-v2")
             self.assertFalse(unknown.exists())
