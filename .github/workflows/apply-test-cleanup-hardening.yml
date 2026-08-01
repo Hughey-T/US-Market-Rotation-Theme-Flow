@@ -1,0 +1,67 @@
+name: apply-test-cleanup-hardening
+
+on:
+  push:
+    branches:
+      - fix/consumer-v3-fragment-compaction
+    paths:
+      - .github/workflows/apply-test-cleanup-hardening.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/consumer-v3-fragment-compaction
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Harden temporary Git repository cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("tests/test_lock_and_workflow_contract.py")
+          text = path.read_text(encoding="utf-8")
+          old = '''    def make_repo(self):
+                  temporary = tempfile.TemporaryDirectory(); repo = Path(temporary.name)
+                  self.git(repo, "init", "-b", "main")
+          '''
+          new = '''    def make_repo(self):
+                  temporary = tempfile.TemporaryDirectory(
+                      ignore_cleanup_errors=True
+                  )
+                  repo = Path(temporary.name)
+                  self.git(repo, "init", "-b", "main")
+                  self.git(repo, "config", "gc.auto", "0")
+                  self.git(repo, "config", "maintenance.auto", "false")
+          '''
+          if old not in text:
+              raise SystemExit("make_repo anchor not found")
+          path.write_text(text.replace(old, new, 1), encoding="utf-8")
+          PY
+          python -m unittest \
+            tests.test_lock_and_workflow_contract.WorkflowContractTests.test_publication_push_allows_new_judgment_record \
+            tests.test_lock_and_workflow_contract.WorkflowContractTests.test_publication_push_rejects_changed_existing_judgment \
+            -v
+          python -m unittest \
+            tests.test_lock_and_workflow_contract.WorkflowContractTests.test_publication_push_allows_new_judgment_record \
+            tests.test_lock_and_workflow_contract.WorkflowContractTests.test_publication_push_rejects_changed_existing_judgment \
+            -v
+          rm .github/workflows/apply-test-cleanup-hardening.yml
+      - name: Commit cleanup hardening
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add tests/test_lock_and_workflow_contract.py .github/workflows/apply-test-cleanup-hardening.yml
+          git commit -m "Harden temporary Git test cleanup"
+          git push origin HEAD:fix/consumer-v3-fragment-compaction
