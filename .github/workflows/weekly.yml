@@ -99,9 +99,27 @@ jobs:
             cmp "$VERIFY_ROOT/output/consumer/v1/details/phase-$phase.json" "$VERIFY_EXPORT/v1/details/phase-$phase.json"
           done
           diff -qr "$VERIFY_ROOT/output/consumer/v2" "$VERIFY_EXPORT/v2"
-          diff -qr "$VERIFY_ROOT/output/consumer/v3" "$VERIFY_EXPORT/v3"
+          cmp "$VERIFY_ROOT/output/consumer/v3/manifest.json" "$VERIFY_EXPORT/v3/manifest.json"
+          V3_GENERATION_ID="$(python - "$VERIFY_EXPORT/v3/manifest.json" <<'PY'
+          import json
+          import re
+          import sys
+
+          with open(sys.argv[1], encoding="utf-8") as handle:
+              generation_id = json.load(handle)["generation_id"]
+          if re.fullmatch(r"[0-9a-f]{64}", generation_id) is None:
+              raise SystemExit("invalid consumer v3 generation ID")
+          print(generation_id)
+          PY
+          )"
+          test -d "$VERIFY_ROOT/output/consumer/v3/generations/$V3_GENERATION_ID"
+          test -d "$VERIFY_EXPORT/v3/generations/$V3_GENERATION_ID"
+          test "$(find "$VERIFY_EXPORT/v3/generations" -mindepth 1 -maxdepth 1 -type d | wc -l)" -eq 1
+          diff -qr \
+            "$VERIFY_ROOT/output/consumer/v3/generations/$V3_GENERATION_ID" \
+            "$VERIFY_EXPORT/v3/generations/$V3_GENERATION_ID"
           echo "Verified publication commit: $REMOTE_SHA" >> "$GITHUB_STEP_SUMMARY"
-          echo "Validated current pointer, manifest, generation, legacy full consumer, v1 projections, and the complete size-bounded v2 consumer tree." >> "$GITHUB_STEP_SUMMARY"
+          echo "Validated current pointer, manifest, current generation, legacy full consumer, v1 projections, and complete size-bounded v2/v3 current consumer trees." >> "$GITHUB_STEP_SUMMARY"
       - name: Failure summary
         if: failure()
         run: |
