@@ -1,16 +1,16 @@
 name: apply-v3-summary-display-hygiene
 
 on:
-  push:
+  pull_request:
     branches:
-      - fix/v3-summary-dedup-and-display-hygiene
+      - main
 
 permissions:
   contents: write
 
 jobs:
   apply:
-    if: github.actor != 'github-actions[bot]'
+    if: github.head_ref == 'fix/v3-summary-dedup-and-display-hygiene' && github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
