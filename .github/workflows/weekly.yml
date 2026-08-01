@@ -60,6 +60,7 @@ jobs:
           python scripts/export_consumer_projection.py output/consumer/v1/latest.json
           python scripts/export_consumer_details.py output/consumer/v1/details
           python scripts/export_consumer_v2.py output/consumer/v2
+          python scripts/export_consumer_v3.py output/consumer/v3
           python scripts/validate_repository.py
       - name: Commit validated outputs
         id: publish
@@ -91,12 +92,14 @@ jobs:
           python "$VERIFY_ROOT/scripts/export_consumer_projection.py" "$VERIFY_EXPORT/v1/latest.json" --output "$VERIFY_ROOT/output"
           python "$VERIFY_ROOT/scripts/export_consumer_details.py" "$VERIFY_EXPORT/v1/details" --output "$VERIFY_ROOT/output"
           python "$VERIFY_ROOT/scripts/export_consumer_v2.py" "$VERIFY_EXPORT/v2" --output "$VERIFY_ROOT/output"
+          python "$VERIFY_ROOT/scripts/export_consumer_v3.py" "$VERIFY_EXPORT/v3" --output "$VERIFY_ROOT/output"
           cmp "$VERIFY_ROOT/output/consumer/latest.json" "$VERIFY_EXPORT/latest.json"
           cmp "$VERIFY_ROOT/output/consumer/v1/latest.json" "$VERIFY_EXPORT/v1/latest.json"
           for phase in 1 2 3 4 5 6; do
             cmp "$VERIFY_ROOT/output/consumer/v1/details/phase-$phase.json" "$VERIFY_EXPORT/v1/details/phase-$phase.json"
           done
           diff -qr "$VERIFY_ROOT/output/consumer/v2" "$VERIFY_EXPORT/v2"
+          diff -qr "$VERIFY_ROOT/output/consumer/v3" "$VERIFY_EXPORT/v3"
           echo "Verified publication commit: $REMOTE_SHA" >> "$GITHUB_STEP_SUMMARY"
           echo "Validated current pointer, manifest, generation, legacy full consumer, v1 projections, and the complete size-bounded v2 consumer tree." >> "$GITHUB_STEP_SUMMARY"
       - name: Failure summary

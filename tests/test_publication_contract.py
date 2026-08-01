@@ -37,6 +37,9 @@ def generation(data_date: str, suffix: str):
         run_id=run_id,
         source_snapshot=f"output/generations/{generation_id}/archive.json",
     )
+    if value.get("v3_inputs"):
+        value["v3_inputs"]["data_date"] = data_date
+        value["v3_inputs"]["fundamentals"]["as_of"] = data_date
     value["meta"]["source_sha256"] = snapshot_source_hash(value)
     return value
 

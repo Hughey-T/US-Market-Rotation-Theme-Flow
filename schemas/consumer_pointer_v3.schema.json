@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "consumer_contract_version",
+    "generation_id",
+    "generation_manifest_path",
+    "generation_manifest_sha256",
+    "identity",
+    "validity"
+  ],
+  "properties": {
+    "consumer_contract_version": {
+      "const": "3.0"
+    },
+    "generation_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "generation_manifest_path": {
+      "type": "string",
+      "pattern": "^generations/[a-f0-9]{64}/manifest\\.json$"
+    },
+    "generation_manifest_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "analysis_id",
+        "generation_id",
+        "run_id",
+        "source_commit",
+        "source_sha256",
+        "data_date",
+        "status",
+        "generated_at",
+        "valid_until",
+        "hard_stop_after",
+        "timezone"
+      ],
+      "properties": {
+        "analysis_id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "generation_id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_commit": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "data_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "status": {
+          "enum": [
+            "success",
+            "failed"
+          ]
+        },
+        "generated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "valid_until": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "hard_stop_after": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "timezone": {
+          "const": "UTC"
+        }
+      }
+    },
+    "validity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generated_at",
+        "valid_until",
+        "hard_stop_after",
+        "timezone"
+      ],
+      "properties": {
+        "generated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "valid_until": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "hard_stop_after": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "timezone": {
+          "const": "UTC"
+        }
+      }
+    }
+  }
+}

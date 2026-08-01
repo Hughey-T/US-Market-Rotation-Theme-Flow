@@ -19,6 +19,7 @@ from scripts.export_current_latest import export_current
 from scripts.export_consumer_projection import export_consumer_projection
 from scripts.export_consumer_details import export_consumer_details
 from scripts.export_consumer_v2 import export_consumer_v2
+from scripts.export_consumer_v3 import export_consumer_v3
 from scripts.generate_weekly import history_item
 from scripts.validate_immutable_judgments import validate_immutable_judgments
 from tests.test_publication_contract import generation
@@ -62,13 +63,19 @@ class WorkflowContractTests(unittest.TestCase):
         export_consumer_projection(output, output / "consumer/v1/latest.json")
         export_consumer_details(output, output / "consumer/v1/details")
         export_consumer_v2(output, output / "consumer/v2")
+        export_consumer_v3(output, output / "consumer/v3")
 
     def git(self, repo, *args, check=True):
-        return subprocess.run(["git", *args], cwd=repo, text=True, capture_output=True, check=check)
+        # Keep temporary-repository identity tests independent from the cloud
+        # runner's global git configuration.
+        env = {**os.environ, "GIT_CONFIG_GLOBAL": os.devnull}
+        return subprocess.run(["git", *args], cwd=repo, text=True, capture_output=True, check=check, env=env)
 
     def make_repo(self):
-        temporary = tempfile.TemporaryDirectory(); repo = Path(temporary.name)
+        temporary = tempfile.TemporaryDirectory(ignore_cleanup_errors=True); repo = Path(temporary.name)
         self.git(repo, "init", "-b", "main")
+        self.git(repo, "config", "gc.auto", "0")
+        self.git(repo, "config", "maintenance.auto", "false")
         judgment_dir = repo / "output/judgments"
         judgment_dir.mkdir(parents=True)
         atomic_write_json(judgment_dir / "index.json", {"index_version": "1.0", "records": []})
@@ -97,6 +104,7 @@ class WorkflowContractTests(unittest.TestCase):
         export_current(output, output / "consumer/latest.json")
         shutil.rmtree(output / "consumer/v1")
         shutil.rmtree(output / "consumer/v2")
+        shutil.rmtree(output / "consumer/v3")
         record = load_json(ROOT / "tests/fixtures/judgment_record.json")
         record_path = judgments / "judgment.json"
         atomic_write_json(record_path, record)
@@ -193,6 +201,8 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertLess(text.index("- name: Offline preflight"), text.index("- name: Bootstrap or update publication work"))
         self.assertLess(text.index("- name: Bootstrap or update publication work"), text.index("- name: Generate, validate, and publish"))
         self.assertIn("push:\n    branches: [main]", test_workflow)
+        self.assertIn('python -m unittest discover -s tests -p "test_*.py" -v', test_workflow)
+        self.assertIn("python scripts/validate_repository.py", test_workflow)
 
     def test_publication_push_is_fast_forward_and_does_not_update_main(self):
         temporary, repo = self.make_repo()

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import re
 import subprocess
 import sys
 import tempfile
@@ -21,6 +22,9 @@ except ModuleNotFoundError:  # Direct execution from scripts/.
 
 
 PUBLICATION_BRANCH = "publication"
+_CONSUMER_V2_CHUNK = re.compile(
+    r"output/consumer/v2/(?:phases|details)/phase-[1-6]/part-[1-9][0-9]*\.json"
+)
 
 
 def _git(repo: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess:
@@ -54,6 +58,16 @@ def _validate_staged_allowlist(repo: Path, allowed: set[str]) -> None:
     unexpected = sorted(path for path in staged if path.replace("\\", "/") not in allowed)
     if unexpected:
         raise RuntimeError(f"publication commit contains paths outside the allowlist: {unexpected}")
+
+
+def _is_missing_generated_consumer_v2_chunk(repo: Path, path: str) -> bool:
+    normalized = path.replace("\\", "/")
+    target = repo / normalized
+    return (
+        _CONSUMER_V2_CHUNK.fullmatch(normalized) is not None
+        and not target.exists()
+        and not target.is_symlink()
+    )
 
 
 def _validate_committed_publication_tree(repo: Path) -> set[str]:
@@ -154,15 +168,30 @@ def commit_weekly_outputs(
     if configure_identity:
         _git(repo, "config", "user.name", "github-actions[bot]")
         _git(repo, "config", "user.email", "github-actions[bot]@users.noreply.github.com")
+    else:
+        # A caller opting out of identity setup must provide repository-local
+        # identity.  Do not silently inherit a cloud runner's global config.
+        _git(repo, "config", "--local", "--get", "user.name")
+        _git(repo, "config", "--local", "--get", "user.email")
     full_inventory = validate_current_publication_inventory(repo / "output", require_consumer=True)
     allowed = committable_publication_files(repo / "output")
-    _validate_staged_allowlist(repo, allowed)
     tracked_before = {
         path for path in _git(repo, "ls-files", "--", "output").stdout.splitlines() if path
     }
-    unexpected_tracked = sorted(tracked_before - full_inventory)
-    if unexpected_tracked:
-        raise RuntimeError(f"tracked publication inventory contains unexpected paths: {unexpected_tracked}")
+    unexpected_tracked = tracked_before - full_inventory
+    stale_consumer_v2_chunks = {
+        path
+        for path in unexpected_tracked
+        if _is_missing_generated_consumer_v2_chunk(repo, path)
+    }
+    unsafe_unexpected_tracked = sorted(unexpected_tracked - stale_consumer_v2_chunks)
+    if unsafe_unexpected_tracked:
+        raise RuntimeError(
+            "tracked publication inventory contains unexpected paths: "
+            f"{unsafe_unexpected_tracked}"
+        )
+    staging_allowlist = allowed | stale_consumer_v2_chunks
+    _validate_staged_allowlist(repo, staging_allowlist)
     noncommittable = full_inventory - allowed
     untracked_noncommittable = sorted(noncommittable - tracked_before)
     if untracked_noncommittable:
@@ -182,8 +211,10 @@ def commit_weekly_outputs(
     }
     _git(repo, "diff", "--check")
     _git(repo, "add", "--", *sorted(allowed))
+    if stale_consumer_v2_chunks:
+        _git(repo, "add", "-u", "--", *sorted(stale_consumer_v2_chunks))
     _git(repo, "diff", "--cached", "--check")
-    _validate_staged_allowlist(repo, allowed)
+    _validate_staged_allowlist(repo, staging_allowlist)
     staged = _git(repo, "diff", "--cached", "--quiet", check=False)
     if staged.returncode not in (0, 1):
         raise subprocess.CalledProcessError(staged.returncode, staged.args, staged.stdout, staged.stderr)
