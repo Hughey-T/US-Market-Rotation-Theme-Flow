@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import sys
+from types import ModuleType
+
 from . import publication_core as _core
 
 _LEGACY_THEME_HISTORY_FIELDS = frozenset(
@@ -36,3 +39,20 @@ for _name in dir(_core):
         globals()[_name] = getattr(_core, _name)
 
 globals()["_expected_history"] = _expected_history
+
+
+class _PublicationFacade(ModuleType):
+    """Keep test and runtime monkeypatches synchronized with the implementation."""
+
+    def __setattr__(self, name: str, value: object) -> None:
+        super().__setattr__(name, value)
+        if not name.startswith("__") and hasattr(_core, name):
+            setattr(_core, name, value)
+
+    def __delattr__(self, name: str) -> None:
+        super().__delattr__(name)
+        if not name.startswith("__") and hasattr(_core, name):
+            delattr(_core, name)
+
+
+sys.modules[__name__].__class__ = _PublicationFacade
