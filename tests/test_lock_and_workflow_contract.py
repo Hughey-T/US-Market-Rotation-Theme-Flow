@@ -72,8 +72,10 @@ class WorkflowContractTests(unittest.TestCase):
         return subprocess.run(["git", *args], cwd=repo, text=True, capture_output=True, check=check, env=env)
 
     def make_repo(self):
-        temporary = tempfile.TemporaryDirectory(); repo = Path(temporary.name)
+        temporary = tempfile.TemporaryDirectory(ignore_cleanup_errors=True); repo = Path(temporary.name)
         self.git(repo, "init", "-b", "main")
+        self.git(repo, "config", "gc.auto", "0")
+        self.git(repo, "config", "maintenance.auto", "false")
         judgment_dir = repo / "output/judgments"
         judgment_dir.mkdir(parents=True)
         atomic_write_json(judgment_dir / "index.json", {"index_version": "1.0", "records": []})
