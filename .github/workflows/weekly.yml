@@ -96,10 +96,24 @@ jobs:
           for phase in 1 2 3 4 5 6; do cmp "$VERIFY_ROOT/output/consumer/v1/details/phase-$phase.json" "$VERIFY_EXPORT/v1/details/phase-$phase.json"; done
           diff -qr "$VERIFY_ROOT/output/consumer/v2" "$VERIFY_EXPORT/v2"
           cmp "$VERIFY_ROOT/output/consumer/v3/manifest.json" "$VERIFY_EXPORT/v3/manifest.json"
-          V3_GENERATION_ID="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["generation_id"])' "$VERIFY_EXPORT/v3/manifest.json")"
+          V3_GENERATION_ID="$(python - "$VERIFY_EXPORT/v3/manifest.json" <<'PY'
+          import json
+          import sys
+          with open(sys.argv[1], encoding="utf-8") as handle:
+              print(json.load(handle)["generation_id"])
+          PY
+          )"
+          test "$(find "$VERIFY_EXPORT/v3/generations" -mindepth 1 -maxdepth 1 -type d | wc -l)" -eq 1
           diff -qr "$VERIFY_ROOT/output/consumer/v3/generations/$V3_GENERATION_ID" "$VERIFY_EXPORT/v3/generations/$V3_GENERATION_ID"
           cmp "$VERIFY_ROOT/output/consumer/v4/manifest.json" "$VERIFY_EXPORT/v4/manifest.json"
-          V4_GENERATION_ID="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["generation_id"])' "$VERIFY_EXPORT/v4/manifest.json")"
+          V4_GENERATION_ID="$(python - "$VERIFY_EXPORT/v4/manifest.json" <<'PY'
+          import json
+          import sys
+          with open(sys.argv[1], encoding="utf-8") as handle:
+              print(json.load(handle)["generation_id"])
+          PY
+          )"
+          test "$(find "$VERIFY_EXPORT/v4/generations" -mindepth 1 -maxdepth 1 -type d | wc -l)" -eq 1
           diff -qr "$VERIFY_ROOT/output/consumer/v4/generations/$V4_GENERATION_ID" "$VERIFY_EXPORT/v4/generations/$V4_GENERATION_ID"
           echo "Verified publication commit: $REMOTE_SHA" >> "$GITHUB_STEP_SUMMARY"
       - name: Failure summary
