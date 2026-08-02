@@ -46,7 +46,7 @@ class V3SummaryDisplayHygieneTests(unittest.TestCase):
         )
         self.assertLessEqual(len(text), 8000)
         for required in (
-            "正本指示 1.8.2",
+            "正本指示 1.8.3",
             "検証用データをそのまま並べることは目的ではない",
             "要約、平易な言い換え、重要度に応じた取捨選択",
             "### 結論",
@@ -65,6 +65,9 @@ class V3SummaryDisplayHygieneTests(unittest.TestCase):
             "保存済みsummaryの一般的な`next_update_checks`を特定テーマ固有の数値条件へ変換しない",
             "moving v3 manifestの`generation_manifest_sha256`",
             "`output/current.json`の`manifest_sha256`や別contractのhashを使わない",
+            "Phase1〜5では、本文の最後に単独行で正確に `「次」と送信してください。`",
+            "Phase6ではこの案内を表示せず",
+            "全6 Phaseの表示は完了しました。",
         ):
             self.assertIn(required, text)
         for forbidden in (
