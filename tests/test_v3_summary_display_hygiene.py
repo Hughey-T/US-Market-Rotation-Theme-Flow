@@ -46,7 +46,7 @@ class V3SummaryDisplayHygieneTests(unittest.TestCase):
         )
         self.assertLessEqual(len(text), 8000)
         for required in (
-            "正本指示 1.8.3",
+            "正本指示 1.8.4",
             "検証用データをそのまま並べることは目的ではない",
             "要約、平易な言い換え、重要度に応じた取捨選択",
             "### 結論",
@@ -60,7 +60,7 @@ class V3SummaryDisplayHygieneTests(unittest.TestCase):
             "Phase1〜3は固定コアテーマ、Phase4以降は動的に発見した業種を含む広い候補群",
             "Phase1の順位や全テーマ値を繰り返さない",
             "Phase4・5の全文を繰り返さない",
-            "初回観測を「単週」と表現しない",
+            "初回観測を「単週」や「初回generation」と表現しない",
             "現在PhaseのpayloadにないSPY対比、breadth、threshold、業績評価をPhase1〜3から流用・推測しない",
             "保存済みsummaryの一般的な`next_update_checks`を特定テーマ固有の数値条件へ変換しない",
             "moving v3 manifestの`generation_manifest_sha256`",
@@ -68,6 +68,10 @@ class V3SummaryDisplayHygieneTests(unittest.TestCase):
             "Phase1〜5では、本文の最後に単独行で正確に `「次」と送信してください。`",
             "Phase6ではこの案内を表示せず",
             "全6 Phaseの表示は完了しました。",
+            "鮮度コードは通常表示へ出さない",
+            "`fresh`は「有効期間内」",
+            "生成日時は日本時間へ換算する",
+            "`generation`は通常文では「記録」または「更新回」と言い換える",
         ):
             self.assertIn(required, text)
         for forbidden in (
