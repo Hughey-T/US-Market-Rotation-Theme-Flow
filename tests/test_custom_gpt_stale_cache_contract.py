@@ -13,7 +13,7 @@ class CustomGPTStaleCacheContractTests(unittest.TestCase):
 
         self.assertLessEqual(len(text), 8000)
         for required in (
-            "正本指示 1.8.2",
+            "正本指示 1.8.3",
             "output/current.json",
             "16桁以上の英数字nonce",
             "?cb=<nonce>",
