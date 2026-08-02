@@ -46,7 +46,7 @@ class V3SummaryDisplayHygieneTests(unittest.TestCase):
         )
         self.assertLessEqual(len(text), 8000)
         for required in (
-            "正本指示 1.8.4",
+            "正本指示 1.8.5",
             "検証用データをそのまま並べることは目的ではない",
             "要約、平易な言い換え、重要度に応じた取捨選択",
             "### 結論",
@@ -72,6 +72,8 @@ class V3SummaryDisplayHygieneTests(unittest.TestCase):
             "`fresh`は「有効期間内」",
             "生成日時は日本時間へ換算する",
             "`generation`は通常文では「記録」または「更新回」と言い換える",
+            "1回のassistant応答内で対象Phaseを最後まで完了する",
+            "途中報告・処理予告・確認文だけを単独回答として返し",
         ):
             self.assertIn(required, text)
         for forbidden in (
