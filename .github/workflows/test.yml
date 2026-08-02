@@ -19,19 +19,19 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+        with: {fetch-depth: 0}
       - uses: actions/setup-python@v5
         with: {python-version: "3.12", cache: pip}
       - run: python -m pip install -r requirements.txt
       - run: python scripts/validate_repository.py
+      - run: python scripts/validate_consumer_v4.py
       - name: Validate immutable judgments against PR base
         if: github.event_name == 'pull_request'
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        env: {BASE_SHA: "${{ github.event.pull_request.base.sha }}"}
         run: python scripts/validate_immutable_judgments.py --base "$BASE_SHA"
       - run: python scripts/generate_weekly.py --fixture tests/fixtures/latest_normal.json --dry-run
-      - run: python -m unittest tests.test_condition_audit tests.test_immutable_judgments -v
+      - run: python scripts/export_consumer_v4.py --snapshot tests/fixtures/latest_normal.json --destination "$RUNNER_TEMP/consumer-v4"
+      - run: python -m unittest tests.test_condition_audit tests.test_immutable_judgments tests.test_ai_contracts_v4 -v
 
   unit-and-rule-contracts:
     runs-on: ubuntu-latest
@@ -44,6 +44,7 @@ jobs:
       - run: python -m compileall -q rotation scripts tests
       - run: python -m unittest discover -s tests -p "test_*.py" -v
       - run: python scripts/validate_repository.py
+      - run: python scripts/validate_consumer_v4.py
 
   pipeline-integration:
     runs-on: ubuntu-latest
@@ -63,7 +64,7 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: "3.12", cache: pip}
       - run: python -m pip install -r requirements.txt
-      - run: python -m unittest tests.test_production_orchestration_e2e -v
+      - run: python -m unittest tests.test_production_orchestration_e2e tests.test_consumer_v4_e2e -v
 
   repository-operations-and-transactional-publish:
     runs-on: ubuntu-latest
