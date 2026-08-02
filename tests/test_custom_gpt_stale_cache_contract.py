@@ -13,7 +13,7 @@ class CustomGPTStaleCacheContractTests(unittest.TestCase):
 
         self.assertLessEqual(len(text), 8000)
         for required in (
-            "正本指示 1.7.3",
+            "正本指示 1.8.5",
             "output/current.json",
             "16桁以上の英数字nonce",
             "?cb=<nonce>",
@@ -22,6 +22,7 @@ class CustomGPTStaleCacheContractTests(unittest.TestCase):
             "新しいnonceで一度だけ両方を再取得",
             "E_FETCH_TRANSIENT",
             "queryは取得時のcache回避専用",
+            "moving URLは新しいnonce",
         ):
             self.assertIn(required, text)
 

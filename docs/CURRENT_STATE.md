@@ -2,23 +2,32 @@
 
 ## 結論
 
-2026-07-17 時点の main (`03af8cc`) は、再現可能な詳細分析と安全な publication を備える一方、固定テーマ中心、監査用語中心の表示、旧 shortlist と価格シグナルの flow 表現が利用者向け用途に不向きでした。本変更は監査層を維持し、判断層と表示層を追加します。
+作業開始時点の`main`はconsumer v3、6 Phase、決定論的producerによるauthoritative presentationを使用していました。本変更は既存のdata schema 1.2、mechanical decision 3.0、publication core 1.1、consumer v1〜v3を維持したまま、consumer v4と10 Phaseのsession-local AI layerを追加します。
 
-## 3層
+## Version matrix
 
-- データ層: 取得、欠損、指標、履歴、条件、schema、source identity、atomic publication。
-- 判断層: 動的業種発見、version付き構造的背景、相互排他的4分類候補、価格上の選好、初期観測、企業別調査観点。
-- 表示層: `user_view`の6 Phase。Phase1〜Phase5では通常データとdetailを統合して詳しく表示し、Phase6だけを簡潔な全体まとめとする。
+| Contract | Current/added |
+|---|---|
+| data schema | 1.2（変更なし） |
+| mechanical decision | 3.0（変更なし） |
+| publication core | 1.1（変更なし） |
+| preferred consumer | 4.0 |
+| previous supported consumers | 3.0、2.0、1.0、legacy |
+| AI assessment | 1.0 |
+| handoff | 2.0 |
+| Custom GPT | 2.0.0 |
+| default AI persistence | session_local |
+| write runtime | runtime_available=false |
 
-## 解消したギャップ
+## 境界
 
-- 固定テーマ外の業種を複数企業の breadth で確認し、後段へ渡す。
-- 調査候補を0〜5件とし、弱いテーマで埋めない。
-- 実フローと株価上の選好を別契約にする。
-- 履歴3週未満を初期観測モードにする。
-- 中央値、winsorized、流動性加重、HHI、effective contributor を追加する。
-- 企業を1対象最大2社、重複なしで選ぶ。
+- FACTS、MECHANICAL_SIGNALS、blind projection、company/dynamic-industry factsはproducer所有。
+- AI_THEME_ASSESSMENT、COUNTER_THESIS、exploratory proposalはCustom GPT所有。
+- reconciliationとintegrated decisionはsession-local runtimeが構築する。
+- hard exclusionとcritical data-quality gateはAIで相殺しない。
+- blind packagesとreconciliation packagesは別directory・別URLで公開する。
+- 過去generationのAI statusは`not_assessed`。現在の知識から再構築しない。
 
-## 既知の限界
+## 運用状態
 
-直接的な fund flow、point-in-time market cap、決算直前判定、過去時点の業種構成は未取得です。利用不能値は推測せず `unavailable` とします。
+consumer v4 codeとfixture E2EはPR CIで検証します。mainへmerge後、weekly workflowが成功して初めてpublication branchへ`output/consumer/v4`が公開されます。write-capable runtimeは未デプロイであり、AI artifactとledgerは永続保存済みと表示しません。
