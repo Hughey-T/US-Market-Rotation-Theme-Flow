@@ -37,15 +37,37 @@ class AIContractsV4Tests(unittest.TestCase):
         }
 
     def test_rank_coverage_is_unique_and_contiguous(self):
-        validate_ai_theme_assessment(self.assessment, self.packages["blind"])
-        duplicate = copy.deepcopy(self.assessment)
+        blind = copy.deepcopy(self.packages["blind"])
+        theme_ids = list(blind["theme_ids"])
+        if len(theme_ids) < 2:
+            theme_ids.append("synthetic_theme")
+        blind["theme_ids"] = sorted(theme_ids)
+        blind["theme_set_identity"] = stable_hash(blind["theme_ids"])
+        assessment = {
+            "assessment_contract_version": "1.0",
+            "generation_id": blind["generation_id"],
+            "analysis_id": blind["analysis_id"],
+            "blind_projection_sha256": stable_hash(blind),
+            "theme_set_identity": blind["theme_set_identity"],
+            "evidence_cutoff": blind["data_date"],
+            "assessment_mode": "session_local",
+            "themes": [{
+                "theme_id": theme_id,
+                "assessment_status": "assessed",
+                "independent_ai_rank": rank,
+                "confidence": 0.5,
+                "evidence_refs": [],
+            } for rank, theme_id in enumerate(blind["theme_ids"], 1)],
+        }
+        validate_ai_theme_assessment(assessment, blind)
+        duplicate = copy.deepcopy(assessment)
         duplicate["themes"][1]["independent_ai_rank"] = 1
         with self.assertRaisesRegex(ContractError, "unique"):
-            validate_ai_theme_assessment(duplicate, self.packages["blind"])
-        gap = copy.deepcopy(self.assessment)
+            validate_ai_theme_assessment(duplicate, blind)
+        gap = copy.deepcopy(assessment)
         gap["themes"][-1]["independent_ai_rank"] += 1
         with self.assertRaisesRegex(ContractError, "contiguous"):
-            validate_ai_theme_assessment(gap, self.packages["blind"])
+            validate_ai_theme_assessment(gap, blind)
 
     def test_future_evidence_is_rejected(self):
         future = copy.deepcopy(self.assessment)
