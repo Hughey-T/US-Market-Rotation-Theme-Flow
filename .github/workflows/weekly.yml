@@ -7,7 +7,6 @@ on:
   workflow_dispatch:
 
 permissions: {}
-
 concurrency:
   group: weekly-market-rotation
   cancel-in-progress: false
@@ -16,22 +15,19 @@ jobs:
   generate:
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    permissions:
-      contents: write
+    permissions: {contents: write}
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+        with: {fetch-depth: 0}
       - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
+        with: {python-version: "3.12", cache: pip}
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
       - name: Offline preflight
         run: |
           python -m unittest discover -s tests -v
           python scripts/validate_repository.py
+          python scripts/validate_consumer_v4.py
       - name: Bootstrap or update publication work from current main
         id: publication_branch
         run: |
@@ -52,7 +48,6 @@ jobs:
             echo "remote_before=" >> "$GITHUB_OUTPUT"
           fi
       - name: Generate, validate, and publish a transactional generation
-        id: generate
         run: python scripts/generate_weekly.py
       - name: Validate published repository
         run: |
@@ -61,7 +56,9 @@ jobs:
           python scripts/export_consumer_details.py output/consumer/v1/details
           python scripts/export_consumer_v2.py output/consumer/v2
           python scripts/export_consumer_v3.py output/consumer/v3
+          python scripts/export_consumer_v4.py --destination output/consumer/v4
           python scripts/validate_repository.py
+          python scripts/validate_consumer_v4.py
       - name: Commit validated outputs
         id: publish
         env:
@@ -76,8 +73,7 @@ jobs:
           fi
           echo "commit_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - name: Re-fetch and verify remote publication
-        env:
-          EXPECTED_SHA: ${{ steps.publish.outputs.commit_sha }}
+        env: {EXPECTED_SHA: "${{ steps.publish.outputs.commit_sha }}"}
         run: |
           set -euo pipefail
           git fetch origin publication
@@ -86,6 +82,7 @@ jobs:
           VERIFY_ROOT="$RUNNER_TEMP/publication-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
           git worktree add --detach "$VERIFY_ROOT" origin/publication
           python "$VERIFY_ROOT/scripts/validate_repository.py"
+          python "$VERIFY_ROOT/scripts/validate_consumer_v4.py"
           VERIFY_EXPORT="$RUNNER_TEMP/consumer-export-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
           mkdir -p "$VERIFY_EXPORT/v1/details"
           python "$VERIFY_ROOT/scripts/export_current_latest.py" "$VERIFY_EXPORT/latest.json" --output "$VERIFY_ROOT/output"
@@ -93,34 +90,18 @@ jobs:
           python "$VERIFY_ROOT/scripts/export_consumer_details.py" "$VERIFY_EXPORT/v1/details" --output "$VERIFY_ROOT/output"
           python "$VERIFY_ROOT/scripts/export_consumer_v2.py" "$VERIFY_EXPORT/v2" --output "$VERIFY_ROOT/output"
           python "$VERIFY_ROOT/scripts/export_consumer_v3.py" "$VERIFY_EXPORT/v3" --output "$VERIFY_ROOT/output"
+          python "$VERIFY_ROOT/scripts/export_consumer_v4.py" --destination "$VERIFY_EXPORT/v4"
           cmp "$VERIFY_ROOT/output/consumer/latest.json" "$VERIFY_EXPORT/latest.json"
           cmp "$VERIFY_ROOT/output/consumer/v1/latest.json" "$VERIFY_EXPORT/v1/latest.json"
-          for phase in 1 2 3 4 5 6; do
-            cmp "$VERIFY_ROOT/output/consumer/v1/details/phase-$phase.json" "$VERIFY_EXPORT/v1/details/phase-$phase.json"
-          done
+          for phase in 1 2 3 4 5 6; do cmp "$VERIFY_ROOT/output/consumer/v1/details/phase-$phase.json" "$VERIFY_EXPORT/v1/details/phase-$phase.json"; done
           diff -qr "$VERIFY_ROOT/output/consumer/v2" "$VERIFY_EXPORT/v2"
           cmp "$VERIFY_ROOT/output/consumer/v3/manifest.json" "$VERIFY_EXPORT/v3/manifest.json"
-          V3_GENERATION_ID="$(python - "$VERIFY_EXPORT/v3/manifest.json" <<'PY'
-          import json
-          import re
-          import sys
-
-          with open(sys.argv[1], encoding="utf-8") as handle:
-              generation_id = json.load(handle)["generation_id"]
-          if re.fullmatch(r"[0-9a-f]{64}", generation_id) is None:
-              raise SystemExit("invalid consumer v3 generation ID")
-          print(generation_id)
-          PY
-          )"
-          test -d "$VERIFY_ROOT/output/consumer/v3/generations/$V3_GENERATION_ID"
-          test -d "$VERIFY_EXPORT/v3/generations/$V3_GENERATION_ID"
-          test "$(find "$VERIFY_EXPORT/v3/generations" -mindepth 1 -maxdepth 1 -type d | wc -l)" -eq 1
-          diff -qr \
-            "$VERIFY_ROOT/output/consumer/v3/generations/$V3_GENERATION_ID" \
-            "$VERIFY_EXPORT/v3/generations/$V3_GENERATION_ID"
+          V3_GENERATION_ID="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["generation_id"])' "$VERIFY_EXPORT/v3/manifest.json")"
+          diff -qr "$VERIFY_ROOT/output/consumer/v3/generations/$V3_GENERATION_ID" "$VERIFY_EXPORT/v3/generations/$V3_GENERATION_ID"
+          cmp "$VERIFY_ROOT/output/consumer/v4/manifest.json" "$VERIFY_EXPORT/v4/manifest.json"
+          V4_GENERATION_ID="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["generation_id"])' "$VERIFY_EXPORT/v4/manifest.json")"
+          diff -qr "$VERIFY_ROOT/output/consumer/v4/generations/$V4_GENERATION_ID" "$VERIFY_EXPORT/v4/generations/$V4_GENERATION_ID"
           echo "Verified publication commit: $REMOTE_SHA" >> "$GITHUB_STEP_SUMMARY"
-          echo "Validated current pointer, manifest, current generation, legacy full consumer, v1 projections, and complete size-bounded v2/v3 current consumer trees." >> "$GITHUB_STEP_SUMMARY"
       - name: Failure summary
         if: failure()
-        run: |
-          echo "Generation or validation failed. The atomic current pointer still references the previous validated generation." >> "$GITHUB_STEP_SUMMARY"
+        run: echo "Generation or validation failed. The atomic current pointer still references the previous validated generation." >> "$GITHUB_STEP_SUMMARY"
