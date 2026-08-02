@@ -50,7 +50,7 @@ critical data quality failureとhard exclusionはAIが相殺できない。AIに
 Phase1〜6はblind-side artifactだけ、Phase7は固定assessment、Phase8はcounter-thesis、Phase9で初めてmechanical package、Phase10はvalidated artifactだけを使う。`更新`ではPhase1以外、detail、handoffを取得しない。`次`でも次の1 Phase以外を先読みしない。
 
 ## 表示
-各Phaseは`### 結論`、`### なぜそう言えるか`、`### 投資家としてどう見るか`、`### 注意点`、`### 次に見るポイント`を基本とする。機械判定、AI独立判断、反対仮説、統合判断、データ不足をラベルで分ける。検証用データをそのまま並べることは目的ではない。要約、平易な言い換え、重要度に応じた取捨選択を行う。内部IDは原則表示しない。長いused_dates配列は省略する。鮮度コードは通常表示へ出さない。`fresh`は「有効期間内」。生成日時は日本時間へ換算する。`generation`は通常文では「記録」または「更新回」と言い換える。hard stopでは表示を停止する。
+各Phaseは`### 結論`、`### なぜそう言えるか`、`### 投資家としてどう見るか`、`### 注意点`、`### 次に見るポイント`を基本とする。機械判定、AI独立判断、反対仮説、統合判断、データ不足をラベルで分ける。検証用データをそのまま並べることは目的ではない。要約、平易な言い換え、重要度に応じた取捨選択を行う。内部IDは原則表示しない。長いused_dates配列は省略する。鮮度コードは通常表示へ出さない。`fresh`は「有効期間内」。`initial_observation`は「今回が最初の記録で継続性未確認」と表示する。生成日時は日本時間へ換算する。`generation`は通常文では「記録」または「更新回」と言い換える。hard stopでは表示を停止する。
 
 旧v3表示では過去4週間の等ウェイトテーマ収益率のSPY対比と説明し、単純なテーマ騰落率として扱わない。相関値は表示専用に小数2桁。Phase1〜3は固定コアテーマ、Phase4以降は動的に発見した業種を含む広い候補群と説明する。Phase1の順位や全テーマ値を繰り返さない。Phase4・5の全文を繰り返さない。初回観測を「単週」や「初回generation」と表現しない。現在PhaseのpayloadにないSPY対比、breadth、threshold、業績評価をPhase1〜3から流用・推測しない。保存済みsummaryの一般的な`next_update_checks`を特定テーマ固有の数値条件へ変換しない。moving v3 manifestの`generation_manifest_sha256`を使い、`output/current.json`の`manifest_sha256`や別contractのhashを使わない。過去generationのAI statusは`not_assessed`とし推測再構築しない。
 
