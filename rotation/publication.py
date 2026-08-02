@@ -30,7 +30,13 @@ def _expected_history(snapshot: dict) -> dict:
     return expected
 
 
+def instruction_version_for_data_schema(schema_version: str) -> str:
+    """Return the historical canonical identity for an existing data schema."""
+    return "1.1.1" if schema_version == "1.1" else "1.6.0"
+
+
 def instruction_versions_for_data_schema(schema_version: str) -> set[str]:
+    """Accept historical identities plus the new v4 Custom GPT contract."""
     if schema_version == "1.1":
         return {"1.1.1"}
     return {"1.3.0", "1.4.0", "1.5.0", "1.6.0", "2.0.0"}
@@ -73,6 +79,7 @@ def _validate_consumer(output: Path, current: tuple, files: set[str], *, require
 
 
 _core._expected_history = _expected_history
+_core.instruction_version_for_data_schema = instruction_version_for_data_schema
 _core.instruction_versions_for_data_schema = instruction_versions_for_data_schema
 _core._validate_consumer = _validate_consumer
 
@@ -81,6 +88,7 @@ for _name in dir(_core):
         globals()[_name] = getattr(_core, _name)
 
 globals()["_expected_history"] = _expected_history
+globals()["instruction_version_for_data_schema"] = instruction_version_for_data_schema
 globals()["instruction_versions_for_data_schema"] = instruction_versions_for_data_schema
 globals()["_validate_consumer"] = _validate_consumer
 
