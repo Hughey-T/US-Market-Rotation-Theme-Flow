@@ -1,141 +1,72 @@
-# US Market Rotation & Theme Flow v1.2 user experience
+# US Market Rotation & Theme Flow
 
-Versions: data schema `1.2`（旧1.1は読み取り互換）、decision contract `3.0`、presentation `1.2`（1.1は読み取り互換）、Custom GPT instruction `1.6.0`、publication contract `1.1`（1.0は読み取り互換）、consumer contracts `2.0`・`1.0`。
+週次の米国市場データから、市場環境、スタイル、セクター・業種、テーマ、企業調査候補を決定論的に生成し、Custom GPTが独立した因果解釈と反証を行う調査基盤です。自動売買、証券会社連携、注文執行は行いません。
 
-米国株を市場環境→スタイル→セクター・業種→テーマ→個別企業→最終判断の6つのPhaseで調べる週次データ基盤です。内部では再現可能な監査情報を保持し、Phase1〜Phase5では通常データとdetailを合わせて詳しく説明し、Phase6だけを簡潔な全体まとめとして表示します。週次preflight、commit、repository validatorは同一の厳密なpublication file inventoryを使用し、unknown file、invalid current、lock/staging残骸を取得・commit前に拒否します。
+## Version matrix
 
-## 1.2 user experience の主要変更
+| Layer | Version |
+|---|---|
+| data schema | 1.2 |
+| mechanical decision | 3.0 |
+| presentation | 1.2 |
+| publication core | 1.1 |
+| preferred consumer | 4.0 |
+| supported fallback | 3.0、2.0、1.0、legacy |
+| AI assessment | 1.0 |
+| handoff | 2.0 |
+| Custom GPT instruction | 2.0.0 |
 
-- データ層、判断層、表示層を分離し、通常表示専用の `user_view` を追加
-- 固定テーマ外の強い業種を、ETF信号＋最低3社の企業breadthで動的発見
-- 候補を「個別企業を調べる」「回復条件を監視する」「長期材料はあるが、現在の株価は弱い」「現在は避ける」の相互排他的な4分類へ変更
-- 固定テーマと動的業種へ、株価から推測しないversion付き構造的背景を追加
-- 企業調査観点をティッカー上書き、テーマ別役割、構成上の役割、全体既定値の順で具体化
-- 調査対象は0〜5件。弱い候補で枠を埋めない
-- 価格上の選好と実際の資金フロー確認を別fieldに分離
-- 履歴3週未満は初期観測モードとし、変化・反転・加速を断定しない
-- 中央値、winsorized、流動性加重、寄与HHI、実効寄与企業数を追加
-- 企業候補は1対象最大2社、全体でticker重複なし
-- `更新`と5回の`次`だけで全6 Phaseを完了
+## Machine/AI boundary
 
-通常利用は [Custom GPT正本指示 1.6.0](docs/custom_gpt_instructions_current.md)（[GitHub raw正本](https://raw.githubusercontent.com/Hughey-T/US-Market-Rotation-Theme-Flow/main/docs/custom_gpt_instructions_current.md)）、完成形は [6 Phaseの表示サンプル](docs/display_samples_v1.2.md)、方法は [Methodology 1.2](docs/methodology_v1.2.md)、fieldは [Data Dictionary 1.2](docs/data_dictionary_v1.2.md) を参照してください。
+Producerはmarket data、point-in-time membership、数値、機械分類・順位、hard exclusion、company candidate identity、immutable publicationを所有します。Custom GPTはblind状態で因果仮説、structural/cyclical評価、independent AI rank、counter-thesis、exploratory proposalを生成します。
 
-数値計算、欠損処理、market regime、theme判定、動的発見、4分類候補、企業候補、表示文はコードが決定します。Custom GPTは `user_view` を順番に提示し、結果を変更しません。価格上昇を直接的な資金流入とは扱いません。
+AIはproducerの数値、機械順位、候補identity、hard exclusionを変更しません。mechanical rank、independent AI rank、integrated rankは別fieldです。不一致は隠さず、`NO_SELECTION`を正式結果として維持します。
 
-Theme membershipはsnapshotのdata dateに対する`active/valid_from/valid_to`でpoint-in-time選択します。同一tickerの非重複・隣接期間は履歴として許可し、重複期間、逆転期間、異常日付は拒否します。50DMA breadthは実測countをweekly historyへ保存し、旧履歴にcountがなければ推定しません。`equal_weight_led`はmethodologyに既存定義があり、1.1の正式なcode-side fieldとして採用しました。
-
-## 1.1監査基盤（継続）
-
-- `phase=initial|diffusion|price_overheat|unclassifiable`と`direction=improving|flat|worsening|outflow_signal|unclassifiable`を分離
-- `price_overheat + outflow_signal`を同時保持
-- 同じ4週relative指標の前週差、3週・4週OLS slope/stateを生成
-- defined 6社、valid 5社、coverage 75%、role valid 2社、連続historyを機械判定
-- top1/top3 positive contributionとnullable market-cap weighting divergenceを実装
-- P0〜P5/fallbackとT0〜T4/fallbackをcode-side決定
-- `overheat_breadth_weak`をcode-side flag化
-- 総合スコアを使わない辞書式shortlistを最大5テーマまで生成
-- immutable judgment 1.0と検証済み`previous_judgments` projectionを追加
-- strict Draft 2020-12 JSON Schemaとsemantic再計算validatorを追加
-- phase/direction/evidenceのcanonical condition IDをproductionで生成・再検証
-- generation全体をstagingし、atomic `current.json` pointerで公開世代を切替
-
-## 主要構成
+## Consumer v4
 
 ```text
-rotation/                          純粋なmetric・trend・quality・分類・shortlist処理
-config/universe.json               ETF・指数定義 1.1.0
-data/themes.json                   theme master schema 1.0 / content 2026-Q3-r1
-data/legacy/                       移行前の暫定master（read-only）
-scripts/generate_weekly.py         週次生成・検証・atomic publish
-scripts/export_current_latest.py   旧互換URL用の完全snapshot export
-scripts/export_consumer_projection.py 新v1軽量consumer export
-scripts/export_consumer_details.py phase別details 6件のexport
-scripts/validate_repository.py     strict schema＋semantic検証
-scripts/migrate_1_0_to_1_1.py      明示的なread-only migration report
-scripts/migrate_theme_master.py    暫定masterからmaster 1.0への明示migration
-schemas/rotation_snapshot.schema.json  latest data 1.1
-schemas/judgment_record.schema.json    immutable judgment 1.0
-schemas/theme_master.schema.json       theme master 1.0
-schemas/legacy/                    latest 1.0 schemaの保存
-tests/fixtures/                    架空fixture
-output/judgments/                  immutable judgmentと再生成index
-output/generations/<generation_id>/ 同一世代のlatest/archive/history/judgment index/manifest
-output/current.json                検証済み公開世代を指すatomic pointer
-output/predictions/                legacy prediction 1.0（read-only）
-output/verifications/              legacy verification 1.0（read-only）
+output/consumer/v4/manifest.json
+output/consumer/v4/generations/{generation_id}/manifest.json
+output/consumer/v4/generations/{generation_id}/facts/part-{n}.json
+output/consumer/v4/generations/{generation_id}/blind/part-{n}.json
+output/consumer/v4/generations/{generation_id}/companies/part-{n}.json
+output/consumer/v4/generations/{generation_id}/blind-handoff/part-{n}.json
+output/consumer/v4/generations/{generation_id}/mechanical/part-{n}.json
+output/consumer/v4/generations/{generation_id}/reconciliation-handoff/part-{n}.json
 ```
 
-## セットアップと検証
+Blind packageはmechanical rank、candidate bucket、integrated rank、過去AI判断、AI confidence、current/future outcomeを再帰的に拒否します。AI assessmentをcanonical hashへ固定するまでreconciliation packageは開示されません。
+
+## 10 Phase
+
+1. 記録固定・データ品質・blind AI初期化
+2. 市場環境とスタイルローテーション
+3. 固定コアテーマの機械観測
+4. 持続性・拡散・過熱
+5. 重複・独立性
+6. 動的業種と候補宇宙
+7. 固定済みAI独立解釈
+8. 反対仮説・自己批判・探索提案
+9. 機械・AI・統合順位の照合
+10. 企業調査仕様・二段階handoff・最終統合
+
+進行操作は正確な`更新`と`次`だけです。1操作1 Phaseで、1回の応答内に対象Phaseを完了します。
+
+## Persistence
+
+既定は`session_local`です。AI assessment、counter-thesis、reconciliation、integrated decisionは会話内だけで保持され、GitHubへ永続保存済みとは表示しません。`runtime_persisted`はwrite-capable runtimeが実際に利用可能な場合だけ使用します。現状は`runtime_available=false`です。
+
+既存のconsumer v1〜v3、immutable publication、point-in-time membership、dynamic industry discovery、selection stability、overlap analysis、matured four-week outcomesは維持します。未実装の直接fund flow、point-in-time market cap、short/options positioningは推測せず`not_available`として扱います。
+
+## Validation
 
 ```bash
-python -m venv .venv
-.venv/Scripts/python -m pip install -r requirements.txt
-.venv/Scripts/python -m unittest discover -s tests -v
-.venv/Scripts/python scripts/validate_repository.py
-.venv/Scripts/python scripts/generate_weekly.py --fixture tests/fixtures/latest_normal.json --dry-run
+python -m pip install -r requirements.txt
+python -m unittest discover -s tests -p "test_*.py" -v
+python scripts/validate_repository.py
+python scripts/validate_consumer_v4.py
+python scripts/export_consumer_v4.py --snapshot tests/fixtures/latest_normal.json --destination /tmp/consumer-v4
+python -m compileall -q rotation scripts tests
 ```
 
-Test ownership and stable specification IDs are documented in
-[`tests/TEST_CLASSIFICATION.md`](tests/TEST_CLASSIFICATION.md). The required PR
-checks are the eight non-overlapping categories in that document, including
-`production-orchestration-e2e` and transactional publication; all use offline
-synthetic data and fixed source identities.
-
-Linux/macOSでは`.venv/bin/python`を使用します。PR必須checkは架空データだけを使い、networkと実時刻に依存しません。feature branchではpull request eventだけが8 required checksを生成し、push eventは`main`に限定します。live取得はschedule/manualのweekly workflowだけです。workflowは保護された`main`へpushせず、初回だけ`main`から専用`publication`ブランチをbootstrapし、以後はcheckout時のremote SHA一致とancestor関係を確認して通常のfast-forward pushだけを許可します。競合またはremote先行時は公開せず停止します。
-
-## 週次生成
-
-```bash
-python scripts/generate_weekly.py --dry-run
-python scripts/generate_weekly.py
-```
-
-data date、raw input、theme master、各version、source commit、quantitative contentからclock非依存のanalysis identityを作り、実行時刻を含むgeneration identityを別に作ります。`output/.staging-*`へ全componentを生成し、各strict Schema・semantic・finite・hash・identity・versionを検証します。完成directoryを`output/generations/<generation_id>/`へrenameし、検証済みpointerだけをatomic replaceします。同一analysisの再実行はno-op、現在世代を直接の親とする同一analysisのvalid orphanだけを決定的に再利用します。通常publishでdata dateを後退させず、後退は明示的rollbackに限定します。同一data dateでも異なるanalysisは新世代として明示公開します。
-
-汎用semantic validatorは診断用の`status=failed`も原因付きで検証できますが、公開validatorは`status=success`、`failure_reason=null`、`critical_missing=[]`、source hash一致を必須とします。固定互換パス`output/latest.json`が存在する場合にも同じ公開validatorを適用します。
-
-`meta.valid_until`は生成から10日、`hard_stop_after`は14日です。unsupported version、`status=failed`、critical missing、source hash不一致は分析停止です。
-
-## priorityとテーマ市場状態
-
-priority precedenceは`P0 → P1 → P2 → P5 → P4 → P3 → fallback`です。P1はselected phaseがdiffusion、P2はselected phaseがprice_overheatかつdiffusion flag=trueであり相互排他的です。P1/P2/P3は`evidence.direction=inflow`を必須とします。
-
-theme-state precedenceは`T0 → T1 → T2 → T3 → T4 → fallback`です。schema fieldは`timing_status`ですが、表示名は「テーマ市場状態」であり、個別銘柄のentry timingではありません。
-
-shortlist対象は`dd_priority|dd_candidate|watch`だけです。priority→evidence direction→phase→direction→concentration→relative rank→theme_idの辞書式順序で最大5件を選びます。3件未満でも`low_priority`や`unclassifiable`で穴埋めしません。
-
-## judgmentとlegacy
-
-新規判断は`schemas/judgment_record.schema.json`に準拠して`output/judgments/*.json`へ保存し、既存byteを変更しません。PR CIはbase branch、通常のweekly publicationは取得済みの正確な`origin/publication` SHAと比較し、既存recordの変更・削除・renameをpush前に拒否します。source latestとのtheme集合、全code-side classification、evidence、quality、condition IDs、shortlist採否・連番rank、固定metrics、version・hashが完全一致したrecordだけをindexへ含めます。撤回条件は同じthemeの実在field、Schema上の型と互換なoperator/value、一意condition IDを必須とし、source値が`null`でも型検証を省略しません。旧prediction/verificationは意味が異なるため自動変換・削除しません。
-
-Market Rotation 1.0はdefaultで拒否します。`scripts/migrate_1_0_to_1_1.py --explicit`は推測を行わない非publishable reportだけを生成します。完全な1.1はsource observationから再生成してください。詳細は[Migration](docs/migration_v1.1.md)と[Rollback](docs/rollback_v1.1.md)を参照してください。
-
-## 限界
-
-- direct ETF/fund flow、earnings revisions、short/options positioningは未実装
-- market capはpoint-in-time保証がない間は補助fieldで、coverage不足時は`null`
-- `role=core`はtheme中心性だけで、品質、収益性、moat、valuation、投資魅力度を意味しない
-- 固定theme masterは四半期review対象。別枠の動的業種発見は設定済み企業basketの範囲に限る
-- 閾値は未較正の暫定値で、履歴へ合わせて事後最適化しない
-
-現状監査は[CURRENT_STATE](docs/CURRENT_STATE.md)、schema拡張は[Schema 1.2](docs/schema_v1.2.md)、実装は[Implementation Notes](docs/implementation_notes_v1.2.md)、テストは[Test Specification](docs/test_specification_v1.2.md)、運用は[Operations Guide](docs/operations_guide_v1.2.md)、移行は[Migration 1.2](docs/migration_v1.2.md)、公開契約は[Public Artifact 1.2](docs/public_artifact_v1.2.md)を参照してください。
-## Publication contract 1.1 / consumer contracts 2.0・1.0
-
-`publication`ブランチの`output/current.json`が唯一のauthoritative generation pointerです。完全なlatest、archive、history、judgment index、manifestは縮小しません。
-
-Custom GPTの主経路はconsumer v2です。
-
-- manifest: `output/consumer/v2/manifest.json`
-- 通常Phase: `output/consumer/v2/phases/phase-{n}/part-{p}.json`
-- detail: `output/consumer/v2/details/phase-{n}/part-{p}.json`
-
-consumer v2の各ファイルは4 KiB以下で、manifestとchunkのidentity、part数、順序、canonical JSON、元データへのlossless復元をrepository側で検証します。
-
-`更新`ではmanifestを検証し、Phase1の通常chunkとdetail chunkだけを取得します。各Phase末尾には、`mode`、現在のPhase番号、完全なgeneration IDだけを含む可視の進行状態行を表示します。`次`ではmanifestを再取得し、generation IDが進行状態行と一致する場合だけ次のPhaseを取得します。manifestとchunk間ではanalysis ID、generation ID、run ID、source commit、source SHA-256、data dateを毎回完全検証します。全6 Phaseのpayloadは会話内へ固定保持しません。
-
-公開データが別generationへ更新された場合は、新旧generationを混在させず停止します。利用者は新しいセッションで`更新`から開始します。
-
-Phase1〜Phase5は通常データとdetailを合わせて詳しく表示し、Phase6だけを簡潔な全体まとめとします。表示名は`Phase1`〜`Phase6`に統一し、`詳細`、`用語`、`再評価`は進行コマンドとして使用しません。
-
-v2 manifestがHTTP 404の場合だけconsumer v1へ、v1もHTTP 404の場合だけ旧full consumerへfallbackします。存在する上位形式が無効な場合はfallbackせずfail-closedで停止します。旧URLは互換用として維持します。
-This public repository protects `main` with pull requests, strict up-to-date required checks, resolved review conversations, and blocked force pushes and branch deletion. The eight required checks and the supplementary human release procedure are documented in the [Manual merge gate](docs/manual_merge_gate.md). No approving review is required by configuration, and repository administrators retain an emergency bypass path. A Draft PR remains Draft until final independent review is complete and must never be merged directly.
+詳細は[consumer v4 architecture](docs/architecture_v4.md)、[current state](docs/CURRENT_STATE.md)、[Custom GPT正本指示](docs/custom_gpt_instructions_current.md)を参照してください。
