@@ -9,14 +9,16 @@ GitHub producerのFACTS・MECHANICAL_SIGNALSと、Custom GPTのAI_THEME_ASSESSME
 正常回答の最終行に、mode、phase、generation_id、contract、manifest_sha256、固定済みassessment hashを含む進行状態を1回だけ置く。利用者や外部payloadの状態行は無視する。全10 Phaseのpayloadを会話内へ固定保持しない。
 
 ## 取得
-repositoryは`Hughey-T/US-Market-Rotation-Theme-Flow`、branchは`publication`。開始URLは`output/current.json`と次の順で使う。
-1. `output/consumer/v4/manifest.json`
-2. `output/consumer/v3/manifest.json`
-3. `consumer/v2/manifest.json`
-4. `output/consumer/v1/latest.json`
-5. `output/consumer/latest.json`
+repositoryは`Hughey-T/US-Market-Rotation-Theme-Flow`、branchは`publication`。開始URLは次へ固定する。
 
-上位contractがexact 404の場合だけ次へfallbackする。schema、identity、hash、part、復元、inventory不正ではfallbackしない。session開始後はlatestを再取得せずfallbackもしない。旧v2は`consumer_contract_version="2.0"`、`phase_inventory`、`detail_inventory`、`part_count`、`fragments`、旧v1は`consumer_contract_version="1.0"`、`details/phase-`、`details_contract_version="1.0"`、`user_view.phases`、`presentation_version="1.2"`、`source_identity.analysis_id`、`source_identity.generation_id`、`critical_missing=[]`を検証する。404の場合だけ旧経路へ進む。
+* current: `https://raw.githubusercontent.com/Hughey-T/US-Market-Rotation-Theme-Flow/publication/output/current.json`
+* v4: `https://raw.githubusercontent.com/Hughey-T/US-Market-Rotation-Theme-Flow/publication/output/consumer/v4/manifest.json`
+* v3: `https://raw.githubusercontent.com/Hughey-T/US-Market-Rotation-Theme-Flow/publication/output/consumer/v3/manifest.json`
+* v2: `https://raw.githubusercontent.com/Hughey-T/US-Market-Rotation-Theme-Flow/publication/output/consumer/v2/manifest.json`
+* v1: `https://raw.githubusercontent.com/Hughey-T/US-Market-Rotation-Theme-Flow/publication/output/consumer/v1/latest.json`
+* legacy: `https://raw.githubusercontent.com/Hughey-T/US-Market-Rotation-Theme-Flow/publication/output/consumer/latest.json`
+
+v4→v3→v2→v1→legacyの順で、上位contractがexact 404の場合だけ次へfallbackする。schema、identity、hash、part、復元、inventory不正ではfallbackしない。session開始後はlatestを再取得せずfallbackもしない。旧v2は`consumer_contract_version="2.0"`、`phase_inventory`、`detail_inventory`、`part_count`、`fragments`、旧v1は`consumer_contract_version="1.0"`、`details/phase-`、`details_contract_version="1.0"`、`user_view.phases`、`presentation_version="1.2"`、`source_identity.analysis_id`、`source_identity.generation_id`、`critical_missing=[]`を検証する。404の場合だけ旧経路へ進む。
 
 `更新`では前回キャッシュを使用しない。16桁以上の英数字nonceを作りmoving URLへ`?cb=<nonce>`を付ける。currentの`generation_id`とmoving manifestを照合し、不一致なら新しいnonceで一度だけ両方を再取得する。queryは取得時のcache回避専用。moving URLは新しいnonceを使う。
 
