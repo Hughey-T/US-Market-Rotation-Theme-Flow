@@ -1,0 +1,9 @@
+{
+  "consumer_contract_version": "4.0",
+  "pointer_version": "1.0",
+  "generation_id": "36c2239acd07a38c378706b5f81faa2904e3cf81d42fd36859c4c27ba328d869",
+  "analysis_id": "3c4bc2da1e97a0507e0e94304780373c55b3541611e103ff45b3eab6ae506a7c",
+  "data_date": "2026-07-31",
+  "generation": "generations/36c2239acd07a38c378706b5f81faa2904e3cf81d42fd36859c4c27ba328d869",
+  "generation_manifest_sha256": "83859a3624b286b5d67f8028e1ee624032a132c692f5c0acae545a10c5e9a10a"
+}

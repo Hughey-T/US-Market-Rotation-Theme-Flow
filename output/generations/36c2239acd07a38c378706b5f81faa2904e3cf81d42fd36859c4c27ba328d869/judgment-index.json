@@ -1,0 +1,12 @@
+{
+  "index_version": "1.0",
+  "records": [],
+  "publication": {
+    "analysis_id": "3c4bc2da1e97a0507e0e94304780373c55b3541611e103ff45b3eab6ae506a7c",
+    "generation_id": "36c2239acd07a38c378706b5f81faa2904e3cf81d42fd36859c4c27ba328d869",
+    "run_id": "3c4bc2da1e97a0507e0e94304780373c55b3541611e103ff45b3eab6ae506a7c",
+    "data_date": "2026-07-31",
+    "source_sha256": "aabee7e8c8b891bbf560c631d91b601c7dd482e70e1ca40cf11c35eaf4a9e2d2",
+    "instruction_version": "1.6.0"
+  }
+}
