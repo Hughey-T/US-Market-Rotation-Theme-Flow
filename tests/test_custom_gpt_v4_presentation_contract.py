@@ -84,7 +84,7 @@ class CustomGptV4PresentationContractTests(unittest.TestCase):
     def test_instruction_identity_and_size(self) -> None:
         text = _instructions()
         self.assertTrue(text.startswith("# US Market Rotation & Theme Flow — Custom GPT 正本指示 2.0.2"))
-        self.assertLessEqual(len(text), 8_000)
+        self.assertEqual(len(text), 8_000)
 
 
 if __name__ == "__main__":
