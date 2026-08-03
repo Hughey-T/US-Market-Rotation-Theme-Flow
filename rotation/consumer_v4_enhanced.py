@@ -1,7 +1,6 @@
 """Compatibility enhancements for consumer v4 explainability and selection gates."""
 from __future__ import annotations
 
-import copy
 from typing import Any
 
 
@@ -193,12 +192,13 @@ def install(module: Any) -> None:
             hard = signal.get("hard_exclusion") is True
             if hard:
                 reasons.append("HARD_EXCLUSION")
-            for gate_name, gate in (
+            gate_values = (
                 ("RELATIVE", signal["price_confirmation"]["relative_gate"]),
                 ("BREADTH", signal["price_confirmation"]["breadth_gate"]),
                 ("QUALITY", signal["price_confirmation"]["quality_gate"]),
                 ("FUNDAMENTAL", fundamental),
-            ):
+            )
+            for gate_name, gate in gate_values:
                 if gate["status"] != "pass":
                     reasons.append(f"{gate_name}_{gate['reason_code']}")
             bucket = signal.get("candidate_bucket")
@@ -207,18 +207,19 @@ def install(module: Any) -> None:
             elif bucket in {"avoid_now", "unavailable"}:
                 reasons.append(f"CANDIDATE_BUCKET_{str(bucket).upper()}")
             eligible = not reasons
-            not_evaluable = any(
-                gate["status"] == "not_evaluable"
-                for gate in (
-                    signal["price_confirmation"]["relative_gate"],
-                    signal["price_confirmation"]["breadth_gate"],
-                    signal["price_confirmation"]["quality_gate"],
-                    fundamental,
-                )
-            )
+            any_failed = any(gate["status"] == "fail" for _, gate in gate_values)
+            any_not_evaluable = any(gate["status"] == "not_evaluable" for _, gate in gate_values)
+            if eligible:
+                selection_status = "pass"
+            elif hard or any_failed or bucket in {"avoid_now", "watch_recovery", "unavailable"}:
+                selection_status = "fail"
+            elif any_not_evaluable:
+                selection_status = "not_evaluable"
+            else:
+                selection_status = "fail"
             signal.update({
                 "selection_eligible": eligible,
-                "selection_gate_status": "pass" if eligible else "not_evaluable" if not_evaluable else "fail",
+                "selection_gate_status": selection_status,
                 "selection_gate_reasons": reasons,
                 "monitoring_status": (
                     "selected" if eligible
