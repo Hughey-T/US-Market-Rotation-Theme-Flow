@@ -50,7 +50,7 @@ class PublicLatestContractTests(unittest.TestCase):
         self.assertEqual(instruction_version_for_data_schema("1.2"), "1.6.0")
         self.assertEqual(
             instruction_versions_for_data_schema("1.2"),
-            {"1.3.0", "1.4.0", "1.5.0", "1.6.0", "2.0.0"},
+            {"1.3.0", "1.4.0", "1.5.0", "1.6.0", "2.0.0", "2.0.1"},
         )
 
     def test_generic_failed_manifest_is_valid_but_public_latest_rejects_it(self):
