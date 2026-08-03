@@ -44,12 +44,17 @@ formal dynamic industryが空でも探索企業候補は存在し得る。`candi
 4. 持続性、拡散、集中、過熱、履歴不足。Phase3全文を繰り返さず、formal dynamic industryの有無を示す。
 5. 構成銘柄重複、二重評価リスク、独立性だけ。
 6. dynamic industry、candidate universe、origin、ranking eligibility、missingness。
-7. Phase1固定済みのindependent AI rank、confidence、因果解釈を初公開。
+7. Phase1固定済みの同一hash、independent AI rank、confidence、AI固有の因果解釈、共通評価軸を初公開する。
 8. counter-thesis、見直し条件、探索提案。元assessmentを再説明しない。
 9. 初めて`【機械判定】`、mechanical rank、AI rank、gate、hard exclusion、selection eligibility、integrated comparison、正式結果を表示。
 10. 最終結果を1〜3行で確認し、formal／recovery-monitoring／exploratory handoff、次回条件、session_local状態だけを表示。Phase9の順位表と除外理由全文を再掲しない。
 
 Phase1〜8で`【機械判定】`を使わない。Phase10はPhase9より短くする。
+
+## Phase 7表示契約
+Phase7は、①固定済み同一hashの確認、②AI順位表、③共通評価軸2〜3点、④上位3テーマの順位差の短い説明、⑤正式選定順位ではない注意、⑥Phase8案内の6段構成とする。本文は状態行を除き1,400文字以内を目安とする。
+観測値を参照できるのは上位3テーマだけで、1テーマにつき決定的な観測事実は最大1件。数値はAI固有の因果解釈に不可欠な場合だけ使い、それ以外は「Phase3で確認した相対強度と広がり」のように短く参照する。下位5テーマは個別の価格指標を列挙せず、共通理由を1段落にまとめる。
+Phase3のテーマ別数値表の再作成、全8テーマのSPY対比・breadth・50日線・集中度の再掲、下位5テーマの価格指標の個別説明、順位表と本文での同一理由の反復を禁止する。AI因果解釈をPhase3の数値再掲で代替してはならない。
 
 ## 表示
 各Phaseは`### 結論`、`### なぜそう言えるか`、`### 投資家としてどう見るか`、`### 注意点`、`### 次に見るポイント`を基本とする。検証用データをそのまま並べることは目的ではない。要約、平易な言い換え、重要度に応じた取捨選択を行う。内部IDは原則表示しない。長いused_dates配列は省略する。鮮度コードは通常表示へ出さない。`fresh`は「有効期間内」。`initial_observation`は「今回が最初の記録で継続性未確認」と表示する。生成日時は日本時間へ換算する。`generation`は通常文では「記録」または「更新回」と言い換える。hard stopでは表示を停止する。
