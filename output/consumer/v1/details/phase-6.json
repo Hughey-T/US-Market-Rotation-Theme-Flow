@@ -1,14 +1,14 @@
 {
   "details_contract_version": "1.0",
   "source_identity": {
-    "analysis_id": "3c07b5c0e7a3ed0c8aabcce577be51f4906abff8755f2e1f16305b55a043dbdb",
-    "generation_id": "6c2260ba8b98d8fccd20d14e35fb616ff40e1d7bc1d7af296cf514e962deffa0"
+    "analysis_id": "8544cc3923e0ed84c3ec32bfc03bf9644947b2d889ac5caa6effb2765e3cdf16",
+    "generation_id": "6fa376320c04fc2d4cc4191a7ffeb500f434c4cf949dd3f9297a7ca6941f59a6"
   },
   "meta": {
-    "run_id": "3c07b5c0e7a3ed0c8aabcce577be51f4906abff8755f2e1f16305b55a043dbdb",
-    "source_commit": "742e59c2db9c59bc4956cee6e6925060323fb825",
-    "source_sha256": "a3f410670be797e1f45928e50de23cc216c1d0717e3ffb58f6d7ed19e3b28c8b",
-    "data_date": "2026-07-31",
+    "run_id": "8544cc3923e0ed84c3ec32bfc03bf9644947b2d889ac5caa6effb2765e3cdf16",
+    "source_commit": "470adcd315bcea2b97c0df1c976524c5733240bb",
+    "source_sha256": "d0a10a36faf20e6c0db909459c587fea40f0c1c8fcb95b96fedec7c57c29b4c5",
+    "data_date": "2026-08-03",
     "status": "success"
   },
   "phase": 6,

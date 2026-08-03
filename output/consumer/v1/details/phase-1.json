@@ -1,14 +1,14 @@
 {
   "details_contract_version": "1.0",
   "source_identity": {
-    "analysis_id": "3c07b5c0e7a3ed0c8aabcce577be51f4906abff8755f2e1f16305b55a043dbdb",
-    "generation_id": "6c2260ba8b98d8fccd20d14e35fb616ff40e1d7bc1d7af296cf514e962deffa0"
+    "analysis_id": "8544cc3923e0ed84c3ec32bfc03bf9644947b2d889ac5caa6effb2765e3cdf16",
+    "generation_id": "6fa376320c04fc2d4cc4191a7ffeb500f434c4cf949dd3f9297a7ca6941f59a6"
   },
   "meta": {
-    "run_id": "3c07b5c0e7a3ed0c8aabcce577be51f4906abff8755f2e1f16305b55a043dbdb",
-    "source_commit": "742e59c2db9c59bc4956cee6e6925060323fb825",
-    "source_sha256": "a3f410670be797e1f45928e50de23cc216c1d0717e3ffb58f6d7ed19e3b28c8b",
-    "data_date": "2026-07-31",
+    "run_id": "8544cc3923e0ed84c3ec32bfc03bf9644947b2d889ac5caa6effb2765e3cdf16",
+    "source_commit": "470adcd315bcea2b97c0df1c976524c5733240bb",
+    "source_sha256": "d0a10a36faf20e6c0db909459c587fea40f0c1c8fcb95b96fedec7c57c29b4c5",
+    "data_date": "2026-08-03",
     "status": "success"
   },
   "phase": 1,
@@ -24,37 +24,37 @@
       {
         "name": "spy_r_4w",
         "label": "S&P 500の4週騰落率",
-        "value": 0.0017029869054645541,
+        "value": 0.01155372073667671,
         "explanation": "市場平均そのものの中期的な方向を示します。"
       },
       {
         "name": "qqq_rel_spy_4w",
         "label": "大型成長株の相対強度",
-        "value": -0.052973714530697213,
+        "value": -0.0411495199829105,
         "explanation": "NASDAQ 100がS&P 500を4週間でどれだけ上回ったかを示します。"
       },
       {
         "name": "rsp_minus_spy_4w",
         "label": "均等加重の広がり",
-        "value": 0.00579427572173552,
+        "value": -0.0015495615079388347,
         "explanation": "大型株だけでなく幅広い銘柄へ上昇が及んでいるかを見る目安です。"
       },
       {
         "name": "iwm_minus_spy_4w",
         "label": "小型株の相対強度",
-        "value": -0.02883112708485469,
+        "value": -0.020828468275441825,
         "explanation": "小型株が市場平均を上回っているかを見る目安です。"
       },
       {
         "name": "hyg_minus_lqd_4w",
         "label": "信用リスク選好",
-        "value": 0.018994172229579553,
+        "value": 0.01822402416914226,
         "explanation": "低格付け債と高格付け債の差からリスク選好を確認します。"
       },
       {
         "name": "vix_change_4w",
         "label": "VIXの4週変化",
-        "value": -0.6000003814697266,
+        "value": 0.1100006103515625,
         "explanation": "市場の不安感が拡大したか低下したかを見る補助指標です。"
       }
     ],

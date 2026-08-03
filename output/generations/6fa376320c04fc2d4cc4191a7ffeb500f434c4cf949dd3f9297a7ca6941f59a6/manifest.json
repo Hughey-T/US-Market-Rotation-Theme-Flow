@@ -1,0 +1,18 @@
+{
+  "publication_contract_version": "1.1",
+  "generation_version": "1.0",
+  "analysis_id": "8544cc3923e0ed84c3ec32bfc03bf9644947b2d889ac5caa6effb2765e3cdf16",
+  "generation_id": "6fa376320c04fc2d4cc4191a7ffeb500f434c4cf949dd3f9297a7ca6941f59a6",
+  "run_id": "8544cc3923e0ed84c3ec32bfc03bf9644947b2d889ac5caa6effb2765e3cdf16",
+  "data_date": "2026-08-03",
+  "generated_at": "2026-08-03T14:05:23.332412Z",
+  "source_commit": "470adcd315bcea2b97c0df1c976524c5733240bb",
+  "source_sha256": "d0a10a36faf20e6c0db909459c587fea40f0c1c8fcb95b96fedec7c57c29b4c5",
+  "previous_generation_id": "6c2260ba8b98d8fccd20d14e35fb616ff40e1d7bc1d7af296cf514e962deffa0",
+  "files": {
+    "archive.json": "077245e1ec32b9e3d606898fdfff1b9399df3314afee8f0c7df4ae9f1591f50f",
+    "history.json": "659db6f542e698b0c7b4dd17b259b448d2b34d56ef1e4228dafb2d12eb232e7b",
+    "judgment-index.json": "8ed41861800efe7666dc6d644b5262148d7ea7cd65fffb0cd4bdf04dacc50aa5",
+    "latest.json": "077245e1ec32b9e3d606898fdfff1b9399df3314afee8f0c7df4ae9f1591f50f"
+  }
+}

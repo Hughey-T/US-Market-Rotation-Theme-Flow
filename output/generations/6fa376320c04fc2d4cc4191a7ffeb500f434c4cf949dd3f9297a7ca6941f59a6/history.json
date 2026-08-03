@@ -1,0 +1,176 @@
+{
+  "data_date": "2026-08-03",
+  "schema_version": "1.2",
+  "methodology_version": "1.2.0",
+  "theme_master_version": "2026-Q3-r1",
+  "themes": {
+    "ai_semis": {
+      "equal_weight_rel_spy_4w": -0.13704624928383768,
+      "advance_count_4w": 2,
+      "above_50dma_count": 0,
+      "pct_above_50dma": 0.0,
+      "volume_ratio_20d_60d": 0.7616333170790498,
+      "theme_return_4w": -0.12549252854716098,
+      "spy_return_4w": 0.01155372073667671,
+      "candidate_bucket": "watch_recovery",
+      "price_signal": {
+        "data_available": true,
+        "confirmed": false,
+        "candidate_bucket": "watch_recovery",
+        "threshold_pass": false,
+        "breadth_pass": false,
+        "quality_pass": true
+      },
+      "classification_version": "candidate_bucket_v3",
+      "quality_status": "eligible",
+      "constituents_hash": "a1074daff13047c4421aecb8c45305e1201c76c9af50f8212e693cb19dd229c3"
+    },
+    "ai_software_data": {
+      "equal_weight_rel_spy_4w": 0.07842332283980716,
+      "advance_count_4w": 5,
+      "above_50dma_count": 5,
+      "pct_above_50dma": 0.7142857142857143,
+      "volume_ratio_20d_60d": 0.7567301613301545,
+      "theme_return_4w": 0.08997704357648387,
+      "spy_return_4w": 0.01155372073667671,
+      "candidate_bucket": "avoid_now",
+      "price_signal": {
+        "data_available": true,
+        "confirmed": false,
+        "candidate_bucket": "avoid_now",
+        "threshold_pass": true,
+        "breadth_pass": true,
+        "quality_pass": true
+      },
+      "classification_version": "candidate_bucket_v3",
+      "quality_status": "eligible",
+      "constituents_hash": "0f6c2317a48c5935654955bcc718dd19f10d9763d189f071d4b294ff26b0f294"
+    },
+    "cybersecurity": {
+      "equal_weight_rel_spy_4w": 0.04047803586964909,
+      "advance_count_4w": 6,
+      "above_50dma_count": 7,
+      "pct_above_50dma": 1.0,
+      "volume_ratio_20d_60d": 0.7294874643090582,
+      "theme_return_4w": 0.0520317566063258,
+      "spy_return_4w": 0.01155372073667671,
+      "candidate_bucket": "avoid_now",
+      "price_signal": {
+        "data_available": true,
+        "confirmed": false,
+        "candidate_bucket": "avoid_now",
+        "threshold_pass": false,
+        "breadth_pass": true,
+        "quality_pass": true
+      },
+      "classification_version": "candidate_bucket_v3",
+      "quality_status": "eligible",
+      "constituents_hash": "b58b0ce33dd0717678adb0131ff9a1368bdffa8fb71a012e111c3c0443396e43"
+    },
+    "dc_power_infra": {
+      "equal_weight_rel_spy_4w": -0.04849435305926206,
+      "advance_count_4w": 2,
+      "above_50dma_count": 3,
+      "pct_above_50dma": 0.375,
+      "volume_ratio_20d_60d": 0.8842595305380841,
+      "theme_return_4w": -0.03694063232258535,
+      "spy_return_4w": 0.01155372073667671,
+      "candidate_bucket": "avoid_now",
+      "price_signal": {
+        "data_available": true,
+        "confirmed": false,
+        "candidate_bucket": "avoid_now",
+        "threshold_pass": false,
+        "breadth_pass": false,
+        "quality_pass": true
+      },
+      "classification_version": "candidate_bucket_v3",
+      "quality_status": "eligible",
+      "constituents_hash": "446324cdaca1b566ea3763e62b385a0a2954a9ecb5d76336a30081b24223a78c"
+    },
+    "defense": {
+      "equal_weight_rel_spy_4w": -0.03641154829024923,
+      "advance_count_4w": 4,
+      "above_50dma_count": 4,
+      "pct_above_50dma": 0.5,
+      "volume_ratio_20d_60d": 0.8824911338016064,
+      "theme_return_4w": -0.02485782755357252,
+      "spy_return_4w": 0.01155372073667671,
+      "candidate_bucket": "avoid_now",
+      "price_signal": {
+        "data_available": true,
+        "confirmed": false,
+        "candidate_bucket": "avoid_now",
+        "threshold_pass": false,
+        "breadth_pass": false,
+        "quality_pass": true
+      },
+      "classification_version": "candidate_bucket_v3",
+      "quality_status": "eligible",
+      "constituents_hash": "96bd46fe4c518efcfb7f020232180317fe1a7d48d62474710d1e4834a0a84775"
+    },
+    "networking_optical": {
+      "equal_weight_rel_spy_4w": -0.13641979384861547,
+      "advance_count_4w": 1,
+      "above_50dma_count": 1,
+      "pct_above_50dma": 0.14285714285714285,
+      "volume_ratio_20d_60d": 0.7456975029864106,
+      "theme_return_4w": -0.12486607311193876,
+      "spy_return_4w": 0.01155372073667671,
+      "candidate_bucket": "avoid_now",
+      "price_signal": {
+        "data_available": true,
+        "confirmed": false,
+        "candidate_bucket": "avoid_now",
+        "threshold_pass": false,
+        "breadth_pass": false,
+        "quality_pass": true
+      },
+      "classification_version": "candidate_bucket_v3",
+      "quality_status": "eligible",
+      "constituents_hash": "71b64eb5d579ce259cf6c89a629f70440c8daff8c16f97c375555228e1c5d161"
+    },
+    "nuclear_uranium": {
+      "equal_weight_rel_spy_4w": -0.06275241400057952,
+      "advance_count_4w": 2,
+      "above_50dma_count": 2,
+      "pct_above_50dma": 0.2857142857142857,
+      "volume_ratio_20d_60d": 0.86953521573239,
+      "theme_return_4w": -0.051198693263902806,
+      "spy_return_4w": 0.01155372073667671,
+      "candidate_bucket": "avoid_now",
+      "price_signal": {
+        "data_available": true,
+        "confirmed": false,
+        "candidate_bucket": "avoid_now",
+        "threshold_pass": false,
+        "breadth_pass": false,
+        "quality_pass": true
+      },
+      "classification_version": "candidate_bucket_v3",
+      "quality_status": "eligible",
+      "constituents_hash": "4c52647018806885db853dcc2503ac7964ca223cc8e48792a4be4d7505fd3615"
+    },
+    "semi_equipment": {
+      "equal_weight_rel_spy_4w": -0.15942008289927218,
+      "advance_count_4w": 0,
+      "above_50dma_count": 0,
+      "pct_above_50dma": 0.0,
+      "volume_ratio_20d_60d": 0.878707357609878,
+      "theme_return_4w": -0.14786636216259547,
+      "spy_return_4w": 0.01155372073667671,
+      "candidate_bucket": "watch_recovery",
+      "price_signal": {
+        "data_available": true,
+        "confirmed": false,
+        "candidate_bucket": "watch_recovery",
+        "threshold_pass": false,
+        "breadth_pass": false,
+        "quality_pass": true
+      },
+      "classification_version": "candidate_bucket_v3",
+      "quality_status": "eligible",
+      "constituents_hash": "64c939aa4c53ba16d6f32d75e14dd5c7203f81470c9dfa40432d0c3fce225e18"
+    }
+  }
+}
