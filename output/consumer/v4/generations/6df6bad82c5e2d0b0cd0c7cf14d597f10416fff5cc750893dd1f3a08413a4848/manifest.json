@@ -1,0 +1,225 @@
+{
+  "consumer_contract_version": "4.0",
+  "manifest_version": "1.0",
+  "generation_id": "6df6bad82c5e2d0b0cd0c7cf14d597f10416fff5cc750893dd1f3a08413a4848",
+  "analysis_id": "b339f8facbff1d3e1914630792af71600db4bc0fc3c86a97398bbc4f46e92b62",
+  "data_date": "2026-07-31",
+  "source_sha256": "f447d6b09b93c56466ed0064226dae2a93e1c221941b1473f5bbabc60f07aef7",
+  "theme_set_identity": "93386485adbf9ae6826caf36e0ff7574a1e04c00cf1a8c075d760c848525667f",
+  "company_candidate_set_identity": "e43a017d975e730cfdf837be4f59bac3d25c26f3bf9ff0e5568566977a479144",
+  "package_order": [
+    "facts",
+    "blind",
+    "companies",
+    "blind-handoff",
+    "mechanical",
+    "reconciliation-handoff"
+  ],
+  "blind_packages": [
+    "blind",
+    "blind-handoff",
+    "companies",
+    "facts"
+  ],
+  "reconciliation_packages": [
+    "mechanical",
+    "reconciliation-handoff"
+  ],
+  "packages": [
+    {
+      "package": "facts",
+      "part_count": 5,
+      "total_payload_bytes": 38658,
+      "canonical_sha256": "8f97d6c38d5387dd84e6ff1efb12604a605ad443ad5c2c29217e42c19ae63716",
+      "parts": [
+        {
+          "part": 1,
+          "path": "facts/part-1.json",
+          "fragment_byte_length": 8192,
+          "fragment_sha256": "5195f99f1fee5677aca0f4ab7e46501f0fda0acbfbabe39bbcc9243e2e6a1b85",
+          "file_sha256": "723056c532afdf884e5cf25a51ca41b05a584b33f8bc1fb497d69da47d9c9fdc"
+        },
+        {
+          "part": 2,
+          "path": "facts/part-2.json",
+          "fragment_byte_length": 8192,
+          "fragment_sha256": "d33085f5255367b751b63d3a3b0bc8b5ceb83e920898386416ab08eebd28db26",
+          "file_sha256": "3a72f8a8214a39b783bf0555a0967e1a7a659dd70a1616855edc5343727bade3"
+        },
+        {
+          "part": 3,
+          "path": "facts/part-3.json",
+          "fragment_byte_length": 8192,
+          "fragment_sha256": "f5498c0ff1f1e83d28c93c1d35e58104d136eafd48ec37886a816f04f18d8158",
+          "file_sha256": "638c3e4b4e16d821b36a5a02cf9ae495f33f4ae0c58de7bdb82c6b6b2a427a39"
+        },
+        {
+          "part": 4,
+          "path": "facts/part-4.json",
+          "fragment_byte_length": 8192,
+          "fragment_sha256": "c86a3610a411912d4cc64df107fccdc450deb669569f7c2333b320f8fe8c9f9a",
+          "file_sha256": "47a9bcb7737de74b29e81e00ce0c04d42e84b4fd92490bbfebdf132813f17f75"
+        },
+        {
+          "part": 5,
+          "path": "facts/part-5.json",
+          "fragment_byte_length": 5890,
+          "fragment_sha256": "d3cc1e2e26f462a57df10e4418ee845abf3ff5b3cdd4489d4847f1351a5d132a",
+          "file_sha256": "1ec9cc88ecf1a5a06728c040541f53e5a52999517f14e0299c20fd6d81ff17e7"
+        }
+      ]
+    },
+    {
+      "package": "blind",
+      "part_count": 5,
+      "total_payload_bytes": 38677,
+      "canonical_sha256": "ab56896c0ac015036ff8a65e64d9053d3866feb4ea2c330196b2bae1d05fe4d5",
+      "parts": [
+        {
+          "part": 1,
+          "path": "blind/part-1.json",
+          "fragment_byte_length": 8192,
+          "fragment_sha256": "b4c32936ea4e96b970b5eb05e011d034086fd472c879a76b632006f30e60ad69",
+          "file_sha256": "59a877ed8bd7f762a5367fa39d6c1bdbe6147bbd26fbda963582c65c5b6918c7"
+        },
+        {
+          "part": 2,
+          "path": "blind/part-2.json",
+          "fragment_byte_length": 8192,
+          "fragment_sha256": "c302a7f96841ee7434acfa2322b7099007964d2b7ff6a5b2315c254fb166e86f",
+          "file_sha256": "4e6e96533f1094385ce872b86768d7f67de0ff0f50850dd4b1d6c4d98dd687dc"
+        },
+        {
+          "part": 3,
+          "path": "blind/part-3.json",
+          "fragment_byte_length": 8192,
+          "fragment_sha256": "c09bd6d086de57015d2b47e2bb9d24fe43f2238d82759e3eb1730455b026bcdd",
+          "file_sha256": "8d5744775d13ca78e6822cbdfe8f914466518b74ec11001f32da3ecd7188f133"
+        },
+        {
+          "part": 4,
+          "path": "blind/part-4.json",
+          "fragment_byte_length": 8192,
+          "fragment_sha256": "21400506eb6bdc110a52447b5df2dea0911efa6c5cb2f1f1d770d8c9bda7af6a",
+          "file_sha256": "49bb74d88d79a96a2be226fbde4eeb53c48929c8804692ca977f1678c7255889"
+        },
+        {
+          "part": 5,
+          "path": "blind/part-5.json",
+          "fragment_byte_length": 5909,
+          "fragment_sha256": "baa570d70749fb12be59c29b21fb092b8bf4b132e2c3b12d4d327de93ef7bd3b",
+          "file_sha256": "ff0b5a1e71656d969c4e7ac55c407e1dbaa5d5207a4c1980ebe9ca05d83a6145"
+        }
+      ]
+    },
+    {
+      "package": "companies",
+      "part_count": 1,
+      "total_payload_bytes": 5057,
+      "canonical_sha256": "d92e54a7b05dbad90fbbbd2b80a6b9c97854941ca64d7fbb747bcafe5447e1da",
+      "parts": [
+        {
+          "part": 1,
+          "path": "companies/part-1.json",
+          "fragment_byte_length": 5057,
+          "fragment_sha256": "d92e54a7b05dbad90fbbbd2b80a6b9c97854941ca64d7fbb747bcafe5447e1da",
+          "file_sha256": "d35b2d472e1028ad0153ecb2237eb5155df7172c954777a8fd9a96348905e0b8"
+        }
+      ]
+    },
+    {
+      "package": "blind-handoff",
+      "part_count": 4,
+      "total_payload_bytes": 32362,
+      "canonical_sha256": "7c2f1823d5692529972ac86b6ee4e74588c479ca7e95a1a649c0becc9a0f435c",
+      "parts": [
+        {
+          "part": 1,
+          "path": "blind-handoff/part-1.json",
+          "fragment_byte_length": 8192,
+          "fragment_sha256": "4cba415370e1bd4e0cf5a730174da7004fc5e737bf4ccbe59fde6e162a341dc5",
+          "file_sha256": "3ef50d65ce65eef71909966f94651e80d5aaeb90ec164d273c41e29c9a3f2f7f"
+        },
+        {
+          "part": 2,
+          "path": "blind-handoff/part-2.json",
+          "fragment_byte_length": 8192,
+          "fragment_sha256": "971919d41b125ddbdacca093ede89f189fda577c522af56bbb3e673cc1d40eed",
+          "file_sha256": "dab8e8d094db213579b898f8a43d91d3fece0daa38c1fb3b7a356284332b821d"
+        },
+        {
+          "part": 3,
+          "path": "blind-handoff/part-3.json",
+          "fragment_byte_length": 8192,
+          "fragment_sha256": "58c119ff5ffc1d47db7126d2c1faa7e9d8eaae17af243392995bf9cfe98b4130",
+          "file_sha256": "4bd545d02d5b21c603985b175f89ea60083cde52ef2d4399ef42f5affce87ffb"
+        },
+        {
+          "part": 4,
+          "path": "blind-handoff/part-4.json",
+          "fragment_byte_length": 7786,
+          "fragment_sha256": "0c5c8911b68d16877b140b1927eee03f7c82fbb7d4b00605de00d76e9da206ba",
+          "file_sha256": "ff01c358d9a70a8d08d78d109b01d43082d7d2f7583a46513bca6b302e35aaad"
+        }
+      ]
+    },
+    {
+      "package": "mechanical",
+      "part_count": 3,
+      "total_payload_bytes": 21175,
+      "canonical_sha256": "c107962844dc46278a6487b5671bbfb29758b9e18fa45eda19aa24bfcaa2a65c",
+      "parts": [
+        {
+          "part": 1,
+          "path": "mechanical/part-1.json",
+          "fragment_byte_length": 8192,
+          "fragment_sha256": "49b5b915e5e6838483534f0aafd636295d862951dd84f52f142e4b3b4790f050",
+          "file_sha256": "693fd194c0042fe084eb1f43a01e9a7914d30112e41df18df2fb9f907c3cc1f9"
+        },
+        {
+          "part": 2,
+          "path": "mechanical/part-2.json",
+          "fragment_byte_length": 8192,
+          "fragment_sha256": "233ef5ecb9cca3cb39d57d01bad806aedfa7ac9717c5da45603794e9937faf76",
+          "file_sha256": "d3435556c41ce556c9227d3f8f9c18ccad73dae31ee0bcb6c0eeecdc378fedca"
+        },
+        {
+          "part": 3,
+          "path": "mechanical/part-3.json",
+          "fragment_byte_length": 4791,
+          "fragment_sha256": "c7f3184ab05431695cda2440de0fbd9c695f0840b617c3ee2d83451250aa4b46",
+          "file_sha256": "ccd92c96e12f1c0961146f63b03b614ddb2c448b6e166f6a229dff6163d1356b"
+        }
+      ]
+    },
+    {
+      "package": "reconciliation-handoff",
+      "part_count": 3,
+      "total_payload_bytes": 24028,
+      "canonical_sha256": "907074badb2a84a6a462a07b528dd4533be0af7ca373d426f433064bf30d5a04",
+      "parts": [
+        {
+          "part": 1,
+          "path": "reconciliation-handoff/part-1.json",
+          "fragment_byte_length": 8192,
+          "fragment_sha256": "d36bcc982a9ad8cc7c5b43706ec15ef8cbfcc6f99f794f665e9c531a370a2462",
+          "file_sha256": "0ac9e38a40e11a56854abb5e56c90a9930b5ab585a25faed846c046631042394"
+        },
+        {
+          "part": 2,
+          "path": "reconciliation-handoff/part-2.json",
+          "fragment_byte_length": 8192,
+          "fragment_sha256": "c41f2b35842ebe4f3c65ff29632560be72bc5a81dadb25acfef506db90925783",
+          "file_sha256": "351ac08e32742c6113009e37cfe0fefdb131f77502acfccea3d50f825c129f4f"
+        },
+        {
+          "part": 3,
+          "path": "reconciliation-handoff/part-3.json",
+          "fragment_byte_length": 7644,
+          "fragment_sha256": "d4944e28a4f7dca7be78c9d0dad943f277fe584e58ff79dc02099219b0004940",
+          "file_sha256": "18b8b985d5814d6122f83f88e007ee30daeb19c9c56e507ad83caccf1a6a5d5d"
+        }
+      ]
+    }
+  ]
+}
