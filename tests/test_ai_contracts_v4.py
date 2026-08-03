@@ -10,7 +10,7 @@ from rotation.ai_contracts import (
     summarize_ledger,
     validate_ai_theme_assessment,
 )
-from rotation.consumer_v4 import build_consumer_v4_packages
+from rotation.consumer_v4 import _price_confirmation, build_consumer_v4_packages
 from rotation.provenance import stable_hash
 from rotation.validation import ContractError, load_json
 
@@ -80,9 +80,54 @@ class AIContractsV4Tests(unittest.TestCase):
         for signal in mechanical["signals"]:
             signal["hard_exclusion"] = True
             signal["hard_exclusion_reason"] = "test"
+            signal["selection_eligible"] = False
+            signal["selection_gate_reasons"] = ["HARD_EXCLUSION"]
         result = reconcile_rankings(mechanical, self.assessment)
         self.assertEqual(result["decision"], "NO_SELECTION")
         self.assertTrue(all(row["integrated_rank"] is None for row in result["themes"]))
+
+    def test_non_excluded_but_ineligible_theme_is_not_selected(self):
+        mechanical = copy.deepcopy(self.packages["mechanical"])
+        for signal in mechanical["signals"]:
+            signal["hard_exclusion"] = False
+            signal["hard_exclusion_reason"] = None
+            signal["selection_eligible"] = False
+            signal["selection_gate_status"] = "fail"
+            signal["selection_gate_reasons"] = ["RELATIVE_RELATIVE_BELOW_THRESHOLD"]
+        result = reconcile_rankings(mechanical, self.assessment)
+        self.assertEqual(result["decision"], "NO_SELECTION")
+        self.assertTrue(all(row["agreement_status"] == "INELIGIBLE" for row in result["themes"]))
+
+    def test_relative_gate_explains_positive_but_below_five_percent(self):
+        result = _price_confirmation({
+            "metrics": {
+                "equal_weight_rel_spy_4w": 0.039,
+                "advance_ratio_4w": 0.70,
+                "pct_above_50dma": 0.60,
+            },
+            "quality": {"classification_eligible": True},
+        })
+        gate = result["relative_gate"]
+        self.assertEqual(gate["status"], "fail")
+        self.assertEqual(gate["required_value"], 0.05)
+        self.assertAlmostEqual(gate["difference"], -0.011)
+        self.assertEqual(gate["reason_code"], "RELATIVE_BELOW_THRESHOLD")
+
+    def test_missing_gate_data_is_not_evaluable_not_fail(self):
+        result = _price_confirmation({"metrics": {}, "quality": {}})
+        self.assertEqual(result["relative_gate"]["status"], "not_evaluable")
+        self.assertEqual(result["breadth_gate"]["status"], "not_evaluable")
+        self.assertEqual(result["quality_gate"]["status"], "not_evaluable")
+
+    def test_exploratory_company_candidates_are_not_ranking_eligible(self):
+        exploratory = [
+            row for row in self.packages["companies"]["companies"]
+            if row.get("handoff_scope") == "exploratory_only"
+        ]
+        for row in exploratory:
+            self.assertEqual(row["candidate_origin"], "exploratory_company_candidate")
+            self.assertFalse(row["ranking_eligible"])
+            self.assertFalse(row["formal_dynamic_industry_present"])
 
     def test_outcome_maturity(self):
         self.assertEqual(outcome_maturity("2026-01-01", "2026-01-07", 1), "not_matured")
