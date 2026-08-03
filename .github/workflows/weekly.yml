@@ -2,6 +2,10 @@
 name: weekly-data
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/manual-weekly-trigger"
   schedule:
     - cron: "0 23 * * FRI"
   workflow_dispatch:
