@@ -43,14 +43,19 @@ def main() -> int:
         if len(instructions) > 8000:
             raise ContractError(f"Custom GPT instructions exceed 8,000 characters: {len(instructions)}")
         required = (
-            "正本指示 2.0.0", "consumer/v4/manifest.json", "全10 Phase",
+            "正本指示 2.0.1", "consumer/v4/manifest.json", "全10 Phase",
             "blind-handoff", "reconciliation-handoff", "session_local",
             "runtime_available=false", "mechanical rank", "independent AI rank",
             "integrated rank", "exact 404", "1 tool callにつき1 URL",
+            "fixed_hidden", "Phase7", "pass／fail／not_evaluable",
+            "RELATIVE_BELOW_THRESHOLD", "selection_eligible=true",
+            "exploratory_only", "Phase10はPhase9より短く",
         )
         missing = [term for term in required if term not in instructions]
         if missing:
             raise ContractError(f"Custom GPT instructions missing v4 terms: {missing}")
+        if "Phase1〜8で`【機械判定】`を使わない" not in instructions:
+            raise ContractError("Custom GPT instructions do not reserve machine-decision labeling for Phase 9")
         print(f"consumer v4 validation passed: {count} closed schemas")
         return 0
     except (ContractError, OSError, ValueError) as error:
