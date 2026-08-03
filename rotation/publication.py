@@ -36,10 +36,10 @@ def instruction_version_for_data_schema(schema_version: str) -> str:
 
 
 def instruction_versions_for_data_schema(schema_version: str) -> set[str]:
-    """Accept historical identities plus the new v4 Custom GPT contract."""
+    """Accept historical identities plus the v4 Custom GPT contracts."""
     if schema_version == "1.1":
         return {"1.1.1"}
-    return {"1.3.0", "1.4.0", "1.5.0", "1.6.0", "2.0.0"}
+    return {"1.3.0", "1.4.0", "1.5.0", "1.6.0", "2.0.0", "2.0.1"}
 
 
 def _validate_consumer(output: Path, current: tuple, files: set[str], *, required: bool) -> None:
