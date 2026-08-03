@@ -72,9 +72,19 @@ class ConsumerV4E2ETests(unittest.TestCase):
             runtime = SessionLocalRuntime(loaded)
             with self.assertRaisesRegex(ContractError, "before AI assessment fixation"):
                 runtime.reconciliation_inputs()
-            phase1 = runtime.advance("更新")
+            with self.assertRaisesRegex(ContractError, "requires fixed AI assessment"):
+                runtime.advance("更新")
             assessment = assessment_for(loaded["packages"]["blind"])
-            runtime.fix_ai_assessment(assessment)
+            assessment_hash = runtime.fix_ai_assessment(assessment)
+            phase1 = runtime.advance("更新")
+            rendered_phase1 = json.dumps(phase1, sort_keys=True)
+            self.assertEqual(phase1["assessment_status"], "fixed_hidden")
+            self.assertEqual(phase1["assessment_disclosure_phase"], 7)
+            self.assertFalse(phase1["assessment_content_disclosed"])
+            self.assertEqual(phase1["ai_assessment_sha256"], assessment_hash)
+            self.assertNotIn("independent_ai_rank", rendered_phase1)
+            self.assertNotIn('"confidence"', rendered_phase1)
+            self.assertNotIn("ai_assessment", phase1)
             changed = copy.deepcopy(assessment)
             changed["themes"][0]["confidence"] = 0.1
             with self.assertRaisesRegex(ContractError, "immutable"):
@@ -82,9 +92,20 @@ class ConsumerV4E2ETests(unittest.TestCase):
             runtime.fix_counter_thesis(counter_for(assessment))
             phases = [phase1] + [runtime.advance("次") for _ in range(9)]
             self.assertEqual([row["phase"] for row in phases], list(range(1, 11)))
+            phase7 = phases[6]
+            self.assertEqual(phase7["ai_assessment_sha256"], assessment_hash)
+            self.assertEqual(phase7["assessment_disclosure"], "fixed_in_phase_1_disclosed_now")
+            self.assertEqual(stable_hash(phase7["ai_assessment"]), assessment_hash)
+            phase9 = phases[8]
+            self.assertIn("mechanical_signals", phase9)
+            self.assertIn("selection_eligible", phase9["mechanical_signals"][0])
+            phase10 = phases[9]
+            self.assertIn("handoffs", phase10)
+            self.assertNotIn("reconciliation_handoff", phase10)
+            self.assertNotIn("blind_handoff", phase10)
+            self.assertEqual(phase10["ledger_status"], "not_persisted_session_local")
+            self.assertFalse(phase10["runtime_available"])
             self.assertTrue(runtime.state.completed)
-            self.assertEqual(phases[-1]["ledger_status"], "not_persisted_session_local")
-            self.assertFalse(phases[-1]["runtime_available"])
             with self.assertRaisesRegex(ContractError, "complete"):
                 runtime.advance("次")
 
