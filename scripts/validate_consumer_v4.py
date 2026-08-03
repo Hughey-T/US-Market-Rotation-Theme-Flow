@@ -43,13 +43,15 @@ def main() -> int:
         if len(instructions) > 8000:
             raise ContractError(f"Custom GPT instructions exceed 8,000 characters: {len(instructions)}")
         required = (
-            "正本指示 2.0.1", "consumer/v4/manifest.json", "全10 Phase",
+            "正本指示 2.0.2", "consumer/v4/manifest.json", "全10 Phase",
+            "# Phase X / 全10 Phase — <日本語の内容名>",
             "blind-handoff", "reconciliation-handoff", "session_local",
             "runtime_available=false", "mechanical rank", "independent AI rank",
             "integrated rank", "exact 404", "1 tool callにつき1 URL",
             "fixed_hidden", "Phase7", "pass／fail／not_evaluable",
             "RELATIVE_BELOW_THRESHOLD", "selection_eligible=true",
             "exploratory_only", "Phase10はPhase9より短く",
+            "理由詳細はproducerデータに未収録", "正式選定なし",
         )
         missing = [term for term in required if term not in instructions]
         if missing:
