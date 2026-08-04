@@ -127,7 +127,7 @@ class PipelineContractTests(unittest.TestCase):
             )
 
     def test_judgment_byte_change_breaks_index(self):
-        schema = load_json(FIXTURES / "judgment_record.schema.json") if False else load_json(ROOT / "schemas" / "judgment_record.schema.json")
+        schema = load_json(ROOT / "schemas" / "judgment_record.schema.json")
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory) / "judgment.json"
             target.write_bytes((FIXTURES / "judgment_record.json").read_bytes())
