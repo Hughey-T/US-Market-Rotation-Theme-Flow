@@ -57,7 +57,8 @@ class CustomGptPhase7DisplayContractTests(unittest.TestCase):
 
     def test_phase7_has_a_compact_body_budget(self) -> None:
         section = _phase7_section()
-        self.assertIn("状態行を除き1,400文字以内", section)
+        self.assertIn("監査情報行を除き1,400文字以内", section)
+        self.assertNotIn("状態行を除き1,400文字以内", section)
 
     def test_canonical_instructions_remain_within_limit(self) -> None:
         text = INSTRUCTIONS.read_text(encoding="utf-8")
